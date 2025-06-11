@@ -9,6 +9,7 @@ class HuggingFaceDatasetService {
     this.streamingEnabled = false;
     this.cache = new Map();
     this.preloadedBooks = [];
+    this.usedBooks = new Set(); // Track books used this session
   }
 
   // Local fallback books for when HF streaming is unavailable
@@ -129,8 +130,9 @@ class HuggingFaceDatasetService {
     if (!this.streamingEnabled) return;
     
     try {
-      // Fetch a batch of books from HF Datasets (correct API format)
-      const url = `${this.apiBase}/rows?dataset=${this.datasetName}&config=default&split=en&offset=0&length=${count}`;
+      // Use random offset to avoid always getting the same books
+      const randomOffset = Math.floor(Math.random() * 5000); // Random start point in dataset
+      const url = `${this.apiBase}/rows?dataset=${this.datasetName}&config=default&split=en&offset=${randomOffset}&length=${count}`;
       const response = await fetch(url);
       
       if (response.ok) {
@@ -354,16 +356,51 @@ class HuggingFaceDatasetService {
       throw new Error('Dataset not loaded');
     }
     
-    // Prioritize preloaded books for fast access (90% chance)
-    if (this.streamingEnabled && this.preloadedBooks.length > 0 && Math.random() > 0.1) {
-      const randomIndex = Math.floor(Math.random() * this.preloadedBooks.length);
-      return this.preloadedBooks[randomIndex];
+    // Try multiple times to get an unused book
+    for (let attempt = 0; attempt < 10; attempt++) {
+      let book = null;
+      
+      // Prioritize preloaded books for fast access (90% chance)
+      if (this.streamingEnabled && this.preloadedBooks.length > 0 && Math.random() > 0.1) {
+        const availableBooks = this.preloadedBooks.filter(book => 
+          !this.usedBooks.has(this.getBookId(book))
+        );
+        
+        if (availableBooks.length > 0) {
+          const randomIndex = Math.floor(Math.random() * availableBooks.length);
+          book = availableBooks[randomIndex];
+        } else {
+          // All preloaded books used, try streaming
+          book = await this.getStreamingBook();
+        }
+      } else {
+        // Use local samples for remaining 10% + fallback
+        const fallbackBooks = this.books.length > 0 ? this.books : this.getSampleBooks();
+        const availableBooks = fallbackBooks.filter(book => 
+          !this.usedBooks.has(this.getBookId(book))
+        );
+        
+        if (availableBooks.length > 0) {
+          const randomIndex = Math.floor(Math.random() * availableBooks.length);
+          book = availableBooks[randomIndex];
+        }
+      }
+      
+      if (book && !this.usedBooks.has(this.getBookId(book))) {
+        this.usedBooks.add(this.getBookId(book));
+        return book;
+      }
     }
     
-    // Use local samples for remaining 10% + fallback
-    const fallbackBooks = this.books.length > 0 ? this.books : this.getSampleBooks();
-    const randomIndex = Math.floor(Math.random() * fallbackBooks.length);
-    return fallbackBooks[randomIndex];
+    // If all attempts failed, clear used books and start over
+    this.usedBooks.clear();
+    console.log('All books used, cleared used book cache');
+    return this.getRandomBook();
+  }
+
+  getBookId(book) {
+    // Create unique ID from title and author to track duplicates
+    return `${book.title}_${book.author}`.replace(/\s+/g, '_').toLowerCase();
   }
 
   async getStreamingBook() {
@@ -375,7 +412,7 @@ class HuggingFaceDatasetService {
     
     // If no preloaded books, try to fetch directly
     try {
-      const offset = Math.floor(Math.random() * 1000); // Random offset
+      const offset = Math.floor(Math.random() * 10000); // Much larger random range
       const url = `${this.apiBase}/rows?dataset=${this.datasetName}&config=default&split=en&offset=${offset}&length=1`;
       const response = await fetch(url);
       
