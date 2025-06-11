@@ -80,22 +80,12 @@ class OpenRouterService {
     }
 
     try {
-      // Get the appropriate tool for this question type
-      const tool = this.questionTools[questionType];
-      if (!tool) {
-        console.warn(`Unknown question type: ${questionType}`);
-        return this.getEnhancedFallback(questionType, word, sentence, bookTitle);
-      }
-
-      // Create sophisticated tool-calling prompt
-      const systemPrompt = `You are an educational reading tutor using structured responses. You must respond using the provided tool to give focused, helpful hints without revealing the answer directly.
-
-Context: This is from "${bookTitle}" - classic literature requiring thoughtful analysis.
-
-Current word to help with: "${word}"
-Sentence context: "${sentence}"
-
-Use the ${tool.name} tool to provide an appropriate educational hint.`;
+      const prompts = {
+        part_of_speech: `What part of speech is the word in this blank in: "${sentence}"? Provide a clear, direct answer.`,
+        sentence_role: `What grammatical role does the word in this blank play in: "${sentence}"? Focus on its function.`,
+        word_category: `Is the word in this blank an abstract or concrete noun? Explain briefly with an example.`,
+        synonym: `What's a good synonym for the word that would fit in this blank: "${sentence}"?`
+      };
 
       const response = await fetch(this.apiUrl, {
         method: 'POST',
@@ -109,17 +99,13 @@ Use the ${tool.name} tool to provide an appropriate educational hint.`;
           model: this.model,
           messages: [{
             role: 'system',
-            content: systemPrompt
+            content: 'You are a helpful reading tutor. Provide clear, educational answers that help students learn without giving away the answer directly.'
           }, {
             role: 'user',
-            content: `Help me understand the word that fits in this context using the ${tool.name} tool.`
+            content: prompts[questionType] || `Help me understand the word that fits in this context: "${sentence}"`
           }],
-          tools: [{
-            type: 'function',
-            function: tool
-          }],
-          max_tokens: 200,
-          temperature: 0.3
+          max_tokens: 150,
+          temperature: 0.7
         })
       });
 
@@ -128,24 +114,7 @@ Use the ${tool.name} tool to provide an appropriate educational hint.`;
       }
 
       const data = await response.json();
-      
-      // Extract tool call response
-      const message = data.choices[0].message;
-      if (message.tool_calls && message.tool_calls.length > 0) {
-        const toolCall = message.tool_calls[0];
-        if (toolCall.function && toolCall.function.arguments) {
-          try {
-            const args = JSON.parse(toolCall.function.arguments);
-            return args.hint || this.getEnhancedFallback(questionType, word, sentence, bookTitle);
-          } catch (parseError) {
-            console.warn('Failed to parse tool call arguments:', parseError);
-          }
-        }
-      }
-      
-      // Fallback to message content if tool call failed
-      return message.content?.trim() || this.getEnhancedFallback(questionType, word, sentence, bookTitle);
-      
+      return data.choices[0].message.content.trim();
     } catch (error) {
       console.error('Error generating contextual hint:', error);
       return this.getEnhancedFallback(questionType, word, sentence, bookTitle);
