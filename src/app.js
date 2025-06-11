@@ -1,15 +1,15 @@
 // Main application entry point
-import { ClozeGameEngine } from './clozeGameEngine.js';
-import { BookDataService } from './bookDataService.js';
+import ClozeGameEngine from './clozeGameEngine.js';
+import bookDataService from './bookDataService.js';
 import { AIService } from './aiService.js';
-import { ChatInterface } from './chatInterface.js';
-import { ConversationManager } from './conversationManager.js';
+import ChatInterface from './chatInterface.js';
+import ConversationManager from './conversationManager.js';
 
 class ClozeReaderApp {
     constructor() {
-        this.bookDataService = new BookDataService();
+        this.bookDataService = bookDataService; // Already instantiated
         this.aiService = new AIService();
-        this.gameEngine = new ClozeGameEngine(this.bookDataService, this.aiService);
+        this.gameEngine = new ClozeGameEngine();
         this.chatInterface = new ChatInterface(this.aiService);
         this.conversationManager = new ConversationManager(this.aiService);
         

@@ -1,7 +1,9 @@
 // Core game logic for minimal cloze reader
 import bookDataService from './bookDataService.js';
-import aiService from './aiService.js';
+import { AIService } from './aiService.js';
 import ChatService from './conversationManager.js';
+
+const aiService = new AIService();
 
 class ClozeGame {
   constructor() {
