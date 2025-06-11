@@ -78,14 +78,14 @@ class ChatService {
     const sentenceWithBlank = sentence.replace(new RegExp(`\\b${word}\\b`, 'gi'), '____');
     
     try {
-      // Use the enhanced contextual hint generation WITHOUT revealing the target word
-      const aiResponse = await this.aiService.generateContextualHint(
-        questionType, 
-        '____', // Don't pass the actual word
-        sentenceWithBlank, 
-        bookTitle, 
-        author
-      );
+      // Build focused prompt using the conversation manager's logic
+      const prompt = this.buildFocusedPrompt({
+        ...context,
+        sentence: sentenceWithBlank
+      }, questionType, userInput);
+      
+      // Use the AI service as a simple API wrapper
+      const aiResponse = await this.aiService.generateContextualHint(prompt);
       
       if (aiResponse && typeof aiResponse === 'string' && aiResponse.length > 10) {
         return aiResponse;
@@ -95,59 +95,38 @@ class ChatService {
     }
     
     // Fallback - return enhanced fallback response without revealing word
-    return this.aiService.getEnhancedFallback(questionType, '____', sentenceWithBlank, bookTitle);
+    return this.getSimpleFallback(context, questionType);
   }
 
   // Build focused prompt for specific question types with level awareness
   buildFocusedPrompt(context, questionType, userInput) {
-    const { sentence, bookTitle, author, targetWord } = context;
-    const level = this.currentLevel;
+    const { sentence, bookTitle, author } = context;
+    const baseContext = `From "${bookTitle}" by ${author}: "${sentence}"`;
     
-    // Level 1 questions - Basic identification
-    if (level === 1) {
-      const prompts = {
-        'basic_grammar': `What type of word (person/place/thing or action word) fits in the blank in: "${sentence}"? Keep it simple.`,
-        'letter_hint': `The missing word is "${targetWord}". Tell me it starts with "${targetWord[0]}" without revealing the full word.`,
-        'length_hint': `The missing word has ${targetWord.length} letters. Mention this fact helpfully.`,
-        'category_hint': `Is the missing word in "${sentence}" a person, place, thing, or action? Give a simple answer.`,
-        'basic_clue': `Give a very simple hint about the missing word in: "${sentence}". Make it easy to understand.`
-      };
-      return prompts[questionType] || prompts['basic_clue'];
-    }
-    
-    // Level 2 questions - Contextual understanding
-    if (level === 2) {
-      const prompts = {
-        'grammar_analysis': `In "${bookTitle}", what part of speech (noun, verb, adjective, etc.) is needed in: "${sentence}"? Explain simply.`,
-        'contextual_meaning': `What does the missing word mean in this context from "${bookTitle}": "${sentence}"? Explain without revealing it.`,
-        'synonym_clue': `Give a synonym or similar word to the one missing in: "${sentence}". Don't reveal the exact word.`,
-        'narrative_connection': `How does the missing word connect to the story in "${bookTitle}"? Context: "${sentence}"`,
-        'emotional_context': `What feeling or mood does the missing word express in: "${sentence}"?`
-      };
-      return prompts[questionType] || prompts['contextual_meaning'];
-    }
-    
-    // Level 3+ questions - Literary analysis
     const prompts = {
-      'deep_grammar': `Analyze the grammatical function of the missing word in this passage from "${bookTitle}" by ${author}: "${sentence}"`,
-      'literary_analysis': `What literary significance does the missing word have in "${bookTitle}"? Context: "${sentence}"`,
-      'authorial_intent': `What would ${author} intend with the word choice here in "${bookTitle}": "${sentence}"?`,
-      'comparative_analysis': `How does this word usage compare to similar passages in "${bookTitle}"? Context: "${sentence}"`,
-      'style_analysis': `Explain the stylistic choice of the missing word in ${author}'s writing: "${sentence}"`
+      part_of_speech: `${baseContext}\n\nWhat part of speech is the missing word? Look at the sentence structure.`,
+      sentence_role: `${baseContext}\n\nWhat grammatical role does the missing word play? How does it function in the sentence?`,
+      word_category: `${baseContext}\n\nIs the missing word concrete or abstract? What type of concept does it represent?`,
+      synonym: `${baseContext}\n\nWhat's a related word or concept that would fit in this blank?`
     };
     
-    return prompts[questionType] || prompts['literary_analysis'];
+    return prompts[questionType] || `${baseContext}\n\nProvide a helpful hint about the missing word without revealing it.`;
   }
 
   // Simple fallback responses
   getSimpleFallback(context, questionType) {
-    // Use the enhanced fallback from HuggingFace service
-    return this.aiService.getEnhancedFallback(
-      questionType, 
-      context.targetWord, 
-      context.sentence, 
-      context.bookTitle
-    );
+    const fallbacks = {
+      part_of_speech: "Look at the surrounding words. Is it describing something, showing action, or naming something?",
+      sentence_role: "Consider how this word connects to the other parts of the sentence.",
+      word_category: "Think about whether this represents something concrete or an abstract idea.",
+      synonym: "What other word could fit in this same spot with similar meaning?"
+    };
+    
+    return {
+      success: true,
+      response: fallbacks[questionType] || "Consider the context and what word would make sense here.",
+      questionType: questionType
+    };
   }
 
   // Helper method to get words before the target word
