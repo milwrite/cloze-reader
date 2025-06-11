@@ -3,6 +3,54 @@ class OpenRouterService {
     this.apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
     this.apiKey = this.getApiKey();
     this.model = 'google/gemma-3-27b-it:free';
+    
+    // Focused tool definitions for specific, non-overlapping question types
+    this.questionTools = {
+      part_of_speech: {
+        name: 'identify_part_of_speech',
+        description: 'Identify the grammatical category directly and clearly',
+        parameters: {
+          type: 'object',
+          properties: {
+            hint: { type: 'string', description: 'Direct answer: "This is a [noun/verb/adjective/adverb]" then add a simple, concrete clue about what type (e.g., "a thing", "an action", "describes something")' }
+          },
+          required: ['hint']
+        }
+      },
+      sentence_role: {
+        name: 'explain_sentence_role',
+        description: 'Explain the structural function using context clues',
+        parameters: {
+          type: 'object',
+          properties: {
+            hint: { type: 'string', description: 'Point to specific words around the blank. Example: "Look at \'the whole ___ consisting of\' - what could contain something?" Focus on the immediate context.' }
+          },
+          required: ['hint']
+        }
+      },
+      word_category: {
+        name: 'categorize_word',
+        description: 'State clearly if abstract or concrete',
+        parameters: {
+          type: 'object',
+          properties: {
+            hint: { type: 'string', description: 'Start simple: "This is abstract/concrete." Then give a relatable example or size clue: "Think about something very big/small" or "Like feelings/objects"' }
+          },
+          required: ['hint']
+        }
+      },
+      synonym: {
+        name: 'provide_synonym',
+        description: 'Give clear synonym or similar word',
+        parameters: {
+          type: 'object',
+          properties: {
+            hint: { type: 'string', description: 'Direct synonyms or word families: "Try a word similar to [related word]" or "Think of another word for [meaning]"' }
+          },
+          required: ['hint']
+        }
+      }
+    };
   }
 
   getApiKey() {
@@ -32,12 +80,22 @@ class OpenRouterService {
     }
 
     try {
-      const prompts = {
-        part_of_speech: `What part of speech is the word "${word}" in this sentence: "${sentence}"? Provide a clear, direct answer.`,
-        sentence_role: `What grammatical role does "${word}" play in this sentence: "${sentence}"? Focus on its function.`,
-        word_category: `Is "${word}" an abstract or concrete noun? Explain briefly with an example.`,
-        synonym: `What's a good synonym for "${word}" that would fit in this sentence: "${sentence}"?`
-      };
+      // Get the appropriate tool for this question type
+      const tool = this.questionTools[questionType];
+      if (!tool) {
+        console.warn(`Unknown question type: ${questionType}`);
+        return this.getEnhancedFallback(questionType, word, sentence, bookTitle);
+      }
+
+      // Create sophisticated tool-calling prompt
+      const systemPrompt = `You are an educational reading tutor using structured responses. You must respond using the provided tool to give focused, helpful hints without revealing the answer directly.
+
+Context: This is from "${bookTitle}" - classic literature requiring thoughtful analysis.
+
+Current word to help with: "${word}"
+Sentence context: "${sentence}"
+
+Use the ${tool.name} tool to provide an appropriate educational hint.`;
 
       const response = await fetch(this.apiUrl, {
         method: 'POST',
@@ -51,13 +109,21 @@ class OpenRouterService {
           model: this.model,
           messages: [{
             role: 'system',
-            content: 'You are a helpful reading tutor. Provide clear, educational answers that help students learn without giving away the answer directly.'
+            content: systemPrompt
           }, {
             role: 'user',
-            content: prompts[questionType] || `Help me understand the word "${word}" in this context: "${sentence}"`
+            content: `Help me understand the word that fits in this context using the ${tool.name} tool.`
           }],
-          max_tokens: 150,
-          temperature: 0.7
+          tools: [{
+            type: 'function',
+            function: tool
+          }],
+          tool_choice: {
+            type: 'function',
+            function: { name: tool.name }
+          },
+          max_tokens: 200,
+          temperature: 0.3
         })
       });
 
@@ -66,7 +132,24 @@ class OpenRouterService {
       }
 
       const data = await response.json();
-      return data.choices[0].message.content.trim();
+      
+      // Extract tool call response
+      const message = data.choices[0].message;
+      if (message.tool_calls && message.tool_calls.length > 0) {
+        const toolCall = message.tool_calls[0];
+        if (toolCall.function && toolCall.function.arguments) {
+          try {
+            const args = JSON.parse(toolCall.function.arguments);
+            return args.hint || this.getEnhancedFallback(questionType, word, sentence, bookTitle);
+          } catch (parseError) {
+            console.warn('Failed to parse tool call arguments:', parseError);
+          }
+        }
+      }
+      
+      // Fallback to message content if tool call failed
+      return message.content?.trim() || this.getEnhancedFallback(questionType, word, sentence, bookTitle);
+      
     } catch (error) {
       console.error('Error generating contextual hint:', error);
       return this.getEnhancedFallback(questionType, word, sentence, bookTitle);
