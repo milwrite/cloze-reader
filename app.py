@@ -27,15 +27,7 @@ async def read_root():
     env_script = f"""
     <meta name="openrouter-key" content="{openrouter_key}">
     <meta name="hf-key" content="{hf_key}">
-    <script>
-        // Read keys from meta tags to avoid CSP issues
-        document.addEventListener('DOMContentLoaded', function() {{
-            const openrouterMeta = document.querySelector('meta[name="openrouter-key"]');
-            const hfMeta = document.querySelector('meta[name="hf-key"]');
-            if (openrouterMeta) window.OPENROUTER_API_KEY = openrouterMeta.content;
-            if (hfMeta) window.HF_API_KEY = hfMeta.content;
-        }});
-    </script>
+    <script src="./src/init-env.js"></script>
     """
     
     # Insert the script before closing head tag

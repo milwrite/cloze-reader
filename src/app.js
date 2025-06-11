@@ -10,7 +10,7 @@ class ClozeReaderApp {
         this.bookDataService = bookDataService; // Already instantiated
         this.aiService = new AIService();
         this.gameEngine = new ClozeGameEngine();
-        this.chatInterface = new ChatInterface(this.aiService);
+        this.chatInterface = new ChatInterface(this.gameEngine);
         this.conversationManager = new ConversationManager(this.aiService);
         
         this.init();
@@ -21,8 +21,7 @@ class ClozeReaderApp {
             // Start the game directly - bookDataService is already initialized
             await this.gameEngine.initialize();
             
-            // Initialize chat interface
-            this.chatInterface.initialize();
+            // Chat interface is already initialized in constructor
             
             console.log('Cloze Reader application initialized successfully');
         } catch (error) {
