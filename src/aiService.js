@@ -118,10 +118,7 @@ Use the ${tool.name} tool to provide an appropriate educational hint.`;
             type: 'function',
             function: tool
           }],
-          tool_choice: {
-            type: 'function',
-            function: { name: tool.name }
-          },
+          tool_choice: tool.name,
           max_tokens: 200,
           temperature: 0.3
         })
@@ -311,7 +308,7 @@ Passage: "${passage}"`
             role: 'user',
             content: `Describe "${title}" by ${author} in one factual sentence.`
           }],
-          max_tokens: 50,
+          max_tokens: 80,
           temperature: 0.2
         })
       });
