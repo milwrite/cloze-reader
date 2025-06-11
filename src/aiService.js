@@ -118,7 +118,6 @@ Use the ${tool.name} tool to provide an appropriate educational hint.`;
             type: 'function',
             function: tool
           }],
-          tool_choice: tool.name,
           max_tokens: 200,
           temperature: 0.3
         })
@@ -303,10 +302,10 @@ Passage: "${passage}"`
           model: this.model,
           messages: [{
             role: 'system',
-            content: 'You are a literary expert. Provide exactly 1 short sentence about this classic work. Be factual and concise. No exaggerative language.'
+            content: 'You are a literary expert. Provide exactly 1 short, factual sentence about this classic work. Be accurate and concise. Do not add fictional details or characters.'
           }, {
             role: 'user',
-            content: `Describe "${title}" by ${author} in one factual sentence.`
+            content: `Write one factual sentence about "${title}" by ${author}. Focus on what type of work it is, when it was written, or its historical significance.`
           }],
           max_tokens: 80,
           temperature: 0.2
