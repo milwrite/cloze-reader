@@ -18,10 +18,7 @@ class ClozeReaderApp {
 
     async init() {
         try {
-            // Initialize services
-            await this.bookDataService.initialize();
-            
-            // Start the game
+            // Start the game directly - bookDataService is already initialized
             await this.gameEngine.initialize();
             
             // Initialize chat interface
