@@ -12,6 +12,7 @@ class OpenRouterService {
     if (typeof window !== 'undefined' && window.OPENROUTER_API_KEY) {
       return window.OPENROUTER_API_KEY;
     }
+    console.warn('No API key found in getApiKey()');
     return '';
   }
 
@@ -20,6 +21,12 @@ class OpenRouterService {
   }
 
   async generateContextualHint(questionType, word, sentence, bookTitle, wordContext) {
+    // Check for API key at runtime
+    const currentKey = this.getApiKey();
+    if (currentKey && !this.apiKey) {
+      this.apiKey = currentKey;
+    }
+    
     if (!this.apiKey) {
       return this.getEnhancedFallback(questionType, word, sentence, bookTitle);
     }
@@ -119,7 +126,18 @@ Provide a brief, educational hint that helps understand the word without giving 
   }
 
   async selectSignificantWords(passage, count) {
+    console.log('selectSignificantWords called with count:', count);
+    
+    // Check for API key at runtime in case it was loaded after initialization
+    const currentKey = this.getApiKey();
+    if (currentKey && !this.apiKey) {
+      this.apiKey = currentKey;
+    }
+    
+    console.log('API key available:', !!this.apiKey);
+    
     if (!this.apiKey) {
+      console.error('No API key for word selection');
       throw new Error('API key required for word selection');
     }
 
@@ -177,7 +195,18 @@ Passage: "${passage}"`
   }
 
   async getContextualization(title, author, passage) {
+    console.log('getContextualization called for:', title, 'by', author);
+    
+    // Check for API key at runtime
+    const currentKey = this.getApiKey();
+    if (currentKey && !this.apiKey) {
+      this.apiKey = currentKey;
+    }
+    
+    console.log('API key available for contextualization:', !!this.apiKey);
+    
     if (!this.apiKey) {
+      console.log('No API key, returning fallback contextualization');
       return `📚 Practice with classic literature from ${author}'s "${title}"`;
     }
 
@@ -205,11 +234,15 @@ Passage: "${passage}"`
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Contextualization API error:', response.status, errorText);
         throw new Error(`API request failed: ${response.status}`);
       }
 
       const data = await response.json();
-      return data.choices[0].message.content.trim();
+      const content = data.choices[0].message.content.trim();
+      console.log('Contextualization received:', content);
+      return content;
     } catch (error) {
       console.error('Error getting contextualization:', error);
       return `📚 Practice with classic literature from ${author}'s "${title}"`;
