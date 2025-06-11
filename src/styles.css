@@ -1,0 +1,356 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Chat functionality styles */
+.typing-dots span {
+  animation: typing 1.5s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 1s;
+}
+
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.3; }
+  30% { opacity: 1; }
+}
+
+.chat-button {
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.chat-button:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  transform: scale(1.1);
+}
+
+.suggestion-btn {
+  transition: all 0.2s ease;
+}
+
+.suggestion-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Answer revelation styles */
+.revealed-answer {
+  background-color: #fef3c7 !important;
+  font-weight: bold !important;
+  color: #92400e !important;
+  border: 2px solid #f59e0b !important;
+}
+
+/* Correct and incorrect answer styles */
+.cloze-input.correct {
+  background-color: #dcfce7 !important;
+  border-color: #16a34a !important;
+  color: #15803d !important;
+  font-weight: bold !important;
+}
+
+.cloze-input.incorrect {
+  background-color: #fef2f2 !important;
+  border-color: #dc2626 !important;
+  color: #dc2626 !important;
+  font-weight: bold !important;
+}
+
+.cloze-input:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+/* Custom typewriter color scheme */
+:root {
+  --aged-paper: #faf7f0;
+  --aged-paper-dark: #f5f1e8;
+  --aged-paper-light: #fefcf7;
+  --typewriter-ink: #2c2c2c;
+  --typewriter-ribbon: #8b5cf6;
+  --paper-shadow: rgba(0, 0, 0, 0.08);
+}
+
+@layer base {
+  body {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    background-color: var(--aged-paper);
+    color: var(--typewriter-ink);
+    letter-spacing: 0.05em;
+    background-image: 
+      radial-gradient(circle at 25% 25%, rgba(139, 92, 246, 0.02) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.02) 0%, transparent 50%);
+  }
+}
+
+@layer components {
+  .typewriter-text {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    color: var(--typewriter-ink);
+    letter-spacing: 0.1em;
+    word-spacing: 0.1em;
+    line-height: 1.8;
+  }
+
+  .typewriter-subtitle {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    color: #666;
+    letter-spacing: 0.05em;
+    font-size: 0.95rem;
+  }
+
+  .paper-sheet {
+    background-color: var(--aged-paper-light);
+    border: 1px solid rgba(139, 92, 246, 0.1);
+    box-shadow: 
+      0 2px 8px var(--paper-shadow),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    position: relative;
+  }
+
+  .paper-sheet::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 23px,
+      rgba(139, 92, 246, 0.03) 23px,
+      rgba(139, 92, 246, 0.03) 24px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .paper-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .cloze-input {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid black;
+    color: var(--typewriter-ink);
+    text-align: center;
+    outline: none;
+    padding: 2px 4px;
+    margin: 0 2px;
+    min-width: 3ch;
+    width: auto;
+    letter-spacing: 0.05em;
+    font-size: inherit;
+    line-height: inherit;
+    transition: all 0.2s ease;
+  }
+  
+  .cloze-input:focus {
+    border-bottom-color: black;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .cloze-input.correct {
+    border-bottom-color: #10b981;
+    background-color: rgba(16, 185, 129, 0.1);
+  }
+  
+  .cloze-input.incorrect {
+    border-bottom-color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+  }
+
+  .cloze-input::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+    font-style: italic;
+  }
+
+  .typewriter-button {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    min-width: 120px;
+    min-height: 42px;
+    padding: 8px 16px;
+    background-color: var(--aged-paper-dark);
+    color: var(--typewriter-ink);
+    border: 2px solid black;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 
+      0 4px 0 rgba(0, 0, 0, 0.3),
+      0 6px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .typewriter-button:hover:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 
+      0 5px 0 rgba(0, 0, 0, 0.3),
+      0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .typewriter-button:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 
+      0 2px 0 rgba(0, 0, 0, 0.3),
+      0 3px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .typewriter-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: translateY(2px);
+    box-shadow: 
+      0 2px 0 rgba(0, 0, 0, 0.2),
+      0 3px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .typewriter-button:focus {
+    outline: none;
+    box-shadow: 
+      0 4px 0 rgba(0, 0, 0, 0.3),
+      0 6px 12px rgba(0, 0, 0, 0.1),
+      0 0 0 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .prose {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    letter-spacing: 0.05em;
+    word-spacing: 0.1em;
+    color: var(--typewriter-ink);
+    overflow-wrap: break-word;
+  }
+  
+  .prose p {
+    margin-bottom: 1.5rem;
+    text-align: justify;
+  }
+
+  .biblio-info {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #666;
+    letter-spacing: 0.03em;
+    font-style: italic;
+  }
+
+  .context-box {
+    background-color: rgba(245, 158, 11, 0.08);
+    border-left: 4px solid #f59e0b;
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    line-height: 1.6;
+  }
+
+  .hints-box {
+    background-color: rgba(245, 158, 11, 0.08);
+    border-left: 4px solid #f59e0b;
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    line-height: 1.6;
+  }
+
+  .round-badge {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #666;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .loading-text {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    color: #666;
+    letter-spacing: 0.05em;
+  }
+
+  .result-text {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 640px) {
+    .prose {
+      font-size: 1rem;
+    }
+    
+    .typewriter-text {
+      font-size: 1.75rem;
+    }
+    
+    .typewriter-subtitle {
+      font-size: 0.85rem;
+    }
+    
+    .typewriter-button {
+      min-width: 100px;
+      min-height: 38px;
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .prose {
+      font-size: 0.95rem;
+    }
+    
+    .typewriter-text {
+      font-size: 1.5rem;
+    }
+    
+    .cloze-input {
+      min-width: 2.5ch;
+    }
+  }
+
+  /* Print styles */
+  @media print {
+    body {
+      background: white;
+      color: black;
+    }
+    
+    .paper-sheet::before {
+      display: none;
+    }
+    
+    .typewriter-button {
+      display: none;
+    }
+  }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .ink-ribbon-lines {
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 23px,
+      rgba(139, 92, 246, 0.03) 23px,
+      rgba(139, 92, 246, 0.03) 24px
+    );
+  }
+}

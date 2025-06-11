@@ -3,209 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloze Reader</title>
+    <title>Cloze Reader - Minimal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Special Elite', monospace; background: #faf7f0; }
-        .paper-sheet { background: #fefcf7; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .cloze-input { border: none; border-bottom: 2px solid #000; background: transparent; text-align: center; font-family: inherit; }
-        .typewriter-button { background: #f5f1e8; border: 2px solid #000; font-family: inherit; padding: 8px 16px; cursor: pointer; }
-        .correct { background-color: rgba(16, 185, 129, 0.1); border-color: #10b981; }
-        .incorrect { background-color: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
-    </style>
+    <link href="./src/styles.css" rel="stylesheet">
 </head>
-<body class="min-h-screen p-4">
-    <div class="max-w-4xl mx-auto">
+<body class="min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8 max-w-4xl">
         <header class="text-center mb-8">
             <div class="flex items-center justify-center gap-3 mb-2">
-                <span class="text-4xl">📚</span>
-                <h1 class="text-4xl font-bold">Cloze Reader</h1>
+                <img src="./icon.png" alt="Cloze Reader" class="w-12 h-12">
+                <h1 class="text-4xl font-bold typewriter-text">Cloze Reader</h1>
             </div>
-            <p class="text-gray-600">Fill in the blanks to practice reading comprehension</p>
+            <p class="typewriter-subtitle">Fill in the blanks to practice reading comprehension</p>
         </header>
         
-        <main id="game-container">
+        <main id="game-container" class="space-y-6">
             <div id="loading" class="text-center py-8">
-                <p class="text-lg">Loading passages...</p>
+                <p class="text-lg loading-text">Loading passages...</p>
             </div>
             
             <div id="game-area" class="paper-sheet rounded-lg p-6 hidden">
-                <div id="book-info" class="text-sm italic text-gray-600 mb-4"></div>
-                <div id="round-info" class="text-sm bg-amber-100 px-3 py-1 rounded-full inline-block mb-4"></div>
-                <div id="contextualization" class="bg-amber-50 border-l-4 border-amber-500 p-3 mb-4 text-sm"></div>
-                <div id="passage-content" class="text-lg leading-relaxed mb-6"></div>
-                <div id="hints-section" class="bg-yellow-50 border-l-4 border-yellow-500 p-3 mb-4 hidden">
-                    <div class="font-semibold mb-2 text-sm">💡 Hints:</div>
-                    <div id="hints-list" class="text-sm space-y-1"></div>
+                <div class="paper-content">
+                    <div class="flex justify-between items-center mb-4">
+                        <div id="book-info" class="biblio-info"></div>
+                        <div id="round-info" class="round-badge px-3 py-1 rounded-full text-sm"></div>
+                    </div>
+                    <div id="contextualization" class="context-box mb-4 p-3 rounded-lg"></div>
+                    <div id="passage-content" class="prose max-w-none mb-6"></div>
+                    <div id="hints-section" class="hints-box mb-4 p-3 rounded-lg">
+                        <div class="text-sm font-semibold mb-2">💡 Hints:</div>
+                        <div id="hints-list" class="text-sm space-y-1"></div>
+                    </div>
+                    <div id="controls" class="flex gap-4 justify-center flex-wrap">
+                        <button type="button" id="submit-btn" class="typewriter-button">
+                            Submit
+                        </button>
+                        <button type="button" id="next-btn" class="typewriter-button hidden">
+                            Next Passage
+                        </button>
+                        <button type="button" id="hint-btn" class="typewriter-button">
+                            Show Hints
+                        </button>
+                    </div>
+                    <div id="result" class="mt-4 text-center result-text"></div>
                 </div>
-                <div class="flex gap-4 justify-center flex-wrap">
-                    <button id="submit-btn" class="typewriter-button">Submit</button>
-                    <button id="next-btn" class="typewriter-button hidden">Next Passage</button>
-                    <button id="hint-btn" class="typewriter-button">Show Hints</button>
-                </div>
-                <div id="result" class="mt-4 text-center font-semibold"></div>
             </div>
         </main>
     </div>
     
-    <script>
-        // Simple cloze reader implementation
-        class SimpleClozeReader {
-            constructor() {
-                this.currentLevel = 1;
-                this.currentRound = 1;
-                this.blanks = [];
-                this.hints = [];
-                this.books = [
-                    {
-                        title: "Pride and Prejudice",
-                        author: "Jane Austen", 
-                        text: "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife. However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered the rightful property of some one or other of their daughters."
-                    },
-                    {
-                        title: "The Adventures of Tom Sawyer", 
-                        author: "Mark Twain",
-                        text: "Tom! No answer. Tom! No answer. What's gone with that boy, I wonder? You TOM! No answer. The old lady pulled her spectacles down and looked over them about the room; then she put them up and looked out under them. She seldom or never looked through them for so small a thing as a boy."
-                    }
-                ];
-                this.init();
-            }
-            
-            init() {
-                this.setupEventListeners();
-                this.startNewRound();
-            }
-            
-            setupEventListeners() {
-                document.getElementById('submit-btn').onclick = () => this.submitAnswers();
-                document.getElementById('next-btn').onclick = () => this.nextRound();
-                document.getElementById('hint-btn').onclick = () => this.toggleHints();
-            }
-            
-            startNewRound() {
-                const book = this.books[Math.floor(Math.random() * this.books.length)];
-                const blanksCount = this.currentLevel <= 2 ? 1 : this.currentLevel <= 4 ? 2 : 3;
-                
-                // Simple word selection
-                const words = book.text.split(' ');
-                const selectedIndices = [];
-                const contentWords = ['truth', 'man', 'fortune', 'wife', 'feelings', 'neighbourhood', 'families', 'daughters', 'answer', 'boy', 'lady', 'spectacles', 'room'];
-                
-                for (let i = 0; i < blanksCount && i < contentWords.length; i++) {
-                    const wordIndex = words.findIndex(w => w.toLowerCase().includes(contentWords[i]));
-                    if (wordIndex !== -1) selectedIndices.push(wordIndex);
-                }
-                
-                // Create blanks
-                this.blanks = selectedIndices.map((index, i) => ({
-                    index: i,
-                    originalWord: words[index].replace(/[^\w]/g, ''),
-                    wordIndex: index
-                }));
-                
-                // Create hints
-                this.hints = this.blanks.map((blank, i) => {
-                    const word = blank.originalWord;
-                    if (this.currentLevel <= 2) {
-                        return `${word.length} letters, starts with "${word[0]}", ends with "${word[word.length-1]}"`;
-                    } else {
-                        return `${word.length} letters, starts with "${word[0]}"`;
-                    }
-                });
-                
-                // Create display text
-                let displayText = book.text;
-                this.blanks.forEach((blank, i) => {
-                    const word = words[blank.wordIndex];
-                    const input = `<input type="text" class="cloze-input w-20 mx-1" data-index="${i}" placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}">`;
-                    displayText = displayText.replace(word, input);
-                });
-                
-                // Update UI
-                document.getElementById('book-info').innerHTML = `<strong>${book.title}</strong> by ${book.author}`;
-                document.getElementById('round-info').textContent = `Level ${this.currentLevel} • ${blanksCount} blank${blanksCount > 1 ? 's' : ''}`;
-                document.getElementById('contextualization').innerHTML = `📚 Practice with classic literature from ${book.author}'s "${book.title}"`;
-                document.getElementById('passage-content').innerHTML = displayText;
-                document.getElementById('hints-list').innerHTML = this.hints.map((hint, i) => `<div>${i+1}. ${hint}</div>`).join('');
-                
-                // Show game area
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('game-area').classList.remove('hidden');
-                document.getElementById('hints-section').classList.add('hidden');
-                document.getElementById('result').textContent = '';
-                document.getElementById('submit-btn').classList.remove('hidden');
-                document.getElementById('next-btn').classList.add('hidden');
-            }
-            
-            submitAnswers() {
-                const inputs = document.querySelectorAll('.cloze-input');
-                let correct = 0;
-                
-                inputs.forEach((input, i) => {
-                    const userAnswer = input.value.trim().toLowerCase();
-                    const correctAnswer = this.blanks[i].originalWord.toLowerCase();
-                    
-                    if (userAnswer === correctAnswer) {
-                        input.classList.add('correct');
-                        correct++;
-                    } else {
-                        input.classList.add('incorrect');
-                        // Show correct answer
-                        const span = document.createElement('span');
-                        span.className = 'text-green-600 font-semibold ml-2 text-sm';
-                        span.textContent = `✓ ${this.blanks[i].originalWord}`;
-                        input.parentNode.appendChild(span);
-                    }
-                    input.disabled = true;
-                });
-                
-                const percentage = Math.round((correct / this.blanks.length) * 100);
-                const passed = correct >= (this.blanks.length === 1 ? 1 : this.blanks.length - 1);
-                
-                let message = `Score: ${correct}/${this.blanks.length} (${percentage}%)`;
-                if (passed) {
-                    message += ` - Excellent! Advancing to Level ${this.currentLevel + 1}! 🎉`;
-                    document.getElementById('result').className = 'mt-4 text-center font-semibold text-green-600';
-                    this.currentLevel++;
-                } else {
-                    message += ` - Keep practicing! 💪`;
-                    document.getElementById('result').className = 'mt-4 text-center font-semibold text-red-600';
-                }
-                
-                document.getElementById('result').textContent = message;
-                document.getElementById('submit-btn').classList.add('hidden');
-                document.getElementById('next-btn').classList.remove('hidden');
-                this.currentRound++;
-            }
-            
-            nextRound() {
-                document.querySelectorAll('.cloze-input').forEach(input => {
-                    input.classList.remove('correct', 'incorrect');
-                    input.disabled = false;
-                    input.value = '';
-                });
-                document.querySelectorAll('.text-green-600').forEach(el => el.remove());
-                this.startNewRound();
-            }
-            
-            toggleHints() {
-                const hintsSection = document.getElementById('hints-section');
-                const btn = document.getElementById('hint-btn');
-                if (hintsSection.classList.contains('hidden')) {
-                    hintsSection.classList.remove('hidden');
-                    btn.textContent = 'Hide Hints';
-                } else {
-                    hintsSection.classList.add('hidden');
-                    btn.textContent = 'Show Hints';
-                }
-            }
-        }
-        
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            new SimpleClozeReader();
-        });
-    </script>
+    <script src="./src/app.js" type="module"></script>
 </body>
 </html>
