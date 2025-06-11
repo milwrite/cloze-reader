@@ -156,9 +156,9 @@ class HuggingFaceDatasetService {
     // Try multiple metadata extraction approaches
     const extractedMetadata = this.extractMetadata(originalText);
     
-    // Use HF dataset fields if available, otherwise use extracted metadata
-    const title = rowData.title || extractedMetadata.title || 'Classic Literature';
-    const author = rowData.author || extractedMetadata.author || 'Unknown Author';
+    // Prioritize extracted metadata over potentially incorrect HF dataset fields
+    const title = extractedMetadata.title || rowData.title || 'Classic Literature';
+    const author = extractedMetadata.author || rowData.author || 'Unknown Author';
     
     return {
       id: rowData.id || Math.random().toString(36),
