@@ -80,11 +80,13 @@ class OpenRouterService {
     }
 
     try {
+      const baseContext = `From "${bookTitle}" by ${author}: "${sentence}"`;
+      
       const prompts = {
-        part_of_speech: `What part of speech is the word in this blank in: "${sentence}"? Provide a clear, direct answer.`,
-        sentence_role: `What grammatical role does the word in this blank play in: "${sentence}"? Focus on its function.`,
-        word_category: `Is the word in this blank an abstract or concrete noun? Explain briefly with an example.`,
-        synonym: `What's a good synonym for the word that would fit in this blank: "${sentence}"?`
+        part_of_speech: `${baseContext}\n\nWhat part of speech is the missing word? Look at the sentence structure.`,
+        sentence_role: `${baseContext}\n\nWhat grammatical role does the missing word play? How does it function in the sentence?`,
+        word_category: `${baseContext}\n\nIs the missing word concrete or abstract? What type of concept does it represent?`,
+        synonym: `${baseContext}\n\nWhat's a related word or concept that would fit in this blank?`
       };
 
       const response = await fetch(this.apiUrl, {
@@ -99,13 +101,13 @@ class OpenRouterService {
           model: this.model,
           messages: [{
             role: 'system',
-            content: 'You are a helpful reading tutor. Provide clear, educational answers that help students learn without giving away the answer directly.'
+            content: 'You provide clues for word puzzles. Give useful information about grammar, meaning, or context. Keep responses short and focused. Never reveal the actual word.'
           }, {
             role: 'user',
-            content: prompts[questionType] || `Help me understand the word that fits in this context: "${sentence}"`
+            content: prompts[questionType] || `${baseContext}\n\nProvide a helpful hint about the missing word. Use contextual clues and guide the reader toward the answer without revealing it.`
           }],
-          max_tokens: 150,
-          temperature: 0.7
+          max_tokens: 100,
+          temperature: 0.6
         })
       });
 
