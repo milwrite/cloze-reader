@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 import os
 
@@ -7,6 +7,11 @@ app = FastAPI()
 
 # Mount static files
 app.mount("/src", StaticFiles(directory="src"), name="src")
+
+@app.get("/icon.png")
+async def get_icon():
+    # Redirect to GitHub-hosted icon
+    return RedirectResponse(url="https://raw.githubusercontent.com/zmuhls/cloze-reader/main/icon.png")
 
 @app.get("/")
 async def read_root():
