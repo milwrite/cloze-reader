@@ -129,63 +129,6 @@ class ChatService {
     };
   }
 
-  // Helper method to get words before the target word
-  getWordsBefore(sentence, targetWord, count = 3) {
-    const words = sentence.split(/\s+/);
-    const targetIndex = words.findIndex(word => 
-      word.toLowerCase().replace(/[^\w]/g, '') === targetWord.toLowerCase()
-    );
-    
-    if (targetIndex === -1) return "";
-    
-    const startIndex = Math.max(0, targetIndex - count);
-    return words.slice(startIndex, targetIndex).join(' ');
-  }
-
-  // Helper method to get words after the target word
-  getWordsAfter(sentence, targetWord, count = 3) {
-    const words = sentence.split(/\s+/);
-    const targetIndex = words.findIndex(word => 
-      word.toLowerCase().replace(/[^\w]/g, '') === targetWord.toLowerCase()
-    );
-    
-    if (targetIndex === -1) return "";
-    
-    const endIndex = Math.min(words.length, targetIndex + count + 1);
-    return words.slice(targetIndex + 1, endIndex).join(' ');
-  }
-
-  // Process AI response to ensure quality and safety
-  processAIResponse(rawResponse, targetWord) {
-    let processed = rawResponse.trim();
-    
-    // Remove any accidental word reveals
-    const variations = this.generateWordVariations(targetWord);
-    variations.forEach(variation => {
-      const regex = new RegExp(`\\b${variation}\\b`, 'gi');
-      processed = processed.replace(regex, '[the word]');
-    });
-    
-    return processed;
-  }
-
-  // Generate word variations to avoid accidental reveals
-  generateWordVariations(word) {
-    const variations = [word.toLowerCase()];
-    
-    // Add common variations
-    if (word.endsWith('ing')) {
-      variations.push(word.slice(0, -3));
-    }
-    if (word.endsWith('ed')) {
-      variations.push(word.slice(0, -2));
-    }
-    if (word.endsWith('s')) {
-      variations.push(word.slice(0, -1));
-    }
-    
-    return variations;
-  }
 
   // Clear conversations and reset tracking
   clearConversations() {
