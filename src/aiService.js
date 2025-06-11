@@ -44,7 +44,7 @@ class OpenRouterService {
           model: this.model,
           messages: [{
             role: 'system',
-            content: 'You provide clues for word puzzles. Follow the EXACT format requested. Be concise and direct. Never reveal the actual word. Stick to the word limits specified.'
+            content: 'You provide clues for word puzzles. Follow the EXACT format requested. Be concise and direct. Never reveal the actual word. Use plain text only - no bold, italics, asterisks, or markdown formatting. Stick to word limits.'
           }, {
             role: 'user',
             content: prompt
@@ -96,10 +96,10 @@ class OpenRouterService {
           model: this.model,
           messages: [{
             role: 'system',
-            content: 'You are an educational assistant that selects meaningful words from passages for cloze reading exercises. Select words that are important for comprehension and appropriate for the difficulty level.'
+            content: 'Select words for cloze reading exercises. Choose common, everyday words that students know. Avoid proper nouns (names, places), technical terms, archaic words, and words over 8 letters. Pick words students can guess from surrounding context.'
           }, {
             role: 'user',
-            content: `From this passage, select exactly ${count} meaningful words to create blanks for a cloze reading exercise. The words should be distributed throughout the passage and be important for understanding the text. Return ONLY the words as a JSON array, nothing else.
+            content: `Select exactly ${count} appropriate words for a cloze exercise. Choose common words students can guess from context. Avoid: proper nouns, technical terms, rare/archaic words, words over 8 letters. Return ONLY a JSON array of words.
 
 Passage: "${passage}"`
           }],

@@ -292,7 +292,7 @@ class ClozeGame {
     const contentWordIndices = [];
     words.forEach((word, index) => {
       const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
-      if (cleanWord.length > 3 && !functionWords.has(cleanWord)) {
+      if (cleanWord.length > 3 && cleanWord.length <= 10 && !functionWords.has(cleanWord)) {
         contentWordIndices.push({ word: cleanWord, index });
       }
     });
@@ -510,6 +510,7 @@ class ClozeGame {
     const blankId = `blank_${blankIndex}`;
     return this.chatService.getSuggestedQuestions(blankId);
   }
+
 
   // Enhanced render method to include chat buttons
   renderClozeTextWithChat() {

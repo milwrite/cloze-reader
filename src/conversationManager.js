@@ -104,13 +104,13 @@ class ChatService {
     const baseContext = `From "${bookTitle}" by ${author}: "${sentence}"`;
     
     const prompts = {
-      part_of_speech: `${baseContext}\n\nRespond with exactly: "This is a [noun/verb/adjective/adverb]" then add ONE simple clue about what type (e.g., "a thing", "an action", "describes something"). Maximum 15 words total. Do not reveal the word.`,
+      part_of_speech: `${baseContext}\n\nFor this cloze game, identify the part of speech needed in the blank. Respond exactly: "This is a [noun/verb/adjective/adverb]" then add ONE clue about its function. Maximum 15 words. No bold text or markdown.`,
       
-      sentence_role: `${baseContext}\n\nPoint to specific words around the blank. Format: "Look at 'the [word before] ____ [word after]' - what could [verb/function]?" Use only immediate neighboring words. Maximum 20 words.`,
+      sentence_role: `${baseContext}\n\nFor this cloze game, analyze the blank's sentence role. Format: "Look at [word before] ____ [word after] - what fits here?" Focus on immediate context. Maximum 18 words. No markdown.`,
       
-      word_category: `${baseContext}\n\nStart with exactly "This is abstract" or "This is concrete." Then add ONE example: "Like [feelings/objects]" or "Think [size/type]". Maximum 12 words total.`,
+      word_category: `${baseContext}\n\nFor this cloze game, categorize the missing word. Start exactly: "This is abstract" or "This is concrete" then add ONE example. Maximum 12 words. No bold or italics.`,
       
-      synonym: `${baseContext}\n\nFormat: "Try a word similar to [related word]" or "Another word for [concept]". Give ONE direct synonym or related concept only. Maximum 10 words.`
+      synonym: `${baseContext}\n\nFor this cloze game, give a synonym clue. Format: "Try a word similar to [related concept]" or "Another word for [meaning]". Maximum 10 words. No markdown formatting.`
     };
     
     return prompts[questionType] || `${baseContext}\n\nProvide a helpful hint about the missing word without revealing it.`;
