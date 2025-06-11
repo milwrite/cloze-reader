@@ -104,10 +104,13 @@ class ChatService {
     const baseContext = `From "${bookTitle}" by ${author}: "${sentence}"`;
     
     const prompts = {
-      part_of_speech: `${baseContext}\n\nWhat part of speech is the missing word? Look at the sentence structure.`,
-      sentence_role: `${baseContext}\n\nWhat grammatical role does the missing word play? How does it function in the sentence?`,
-      word_category: `${baseContext}\n\nIs the missing word concrete or abstract? What type of concept does it represent?`,
-      synonym: `${baseContext}\n\nWhat's a related word or concept that would fit in this blank?`
+      part_of_speech: `${baseContext}\n\nRespond with exactly this format: "This is a [noun/verb/adjective/adverb]" then add one simple, concrete clue about what type (e.g., "a thing", "an action", "describes something"). Keep it under 20 words total.`,
+      
+      sentence_role: `${baseContext}\n\nPoint to specific words around the blank. Example format: "Look at 'the [words before] ____ [words after]' - what could [function]?" Focus only on the immediate context. Keep under 25 words.`,
+      
+      word_category: `${baseContext}\n\nStart with exactly: "This is abstract" or "This is concrete." Then give one relatable example or size clue: "Think about something very [big/small]" or "Like [feelings/objects]". Keep under 20 words total.`,
+      
+      synonym: `${baseContext}\n\nUse this format: "Try a word similar to [related word]" or "Think of another word for [meaning]". Give direct synonyms or word families only. Keep under 15 words.`
     };
     
     return prompts[questionType] || `${baseContext}\n\nProvide a helpful hint about the missing word without revealing it.`;

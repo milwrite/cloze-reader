@@ -44,12 +44,12 @@ class OpenRouterService {
           model: this.model,
           messages: [{
             role: 'system',
-            content: 'You provide clues for word puzzles. Give useful information about grammar, meaning, or context. Keep responses short and focused. Never reveal the actual word.'
+            content: 'You provide clues for word puzzles. Follow the EXACT format requested. Be concise and direct. Never reveal the actual word. Stick to the word limits specified.'
           }, {
             role: 'user',
             content: prompt
           }],
-          max_tokens: 100,
+          max_tokens: 50,
           temperature: 0.6
         })
       });
