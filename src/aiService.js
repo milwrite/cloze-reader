@@ -277,6 +277,61 @@ Passage: "${passage}"`
     }
   }
 
+  async generateContextualization(title, author) {
+    console.log('generateContextualization called for:', title, 'by', author);
+    
+    // Check for API key at runtime
+    const currentKey = this.getApiKey();
+    if (currentKey && !this.apiKey) {
+      this.apiKey = currentKey;
+    }
+    
+    console.log('API key available for contextualization:', !!this.apiKey);
+    
+    if (!this.apiKey) {
+      console.log('No API key, returning fallback contextualization');
+      return `📚 Practice with classic literature from ${author}'s "${title}"`;
+    }
+
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Cloze Reader'
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages: [{
+            role: 'system',
+            content: 'You are a literary expert. Provide exactly 1 short sentence about this classic work. Be factual and concise. No exaggerative language.'
+          }, {
+            role: 'user',
+            content: `Describe "${title}" by ${author} in one factual sentence.`
+          }],
+          max_tokens: 50,
+          temperature: 0.2
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Contextualization API error:', response.status, errorText);
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0].message.content.trim();
+      console.log('Contextualization received:', content);
+      return content;
+    } catch (error) {
+      console.error('Error getting contextualization:', error);
+      return `📚 Practice with classic literature from ${author}'s "${title}"`;
+    }
+  }
+
   async getContextualization(title, author, passage) {
     console.log('getContextualization called for:', title, 'by', author);
     

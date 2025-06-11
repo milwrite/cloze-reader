@@ -333,10 +333,9 @@ class ClozeGame {
   async generateContextualization() {
     // Always use AI for contextualization
     try {
-      this.contextualization = await aiService.getContextualization(
+      this.contextualization = await aiService.generateContextualization(
         this.currentBook.title,
-        this.currentBook.author,
-        this.originalText.substring(0, 200) // Pass first 200 chars of passage
+        this.currentBook.author
       );
       return this.contextualization;
     } catch (error) {

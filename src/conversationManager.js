@@ -74,12 +74,15 @@ class ChatService {
     const bookTitle = context.bookTitle;
     const author = context.author;
     
+    // Create sentence with blank instead of revealing the word
+    const sentenceWithBlank = sentence.replace(new RegExp(`\\b${word}\\b`, 'gi'), '____');
+    
     try {
-      // Use the enhanced contextual hint generation
+      // Use the enhanced contextual hint generation WITHOUT revealing the target word
       const aiResponse = await this.aiService.generateContextualHint(
         questionType, 
-        word, 
-        sentence, 
+        '____', // Don't pass the actual word
+        sentenceWithBlank, 
         bookTitle, 
         author
       );
@@ -91,8 +94,8 @@ class ChatService {
       console.warn('AI response failed:', error);
     }
     
-    // Fallback - return enhanced fallback response
-    return this.aiService.getEnhancedFallback(questionType, word, sentence, bookTitle);
+    // Fallback - return enhanced fallback response without revealing word
+    return this.aiService.getEnhancedFallback(questionType, '____', sentenceWithBlank, bookTitle);
   }
 
   // Build focused prompt for specific question types with level awareness
