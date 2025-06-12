@@ -1,8 +1,8 @@
 ---
 title: Cloze Reader
 emoji: 📚
-colorFrom: red
-colorTo: yellow
+colorFrom: yellow
+colorTo: red
 sdk: docker
 pinned: true
 thumbnail: >-
