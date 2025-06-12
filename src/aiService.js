@@ -112,7 +112,7 @@ class OpenRouterService {
             content: 'Select words for cloze reading exercises. Choose common, everyday words that students know. Avoid proper nouns (names, places), technical terms, archaic words, and words over 8 letters. Pick words students can guess from surrounding context.'
           }, {
             role: 'user',
-            content: `Select exactly ${count} appropriate words for a cloze exercise. Choose common words students can guess from context. Avoid: proper nouns, technical terms, rare/archaic words, words over 8 letters. Return ONLY a JSON array of words.
+            content: `Select exactly ${count} meaningful content words for a cloze exercise. Choose nouns, verbs, adjectives that are 4+ letters long and important to meaning. NEVER select: articles (a, an, the), prepositions (in, on, at, to, for, of, with, by, from), conjunctions (and, or, but), pronouns (I, you, he, she, it, they), or auxiliary verbs (is, are, was, were, have, has, had). Return ONLY a JSON array of words.
 
 Passage: "${passage}"`
           }],

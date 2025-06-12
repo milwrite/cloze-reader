@@ -85,7 +85,7 @@ class HuggingFaceDatasetService {
       
       if (this.streamingEnabled) {
         // Preload some books for immediate access
-        await this.preloadBooks(100);
+        await this.preloadBooks(20);
         console.log(`✅ HF Streaming enabled: ${this.preloadedBooks.length} books preloaded`);
       } else {
         // Fall back to local samples
@@ -126,12 +126,12 @@ class HuggingFaceDatasetService {
     }
   }
 
-  async preloadBooks(count = 100) {
+  async preloadBooks(count = 20) {
     if (!this.streamingEnabled) return;
     
     try {
       // Use random offset to avoid always getting the same books
-      const randomOffset = Math.floor(Math.random() * 5000); // Random start point in dataset
+      const randomOffset = Math.floor(Math.random() * 1000); // Smaller random range
       const url = `${this.apiBase}/rows?dataset=${this.datasetName}&config=default&split=en&offset=${randomOffset}&length=${count}`;
       const response = await fetch(url);
       
@@ -412,7 +412,7 @@ class HuggingFaceDatasetService {
     
     // If no preloaded books, try to fetch directly
     try {
-      const offset = Math.floor(Math.random() * 10000); // Much larger random range
+      const offset = Math.floor(Math.random() * 1000); // Smaller random range
       const url = `${this.apiBase}/rows?dataset=${this.datasetName}&config=default&split=en&offset=${offset}&length=1`;
       const response = await fetch(url);
       
@@ -499,7 +499,7 @@ class HuggingFaceDatasetService {
   // Refresh preloaded books cache
   async refreshCache() {
     if (this.streamingEnabled) {
-      await this.preloadBooks(100);
+      await this.preloadBooks(20);
       console.log(`🔄 Cache refreshed: ${this.preloadedBooks.length} books`);
     }
   }
