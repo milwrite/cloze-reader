@@ -68,26 +68,29 @@
 .welcome-modal {
   background: white;
   border-radius: 12px;
-  padding: 32px;
+  padding: 24px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .welcome-title {
-  margin: 0 0 24px 0;
+  margin: 0 0 16px 0;
   color: #1f2937;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 600;
 }
 
 .welcome-content {
   text-align: left;
   color: #4b5563;
-  line-height: 1.6;
-  margin-bottom: 32px;
+  line-height: 1.4;
+  margin-bottom: 20px;
+  font-size: 14px;
 }
 
 .welcome-content p {
-  margin: 0 0 16px 0;
+  margin: 0 0 12px 0;
 }
 
 .welcome-overlay .typewriter-button {
