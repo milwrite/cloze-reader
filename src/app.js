@@ -29,9 +29,6 @@ class App {
 
   async initialize() {
     try {
-      // Show welcome overlay immediately before loading
-      this.welcomeOverlay.show();
-      
       this.showLoading(true);
       await this.game.initialize();
       await this.startNewGame();
@@ -314,6 +311,10 @@ class App {
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   const app = new App();
+  
+  // Show welcome overlay immediately before any loading
+  app.welcomeOverlay.show();
+  
   app.initialize();
   
   // Expose API key setter for browser console
