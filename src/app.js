@@ -29,15 +29,13 @@ class App {
 
   async initialize() {
     try {
+      // Show welcome overlay immediately before loading
+      this.welcomeOverlay.show();
+      
       this.showLoading(true);
       await this.game.initialize();
       await this.startNewGame();
       this.showLoading(false);
-      
-      // Show welcome overlay for first-time users
-      setTimeout(() => {
-        this.welcomeOverlay.show();
-      }, 500);
     } catch (error) {
       console.error('Failed to initialize app:', error);
       this.showError('Failed to load the game. Please refresh and try again.');

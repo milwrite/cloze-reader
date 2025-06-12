@@ -7,7 +7,7 @@ class WelcomeOverlay {
 
   show() {
     console.log('WelcomeOverlay.show() called, hasBeenShown:', this.hasBeenShown);
-    if (this.hasBeenShown) return;
+    // Always show overlay regardless of previous views
     
     this.isVisible = true;
     const overlay = this.createOverlay();
@@ -34,9 +34,11 @@ class WelcomeOverlay {
     `;
 
     modal.innerHTML = `
-      <img src="https://raw.githubusercontent.com/zmuhls/cloze-reader/main/icon.png" 
-           alt="Cloze Reader" 
-           style="width: 64px; height: 64px; margin-bottom: 16px; border-radius: 8px;">
+      <div style="display: flex; justify-content: center; margin-bottom: 16px;">
+        <img src="https://raw.githubusercontent.com/zmuhls/cloze-reader/main/icon.png" 
+             alt="Cloze Reader" 
+             style="width: 64px; height: 64px; border-radius: 8px;">
+      </div>
       <h1 class="welcome-title">
         Cloze Reader
       </h1>
