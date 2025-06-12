@@ -94,24 +94,23 @@ class ChatService {
       console.warn('AI response failed:', error);
     }
     
-    // Fallback - return enhanced fallback response without revealing word
-    const fallback = this.getSimpleFallback(context, questionType);
-    return fallback.response;
+    // Fallback - return simple fallback response
+    return this.getSimpleFallback(context, questionType);
   }
 
-  // Build focused prompt for specific question types with level awareness
+  // Build focused prompt for specific question types
   buildFocusedPrompt(context, questionType, userInput) {
     const { sentence, bookTitle, author } = context;
     const baseContext = `From "${bookTitle}" by ${author}: "${sentence}"`;
     
     const prompts = {
-      part_of_speech: `${baseContext}\n\nFor this cloze game, identify the part of speech needed in the blank. Respond exactly: "This is a [noun/verb/adjective/adverb]" then add ONE clue about its function. Maximum 15 words. No bold text or markdown.`,
+      part_of_speech: `${baseContext}\n\nWhat type of word fits in the blank? Say "This is a [noun/verb/adjective/adverb]" then give a grammatical hint about its function. Maximum 20 words. Never reveal the word.`,
       
-      sentence_role: `${baseContext}\n\nFor this cloze game, analyze the blank's sentence role. Format: "Look at [word before] ____ [word after] - what fits here?" Focus on immediate context. Maximum 18 words. No markdown.`,
+      sentence_role: `${baseContext}\n\nWhat meaning role does the blank serve? Does it express action, emotion, description, or relationship? Maximum 20 words.`,
       
-      word_category: `${baseContext}\n\nFor this cloze game, categorize the missing word. Start exactly: "This is abstract" or "This is concrete" then add ONE example. Maximum 12 words. No bold or italics.`,
+      word_category: `${baseContext}\n\nWhat category does this word belong to? Say "This word describes [general category]" without giving specific examples. Maximum 20 words.`,
       
-      synonym: `${baseContext}\n\nFor this cloze game, give a synonym clue. Format: "Try a word similar to [related concept]" or "Another word for [meaning]". Maximum 10 words. No markdown formatting.`
+      synonym: `${baseContext}\n\nGive a conceptual hint. Format: "Think of something that [general description of concept]." Be indirect and conceptual. Maximum 20 words.`
     };
     
     return prompts[questionType] || `${baseContext}\n\nProvide a helpful hint about the missing word without revealing it.`;
@@ -126,11 +125,7 @@ class ChatService {
       synonym: "What other word could fit in this same spot with similar meaning?"
     };
     
-    return {
-      success: true,
-      response: fallbacks[questionType] || "Consider the context and what word would make sense here.",
-      questionType: questionType
-    };
+    return fallbacks[questionType] || "Consider the context and what word would make sense here.";
   }
 
 
