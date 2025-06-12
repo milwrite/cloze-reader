@@ -76,10 +76,17 @@ class ClozeGame {
     // Extract longer initial passage for better sentence completion
     let passage = text.substring(startIndex, startIndex + 1000);
     
-    // Clean up start - find first complete sentence
-    const firstSentenceEnd = passage.search(/[.!?]\s+[A-Z]/);
-    if (firstSentenceEnd > 0 && firstSentenceEnd < 200) {
-      passage = passage.substring(firstSentenceEnd + 2);
+    // Clean up start - find first complete sentence that starts with capital letter
+    const firstSentenceMatch = passage.match(/[.!?]\s+([A-Z][^.!?]*)/);
+    if (firstSentenceMatch && firstSentenceMatch.index < 200) {
+      // Start from the capital letter after punctuation
+      passage = passage.substring(firstSentenceMatch.index + firstSentenceMatch[0].length - firstSentenceMatch[1].length);
+    } else {
+      // If no good sentence break found, find first capital letter
+      const firstCapitalMatch = passage.match(/[A-Z][^.!?]*/);
+      if (firstCapitalMatch) {
+        passage = passage.substring(firstCapitalMatch.index);
+      }
     }
     
     // Clean up end - ensure we end at a complete sentence

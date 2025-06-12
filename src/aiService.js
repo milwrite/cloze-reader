@@ -74,10 +74,10 @@ class OpenRouterService {
       
       let content = data.choices[0].message.content.trim();
       
-      // Clean up AI response artifacts
+      // Clean up AI response artifacts  
       content = content
         .replace(/^\s*["']|["']\s*$/g, '')  // Remove leading/trailing quotes
-        .replace(/^\s*:+\s*/, '')           // Remove leading colons
+        .replace(/^\s*[:;]+\s*/, '')        // Remove leading colons and semicolons
         .replace(/\*+/g, '')                // Remove asterisks (markdown bold/italic)
         .replace(/_+/g, '')                 // Remove underscores (markdown)
         .replace(/#+\s*/g, '')              // Remove hash symbols (markdown headers)
@@ -212,7 +212,8 @@ Passage: "${passage}"`
       // Clean up AI response artifacts
       content = content
         .replace(/^\s*["']|["']\s*$/g, '')  // Remove leading/trailing quotes
-        .replace(/^\s*:+\s*/, '')           // Remove leading colons
+        .replace(/^\s*[:;]+\s*/, '')        // Remove leading colons and semicolons
+        .replace(/^\s*[a-z]+:\s*/i, '')     // Remove any word followed by colon (like "mas:")
         .replace(/\*+/g, '')                // Remove asterisks (markdown bold/italic)
         .replace(/_+/g, '')                 // Remove underscores (markdown)
         .replace(/#+\s*/g, '')              // Remove hash symbols (markdown headers)
