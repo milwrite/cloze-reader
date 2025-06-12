@@ -1,10 +1,12 @@
 ---
 title: Cloze Reader
 emoji: 📚
-colorFrom: blue
-colorTo: purple
+colorFrom: red
+colorTo: yellow
 sdk: docker
-pinned: false
+pinned: true
+thumbnail: >-
+  https://cdn-uploads.huggingface.co/production/uploads/65a0caa15dfd8b9b1f3aa3d3/3GdgODxZMuycEJvbrtAdm.png
 ---
 
 # Cloze Reader
