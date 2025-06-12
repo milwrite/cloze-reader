@@ -2,7 +2,7 @@
 title: Cloze Reader
 emoji: 📚
 colorFrom: yellow
-colorTo: red
+colorTo: gray
 sdk: docker
 pinned: true
 thumbnail: >-
