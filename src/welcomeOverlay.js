@@ -21,68 +21,43 @@ class WelcomeOverlay {
   createOverlay() {
     const overlay = document.createElement('div');
     overlay.className = 'welcome-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    `;
+    overlay.style.opacity = '0';
 
     const modal = document.createElement('div');
+    modal.className = 'welcome-modal';
     modal.style.cssText = `
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
       max-width: 500px;
       margin: 20px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
       text-align: center;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     `;
 
     modal.innerHTML = `
-      <div style="font-size: 48px; margin-bottom: 16px;">📚</div>
-      <h1 style="margin: 0 0 24px 0; color: #1a1a1a; font-size: 28px; font-weight: 600;">
+      <img src="https://raw.githubusercontent.com/zmuhls/cloze-reader/main/icon.png" 
+           alt="Cloze Reader" 
+           style="width: 64px; height: 64px; margin-bottom: 16px; border-radius: 8px;">
+      <h1 class="welcome-title">
         Cloze Reader
       </h1>
       
-      <div style="text-align: left; color: #4a4a4a; line-height: 1.6; margin-bottom: 32px;">
-        <p style="margin: 0 0 16px 0;">
-          <strong>Practice reading comprehension</strong> by filling in missing words from classic literature passages.
+      <div class="welcome-content">
+        <p>
+          <strong>Practice reading comprehension</strong> by filling in missing words from historical and literary texts.
         </p>
         
-        <p style="margin: 0 0 16px 0;">
+        <p>
           <strong>How to play:</strong> Read the passage, fill in the blanks, and use hints or chat help (💬) if needed. Progress through levels as you improve.
         </p>
         
-        <p style="margin: 0 0 16px 0;">
-          <strong>Data source:</strong> Passages from Project Gutenberg's public domain collection, processed via Hugging Face Datasets.
+        <p>
+          <strong>Data source:</strong> Historical and literary texts from Project Gutenberg's public domain collection, processed via Hugging Face Datasets.
         </p>
         
-        <p style="margin: 0 0 0 0;">
+        <p style="margin-bottom: 0;">
           <strong>AI assistance:</strong> Powered by Google's Gemma 3 model via OpenRouter for intelligent word selection and contextual hints.
         </p>
       </div>
 
-      <button id="welcome-start-btn" style="
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 12px 32px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.2s ease;
-      " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+      <button id="welcome-start-btn" class="btn btn-primary">
         Start Reading
       </button>
     `;
