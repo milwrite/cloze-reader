@@ -106,13 +106,13 @@ class ChatService {
     const wordInstruction = `The target word is "${targetWord}". NEVER mention or reveal this word in your response.`;
     
     const prompts = {
-      part_of_speech: `${baseContext}\n\n${wordInstruction}\n\nGive the part of speech for "${targetWord}" and a grammatical hint. Say "This is a [noun/verb/adjective/adverb]" then explain its function. Maximum 20 words. Do not reveal the actual word.`,
+      part_of_speech: `${baseContext}\n\n${wordInstruction}\n\nState only the grammatical category: "This is a noun" or "This is a verb" etc. Then give ONE grammar rule about how this type of word works. Maximum 15 words total.`,
       
-      sentence_role: `${baseContext}\n\n${wordInstruction}\n\nDescribe the role "${targetWord}" plays in this sentence. Does it express action, emotion, description, or relationship? Maximum 20 words. Do not reveal the actual word.`,
+      sentence_role: `${baseContext}\n\n${wordInstruction}\n\nExplain only what job "${targetWord}" does in this specific sentence. Focus on its function, not what it means. Start with "In this sentence, it..." Maximum 15 words.`,
       
-      word_category: `${baseContext}\n\n${wordInstruction}\n\nWhat category does "${targetWord}" belong to? Say "This word describes [general category]" without giving specific examples. Maximum 20 words. Do not reveal the actual word.`,
+      word_category: `${baseContext}\n\n${wordInstruction}\n\nClassify "${targetWord}" into a broad category. Choose from: living thing, object, action, feeling, quality, place, or time. Say "This belongs to the category of..." Maximum 12 words.`,
       
-      synonym: `${baseContext}\n\n${wordInstruction}\n\nGive a conceptual hint about "${targetWord}". Format: "Think of something that [general description]." Be indirect and conceptual. Maximum 20 words. Do not reveal the actual word.`
+      synonym: `${baseContext}\n\n${wordInstruction}\n\nGive a different word that could replace "${targetWord}" in this sentence. Say "You could use the word..." Maximum 8 words. Choose a simple synonym.`
     };
     
     return prompts[questionType] || `${baseContext}\n\n${wordInstruction}\n\nProvide a helpful hint about "${targetWord}" without revealing it.`;

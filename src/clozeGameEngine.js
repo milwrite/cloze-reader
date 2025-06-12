@@ -70,11 +70,11 @@ class ClozeGame {
     
     // Random position in the middle section
     const availableLength = endAtThreeQuarters - startFromMiddle;
-    const randomOffset = Math.floor(Math.random() * Math.max(0, availableLength - 800));
+    const randomOffset = Math.floor(Math.random() * Math.max(0, availableLength - 1000));
     const startIndex = startFromMiddle + randomOffset;
     
-    // Extract passage
-    let passage = text.substring(startIndex, startIndex + 800);
+    // Extract longer initial passage for better sentence completion
+    let passage = text.substring(startIndex, startIndex + 1000);
     
     // Clean up start - find first complete sentence
     const firstSentenceEnd = passage.search(/[.!?]\s+[A-Z]/);
@@ -82,10 +82,18 @@ class ClozeGame {
       passage = passage.substring(firstSentenceEnd + 2);
     }
     
-    // Clean up end - end at complete sentence
-    const lastSentenceEnd = passage.lastIndexOf('.');
-    if (lastSentenceEnd > 300) {
-      passage = passage.substring(0, lastSentenceEnd + 1);
+    // Clean up end - ensure we end at a complete sentence
+    const sentences = passage.split(/(?<=[.!?])\s+/);
+    if (sentences.length > 1) {
+      // Remove the last sentence if it might be incomplete
+      sentences.pop();
+      passage = sentences.join(' ');
+    }
+    
+    // Ensure minimum length
+    if (passage.length < 400) {
+      // Try again with different position if too short
+      return this.extractCoherentPassage(text);
     }
     
     return passage.trim();
@@ -143,18 +151,18 @@ class ClozeGame {
       
       let wordIndex = -1;
       
-      // First try to find the word in the designated section
-      for (let i = sectionStart; i < sectionEnd; i++) {
+      // First try to find the word in the designated section (avoiding first 10 words)
+      for (let i = Math.max(10, sectionStart); i < sectionEnd; i++) {
         if (wordsLower[i] === cleanSignificant && !selectedIndices.includes(i)) {
           wordIndex = i;
           break;
         }
       }
       
-      // If not found in section, look globally
+      // If not found in section, look globally (but still avoid first 10 words)
       if (wordIndex === -1) {
         wordIndex = wordsLower.findIndex((word, idx) => 
-          word === cleanSignificant && !selectedIndices.includes(idx)
+          word === cleanSignificant && !selectedIndices.includes(idx) && idx >= 10
         );
       }
       
@@ -173,11 +181,11 @@ class ClozeGame {
       console.warn('No AI words matched in passage, using manual selection');
       const manualWords = this.selectWordsManually(words, numberOfBlanks);
       
-      // Try to match manual words
+      // Try to match manual words (avoiding first 10 words)
       manualWords.forEach((manualWord, index) => {
         const cleanManual = manualWord.toLowerCase().replace(/[^\w]/g, '');
         const wordIndex = wordsLower.findIndex((word, idx) => 
-          word === cleanManual && !selectedIndices.includes(idx)
+          word === cleanManual && !selectedIndices.includes(idx) && idx >= 10
         );
         
         if (wordIndex !== -1) {
@@ -191,11 +199,11 @@ class ClozeGame {
     // Sort indices for easier processing
     selectedIndices.sort((a, b) => a - b);
     
-    // Final safety check - if still no words found, pick random content words
+    // Final safety check - if still no words found, pick random content words (avoiding first 10)
     if (selectedIndices.length === 0) {
       console.error('Critical: No words could be selected, using emergency fallback');
       const contentWords = words.map((word, idx) => ({ word: word.toLowerCase().replace(/[^\w]/g, ''), idx }))
-        .filter(item => item.word.length > 3 && !['the', 'and', 'but', 'for', 'are', 'was'].includes(item.word))
+        .filter(item => item.word.length > 3 && !['the', 'and', 'but', 'for', 'are', 'was'].includes(item.word) && item.idx >= 10)
         .slice(0, numberOfBlanks);
       
       selectedIndices.push(...contentWords.map(item => item.idx));
