@@ -72,7 +72,19 @@ class OpenRouterService {
         return 'Unable to generate hint at this time';
       }
       
-      return data.choices[0].message.content.trim();
+      let content = data.choices[0].message.content.trim();
+      
+      // Clean up AI response artifacts
+      content = content
+        .replace(/^\s*["']|["']\s*$/g, '')  // Remove leading/trailing quotes
+        .replace(/^\s*:+\s*/, '')           // Remove leading colons
+        .replace(/\*+/g, '')                // Remove asterisks (markdown bold/italic)
+        .replace(/_+/g, '')                 // Remove underscores (markdown)
+        .replace(/#+\s*/g, '')              // Remove hash symbols (markdown headers)
+        .replace(/\s+/g, ' ')               // Normalize whitespace
+        .trim();
+      
+      return content;
     } catch (error) {
       console.error('Error generating contextual hint:', error);
       return 'Unable to generate hint at this time';
@@ -195,7 +207,18 @@ Passage: "${passage}"`
       }
 
       const data = await response.json();
-      const content = data.choices[0].message.content.trim();
+      let content = data.choices[0].message.content.trim();
+      
+      // Clean up AI response artifacts
+      content = content
+        .replace(/^\s*["']|["']\s*$/g, '')  // Remove leading/trailing quotes
+        .replace(/^\s*:+\s*/, '')           // Remove leading colons
+        .replace(/\*+/g, '')                // Remove asterisks (markdown bold/italic)
+        .replace(/_+/g, '')                 // Remove underscores (markdown)
+        .replace(/#+\s*/g, '')              // Remove hash symbols (markdown headers)
+        .replace(/\s+/g, ' ')               // Normalize whitespace
+        .trim();
+      
       console.log('Contextualization received:', content);
       return content;
     } catch (error) {
