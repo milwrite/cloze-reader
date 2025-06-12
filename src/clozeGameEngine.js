@@ -97,10 +97,18 @@ class ClozeGame {
       passage = sentences.join(' ');
     }
     
-    // Ensure minimum length
+    // Ensure minimum length - if too short, return what we have rather than infinite recursion
     if (passage.length < 400) {
-      // Try again with different position if too short
-      return this.extractCoherentPassage(text);
+      console.warn('Short passage extracted, using fallback approach');
+      // Try one more time with a simpler approach
+      const simpleStart = text.indexOf('. ') + 2;
+      if (simpleStart > 1 && simpleStart < text.length - 500) {
+        passage = text.substring(simpleStart, simpleStart + 600);
+        const lastPeriod = passage.lastIndexOf('.');
+        if (lastPeriod > 200) {
+          passage = passage.substring(0, lastPeriod + 1);
+        }
+      }
     }
     
     return passage.trim();
