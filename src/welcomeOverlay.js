@@ -6,11 +6,13 @@ class WelcomeOverlay {
   }
 
   show() {
+    console.log('WelcomeOverlay.show() called, hasBeenShown:', this.hasBeenShown);
     if (this.hasBeenShown) return;
     
     this.isVisible = true;
     const overlay = this.createOverlay();
     document.body.appendChild(overlay);
+    console.log('Welcome overlay added to DOM');
     
     // Animate in
     requestAnimationFrame(() => {
@@ -57,7 +59,7 @@ class WelcomeOverlay {
         </p>
       </div>
 
-      <button id="welcome-start-btn" class="btn btn-primary">
+      <button id="welcome-start-btn" class="typewriter-button">
         Start Reading
       </button>
     `;
@@ -95,6 +97,12 @@ class WelcomeOverlay {
   reset() {
     localStorage.removeItem('cloze-reader-welcomed');
     this.hasBeenShown = false;
+  }
+
+  // Force show overlay (for testing)
+  forceShow() {
+    this.hasBeenShown = false;
+    this.show();
   }
 }
 
