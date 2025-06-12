@@ -59,6 +59,19 @@ class OpenRouterService {
       }
 
       const data = await response.json();
+      
+      // Check if data and choices exist before accessing
+      if (!data || !data.choices || data.choices.length === 0) {
+        console.error('Invalid API response structure:', data);
+        return 'Unable to generate hint at this time';
+      }
+      
+      // Check if message content exists
+      if (!data.choices[0].message || !data.choices[0].message.content) {
+        console.error('No content in API response');
+        return 'Unable to generate hint at this time';
+      }
+      
       return data.choices[0].message.content.trim();
     } catch (error) {
       console.error('Error generating contextual hint:', error);

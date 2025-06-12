@@ -95,7 +95,8 @@ class ChatService {
     }
     
     // Fallback - return enhanced fallback response without revealing word
-    return this.getSimpleFallback(context, questionType);
+    const fallback = this.getSimpleFallback(context, questionType);
+    return fallback.response;
   }
 
   // Build focused prompt for specific question types with level awareness
