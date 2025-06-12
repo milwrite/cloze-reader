@@ -1,11 +1,13 @@
 // Main application entry point
 import ClozeGame from './clozeGameEngine.js';
 import ChatUI from './chatInterface.js';
+import WelcomeOverlay from './welcomeOverlay.js';
 
 class App {
   constructor() {
     this.game = new ClozeGame();
     this.chatUI = new ChatUI(this.game);
+    this.welcomeOverlay = new WelcomeOverlay();
     this.elements = {
       loading: document.getElementById('loading'),
       gameArea: document.getElementById('game-area'),
@@ -31,6 +33,11 @@ class App {
       await this.game.initialize();
       await this.startNewGame();
       this.showLoading(false);
+      
+      // Show welcome overlay for first-time users
+      setTimeout(() => {
+        this.welcomeOverlay.show();
+      }, 500);
     } catch (error) {
       console.error('Failed to initialize app:', error);
       this.showError('Failed to load the game. Please refresh and try again.');
