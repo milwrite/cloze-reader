@@ -74,14 +74,15 @@ class ChatService {
     const bookTitle = context.bookTitle;
     const author = context.author;
     
-    // Create sentence with blank instead of revealing the word
+    // Create sentence with blank for context, but tell AI the actual word
     const sentenceWithBlank = sentence.replace(new RegExp(`\\b${word}\\b`, 'gi'), '____');
     
     try {
-      // Build focused prompt using the conversation manager's logic
+      // Build focused prompt that includes the target word but forbids revealing it
       const prompt = this.buildFocusedPrompt({
         ...context,
-        sentence: sentenceWithBlank
+        sentence: sentenceWithBlank,
+        targetWord: word
       }, questionType, userInput);
       
       // Use the AI service as a simple API wrapper
@@ -100,20 +101,21 @@ class ChatService {
 
   // Build focused prompt for specific question types
   buildFocusedPrompt(context, questionType, userInput) {
-    const { sentence, bookTitle, author } = context;
+    const { sentence, bookTitle, author, targetWord } = context;
     const baseContext = `From "${bookTitle}" by ${author}: "${sentence}"`;
+    const wordInstruction = `The target word is "${targetWord}". NEVER mention or reveal this word in your response.`;
     
     const prompts = {
-      part_of_speech: `${baseContext}\n\nWhat type of word fits in the blank? Say "This is a [noun/verb/adjective/adverb]" then give a grammatical hint about its function. Maximum 20 words. Never reveal the word.`,
+      part_of_speech: `${baseContext}\n\n${wordInstruction}\n\nGive the part of speech for "${targetWord}" and a grammatical hint. Say "This is a [noun/verb/adjective/adverb]" then explain its function. Maximum 20 words. Do not reveal the actual word.`,
       
-      sentence_role: `${baseContext}\n\nWhat meaning role does the blank serve? Does it express action, emotion, description, or relationship? Maximum 20 words.`,
+      sentence_role: `${baseContext}\n\n${wordInstruction}\n\nDescribe the role "${targetWord}" plays in this sentence. Does it express action, emotion, description, or relationship? Maximum 20 words. Do not reveal the actual word.`,
       
-      word_category: `${baseContext}\n\nWhat category does this word belong to? Say "This word describes [general category]" without giving specific examples. Maximum 20 words.`,
+      word_category: `${baseContext}\n\n${wordInstruction}\n\nWhat category does "${targetWord}" belong to? Say "This word describes [general category]" without giving specific examples. Maximum 20 words. Do not reveal the actual word.`,
       
-      synonym: `${baseContext}\n\nGive a conceptual hint. Format: "Think of something that [general description of concept]." Be indirect and conceptual. Maximum 20 words.`
+      synonym: `${baseContext}\n\n${wordInstruction}\n\nGive a conceptual hint about "${targetWord}". Format: "Think of something that [general description]." Be indirect and conceptual. Maximum 20 words. Do not reveal the actual word.`
     };
     
-    return prompts[questionType] || `${baseContext}\n\nProvide a helpful hint about the missing word without revealing it.`;
+    return prompts[questionType] || `${baseContext}\n\n${wordInstruction}\n\nProvide a helpful hint about "${targetWord}" without revealing it.`;
   }
 
   // Simple fallback responses

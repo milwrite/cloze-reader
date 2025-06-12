@@ -44,7 +44,7 @@ class OpenRouterService {
           model: this.model,
           messages: [{
             role: 'system',
-            content: 'You provide clues for word puzzles. Follow the EXACT format requested. Be concise and direct. Never reveal the actual word. Use plain text only - no bold, italics, asterisks, or markdown formatting. Stick to word limits.'
+            content: 'You provide clues for word puzzles. You will be told the target word that players need to guess, but you must NEVER mention, spell, or reveal that word in your response. Follow the EXACT format requested. Be concise and direct about the target word without revealing it. Use plain text only - no bold, italics, asterisks, or markdown formatting. Stick to word limits.'
           }, {
             role: 'user',
             content: prompt
