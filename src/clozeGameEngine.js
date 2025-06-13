@@ -55,11 +55,13 @@ class ClozeGame {
       this.currentBook = book1;
       this.originalText = this.passages[0];
       
-      // Run AI calls in parallel for faster loading
-      const [clozeResult, contextualizationResult] = await Promise.all([
-        this.createClozeText(),
-        this.generateContextualization()
-      ]);
+      // Run AI calls sequentially to avoid rate limiting
+      await this.createClozeText();
+      
+      // Add small delay between API calls to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      await this.generateContextualization();
       
       return {
         title: this.currentBook.title,
@@ -480,11 +482,13 @@ class ClozeGame {
         // Clear last results
         this.lastResults = null;
         
-        // Generate new cloze text and contextualization for second passage
-        const [clozeResult, contextualizationResult] = await Promise.all([
-          this.createClozeText(),
-          this.generateContextualization()
-        ]);
+        // Generate new cloze text and contextualization for second passage sequentially
+        await this.createClozeText();
+        
+        // Add small delay between API calls to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        await this.generateContextualization();
         
         return {
           title: this.currentBook.title,
