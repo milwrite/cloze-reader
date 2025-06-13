@@ -605,8 +605,8 @@ class ClozeGame {
           <input type="text" 
             class="cloze-input" 
             data-blank-index="${index}" 
-            placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}"
-            style="width: ${Math.max(80, blank.originalWord.length * 12)}px;">
+            placeholder="${'_ '.repeat(Math.max(3, blank.originalWord.length)).trim()}"
+            style="width: ${Math.max(80, blank.originalWord.length * 16)}px;">
           <button id="${chatButtonId}" 
             class="chat-button text-blue-500 hover:text-blue-700 text-sm" 
             data-blank-index="${index}"

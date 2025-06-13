@@ -255,7 +255,9 @@
 
   .cloze-input::placeholder {
     color: rgba(0, 0, 0, 0.4);
-    font-style: italic;
+    font-style: normal;
+    font-family: monospace;
+    letter-spacing: 0.1em;
   }
 
   .typewriter-button {
