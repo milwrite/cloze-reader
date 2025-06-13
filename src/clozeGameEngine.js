@@ -250,6 +250,7 @@ class ClozeGame {
         passage: this.originalText,
         bookTitle: this.currentBook.title,
         author: this.currentBook.author,
+        year: this.currentBook.year,
         wordPosition: index,
         difficulty: this.calculateWordDifficulty(cleanWord, index, words)
       };

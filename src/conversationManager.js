@@ -25,6 +25,7 @@ class ChatService {
       fullPassage: wordData.passage,
       bookTitle: wordData.bookTitle,
       author: wordData.author,
+      year: wordData.year || null,
       wordPosition: wordData.wordPosition,
       difficulty: wordData.difficulty,
       previousAttempts: [],
@@ -101,18 +102,19 @@ class ChatService {
 
   // Build focused prompt for specific question types
   buildFocusedPrompt(context, questionType, userInput) {
-    const { sentence, bookTitle, author, targetWord } = context;
-    const baseContext = `From "${bookTitle}" by ${author}: "${sentence}"`;
-    const wordInstruction = `The target word is "${targetWord}". NEVER mention or reveal this word in your response.`;
+    const { sentence, bookTitle, author, targetWord, year } = context;
+    const yearPrefix = year ? `Published in ${year}, ` : '';
+    const baseContext = `${yearPrefix}from "${bookTitle}" by ${author}: "${sentence}"`;
+    const safetyRule = `Important: The hidden word is "${targetWord}". Never say this word directly - use "it," "this word," or "the word" instead.`;
     
     const prompts = {
-      part_of_speech: `${baseContext}\n\n${wordInstruction}\n\nState only the grammatical category: "This is a noun" or "This is a verb" etc. Then give ONE grammar rule about how this type of word works. Maximum 15 words total.`,
+      part_of_speech: `${baseContext}\n\n${safetyRule}\n\nIdentify the part of speech and share one interesting grammar tip about this type of word. Keep it conversational and under 25 words.\nExample: "It's a verb! These words show action or states of being, like 'run' or 'exist'."`,
       
-      sentence_role: `${baseContext}\n\n${wordInstruction}\n\nExplain only what job "${targetWord}" does in this specific sentence. Focus on its function, not what it means. Start with "In this sentence, it..." Maximum 15 words.`,
+      sentence_role: `${baseContext}\n\n${safetyRule}\n\nExplain what role this word plays in the sentence - what's its job here? Be specific to THIS sentence. Keep it under 20 words and conversational.\nExample: "Here it connects two ideas, showing how one thing relates to another."`,
       
-      word_category: `${baseContext}\n\n${wordInstruction}\n\nClassify "${targetWord}" into a broad category. Choose from: living thing, object, action, feeling, quality, place, or time. Say "This belongs to the category of..." Maximum 12 words.`,
+      word_category: `${baseContext}\n\n${safetyRule}\n\nWhat general category does this word belong to? Think broadly - is it about people, things, actions, qualities, feelings, places, or ideas? Explain briefly in under 20 words.\nExample: "This word fits in the 'qualities' category - it describes how something looks or feels."`,
       
-      synonym: `${baseContext}\n\n${wordInstruction}\n\nGive a different word that could replace "${targetWord}" in this sentence. Say "You could use the word..." Maximum 8 words. Choose a simple synonym.`
+      synonym: `${baseContext}\n\n${safetyRule}\n\nSuggest a word that could replace it in this sentence. Pick something simple and explain why it works. Under 15 words.\nExample: "You could use 'bright' here - it captures the same feeling of intensity."`
     };
     
     return prompts[questionType] || `${baseContext}\n\n${wordInstruction}\n\nProvide a helpful hint about "${targetWord}" without revealing it.`;
