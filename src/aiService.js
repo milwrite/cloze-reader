@@ -139,8 +139,11 @@ Passage: "${passage}"`
 
       const data = await response.json();
       
-      // Debug: Log the actual API response
-      console.log('Word selection API response:', data);
+      // Check for OpenRouter error response
+      if (data.error) {
+        console.error('OpenRouter API error for word selection:', data.error);
+        throw new Error(`OpenRouter API error: ${data.error.message || JSON.stringify(data.error)}`);
+      }
       
       // Check if response has expected structure
       if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
@@ -218,8 +221,11 @@ Passage: "${passage}"`
 
       const data = await response.json();
       
-      // Debug: Log the actual API response
-      console.log('Contextualization API response:', data);
+      // Check for OpenRouter error response
+      if (data.error) {
+        console.error('OpenRouter API error for contextualization:', data.error);
+        throw new Error(`OpenRouter API error: ${data.error.message || JSON.stringify(data.error)}`);
+      }
       
       // Check if response has expected structure
       if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
