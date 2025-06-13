@@ -239,7 +239,6 @@ Passage: "${passage}"`
       content = content
         .replace(/^\s*["']|["']\s*$/g, '')  // Remove leading/trailing quotes
         .replace(/^\s*[:;]+\s*/, '')        // Remove leading colons and semicolons
-        .replace(/^\s*[a-z]+:\s*/i, '')     // Remove any word followed by colon (like "mas:")
         .replace(/\*+/g, '')                // Remove asterisks (markdown bold/italic)
         .replace(/_+/g, '')                 // Remove underscores (markdown)
         .replace(/#+\s*/g, '')              // Remove hash symbols (markdown headers)

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  cloze-reader:
+    build: .
+    ports:
+      - "7860:7860"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - HF_API_KEY=${HF_API_KEY:-}
+    volumes:
+      - ./src:/app/src:ro
+      - ./index.html:/app/index.html:ro
+    restart: unless-stopped
+    
+  dev-server:
+    image: python:3.9-slim
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: python -m http.server 8000
+    environment:
+      - PYTHONUNBUFFERED=1
+    profiles:
+      - dev

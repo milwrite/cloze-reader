@@ -392,8 +392,8 @@ class ClozeGame {
       const inputHtml = `<input type="text" 
         class="cloze-input" 
         data-blank-index="${index}" 
-        placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}"
-        style="width: ${Math.max(80, blank.originalWord.length * 12)}px;">`;
+        placeholder="${'_ '.repeat(Math.max(3, blank.originalWord.length)).trim()}"
+        style="width: ${Math.max(80, blank.originalWord.length * 16)}px;">`;
       
       html = html.replace(`___BLANK_${index}___`, inputHtml);
     });

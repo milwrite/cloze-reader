@@ -1,0 +1,38 @@
+{
+  "name": "cloze-reader",
+  "version": "1.0.0",
+  "description": "Interactive cloze reading comprehension game",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "dev:python": "python app.py",
+    "build": "echo 'No build step needed for vanilla JS'",
+    "test": "echo 'No tests specified yet'",
+    "lint": "echo 'No linting configured yet'",
+    "start": "python app.py",
+    "docker:build": "docker build -t cloze-reader .",
+    "docker:run": "docker run -p 7860:7860 --env-file .env cloze-reader",
+    "docker:dev": "docker-compose up --build",
+    "docker:stop": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker-compose down -v --remove-orphans"
+  },
+  "keywords": [
+    "education",
+    "reading",
+    "comprehension",
+    "cloze",
+    "game"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0",
+    "python": ">=3.9"
+  }
+}
