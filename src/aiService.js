@@ -138,6 +138,16 @@ Passage: "${passage}"`
       }
 
       const data = await response.json();
+      
+      // Debug: Log the actual API response
+      console.log('Word selection API response:', data);
+      
+      // Check if response has expected structure
+      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        console.error('Invalid word selection API response structure:', data);
+        throw new Error('API response missing expected content');
+      }
+      
       const content = data.choices[0].message.content.trim();
       
       // Try to parse as JSON array
@@ -207,6 +217,16 @@ Passage: "${passage}"`
       }
 
       const data = await response.json();
+      
+      // Debug: Log the actual API response
+      console.log('Contextualization API response:', data);
+      
+      // Check if response has expected structure
+      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        console.error('Invalid contextualization API response structure:', data);
+        throw new Error('API response missing expected content');
+      }
+      
       let content = data.choices[0].message.content.trim();
       
       // Clean up AI response artifacts
