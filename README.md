@@ -59,3 +59,52 @@ To run the Cloze Reader application locally using Docker:
 ### Prerequisites
 - Docker installed on your system
 - Port 7860 available on your machine
+
+## Architecture Overview
+
+### Frontend Structure
+This is a **vanilla JavaScript modular application** with no build step. Key architectural patterns:
+
+**Module Organization:**
+- `app.js` - Main application controller, handles UI state and round management
+- `clozeGameEngine.js` - Core game logic, word selection, and scoring
+- `bookDataService.js` - Manages book data fetching from Hugging Face Datasets API
+- `aiService.js` - OpenRouter API integration for AI-powered word selection and contextualization
+- `chatInterface.js` - Modal-based chat UI for contextual hints
+- `conversationManager.js` - AI conversation state management for chat functionality
+- `welcomeOverlay.js` - First-time user onboarding
+
+```mermaid
+graph TD
+    A[User loads app] --> B[Welcome Overlay]
+    B --> C[App.js - Main Controller]
+    C --> D[ClozeGameEngine.js]
+    C --> E[ChatInterface.js]
+    
+    D --> F[BookDataService.js]
+    F --> G[HuggingFace Datasets API]
+    
+    D --> H[AIService.js]
+    H --> I[OpenRouter API - Gemma 3]
+    
+    E --> J[ConversationManager.js]
+    J --> H
+    
+    D --> K[Word Selection Logic]
+    K --> L[Filter Capitalized Words]
+    K --> M[Progressive Difficulty]
+    
+    C --> N[UI State Management]
+    N --> O[Level Progression]
+    N --> P[Score Tracking]
+    N --> Q[Passage Display]
+    
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style I fill:#bbf,stroke:#333,stroke-width:2px
+    style G fill:#bbf,stroke:#333,stroke-width:2px
+    style L fill:#fbb,stroke:#333,stroke-width:2px
+```
+
+---
+
+[milwright](https://huggingface.co/milwright), *Zach Muhlbauer*, CUNY Graduate Center
