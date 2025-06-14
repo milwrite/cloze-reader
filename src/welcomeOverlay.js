@@ -43,7 +43,7 @@ class WelcomeOverlay {
       
       <div class="welcome-content">
         <p>
-          <strong>Practice reading comprehension</strong> by filling in missing words from historical and literary texts.
+          <strong>Practice reading comprehension</strong> by filling in missing words from randomly excerpted historical and literary texts.
         </p>
         
         <p>
@@ -51,7 +51,7 @@ class WelcomeOverlay {
         </p>
         
         <p>
-          <strong>Data source:</strong> Historical and literary texts from Project Gutenberg's public domain collection, processed via Hugging Face Datasets.
+          <strong>Data source:</strong> Randomly excerpted historical and literary texts from Project Gutenberg's public domain collection, processed via Hugging Face Datasets.
         </p>
         
         <p style="margin-bottom: 0;">

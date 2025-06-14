@@ -11,14 +11,14 @@ thumbnail: >-
 
 # Cloze Reader
 
-An interactive cloze reading practice application with AI-powered assistance. Practice reading comprehension by filling in blanks in classic literature passages.
+An interactive cloze reading practice application with AI-powered assistance. Practice reading comprehension by filling in blanks in randomly excerpted historical and literary passages.
 
 ## Features
 
 - **Progressive Level System**: Start with 1 blank, advance to 2-3 blanks as you improve
 - **Smart Hints**: Get word length, first letter, and contextual clues
 - **AI Chat Help**: Click 💬 for intelligent hints about any blank
-- **Classic Literature**: Passages from Project Gutenberg's collection
+- **Historical and Literary Passages**: Randomly excerpted texts from Project Gutenberg's collection
 - **Level-Appropriate Challenges**: Hints adapt based on your current level
 
 ## How to Use
