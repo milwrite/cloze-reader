@@ -1,6 +1,6 @@
 ---
 title: Cloze Reader
-emoji: 📚
+emoji: 📜
 colorFrom: yellow
 colorTo: gray
 sdk: docker
