@@ -355,7 +355,7 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
     
     if (!this.apiKey) {
       console.log('No API key, returning fallback contextualization');
-      return `📚 Practice with classic literature from ${author}'s "${title}"`;
+      return `📜 Practice with literature from ${author}'s "${title}"`;
     }
 
     try {

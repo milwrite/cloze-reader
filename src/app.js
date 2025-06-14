@@ -77,7 +77,7 @@ class App {
     // Show contextualization from AI agent
     this.elements.contextualization.innerHTML = `
       <div class="flex items-start gap-2">
-        <span class="text-blue-600">📚</span>
+        <span class="text-blue-600">📜</span>
         <span>${roundData.contextualization || 'Loading context...'}</span>
       </div>
     `;
@@ -222,10 +222,10 @@ class App {
         roundData = await this.game.nextRound();
       }
       
-      // Ensure loading is shown for at least 1 second
+      // Ensure loading is shown for at least half a second
       const elapsedTime = Date.now() - startTime;
-      if (elapsedTime < 1000) {
-        await new Promise(resolve => setTimeout(resolve, 1000 - elapsedTime));
+      if (elapsedTime < 500) {
+        await new Promise(resolve => setTimeout(resolve, 500 - elapsedTime));
       }
       
       this.displayRound(roundData);
