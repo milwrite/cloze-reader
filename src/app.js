@@ -69,10 +69,11 @@ class App {
       <strong>${roundData.title}</strong> by ${roundData.author}
     `;
 
-    // Show level information without round number
+    // Show level information with passage number
     const blanksCount = roundData.blanks.length;
     const difficultyText = blanksCount === 1 ? 'Easy' : blanksCount === 2 ? 'Medium' : 'Hard';
-    this.elements.roundInfo.innerHTML = `Level ${this.game.currentLevel} • ${blanksCount} blank${blanksCount > 1 ? 's' : ''} • ${difficultyText}`;
+    const passageInfo = roundData.passageNumber ? `Passage ${roundData.passageNumber}/${roundData.totalPassages} • ` : '';
+    this.elements.roundInfo.innerHTML = `Level ${this.game.currentLevel} • ${passageInfo}${blanksCount} blank${blanksCount > 1 ? 's' : ''} • ${difficultyText}`;
 
     // Show contextualization from AI agent
     this.elements.contextualization.innerHTML = `
@@ -206,15 +207,24 @@ class App {
       // Show loading immediately with specific message
       this.showLoading(true, 'Loading next passage...');
       
-      // Clear chat history when starting new round
+      // Clear chat history when starting new passage/round
       this.chatUI.clearChatHistory();
       
-      const roundData = await this.game.nextRound();
+      // Check if we should load next passage or next round
+      let roundData;
+      if (this.game.currentPassageIndex === 0) {
+        // Load second passage in current round
+        roundData = await this.game.nextPassage();
+      } else {
+        // Load next round (two new passages)
+        roundData = await this.game.nextRound();
+      }
+      
       this.displayRound(roundData);
       this.resetUI();
       this.showLoading(false);
     } catch (error) {
-      console.error('Error loading next round:', error);
+      console.error('Error loading next passage:', error);
       this.showError('Could not load next passage. Please try again.');
     }
   }

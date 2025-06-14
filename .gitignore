@@ -55,7 +55,17 @@ tmp/
 temp/
 .aider*
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
 # Planning documents
 HF_DATASET_INTEGRATION_PLAN.md
 *_PLAN.md
 IMPLEMENTATION_*.md
+
+# Local configuration files
+*.local
+.env

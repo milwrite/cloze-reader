@@ -44,7 +44,12 @@ class ChatUI {
           <!-- Question buttons area -->
           <div class="p-4 border-t">
             <div class="text-sm text-gray-600 mb-3">Choose a question:</div>
-            <div id="question-buttons" class="grid grid-cols-2 gap-2">
+            <!-- Dropdown for mobile -->
+            <select id="question-dropdown" class="w-full p-2 border rounded md:hidden mb-2">
+              <option value="">Select a question...</option>
+            </select>
+            <!-- Button grid for desktop -->
+            <div id="question-buttons" class="hidden md:grid grid-cols-2 gap-2">
               <!-- Question buttons will be inserted here -->
             </div>
           </div>
@@ -107,6 +112,7 @@ class ChatUI {
     messagesContainer.innerHTML = `
       <div class="text-center text-gray-500 text-sm">
         Choose a question below to get help with this word.
+        <br>
       </div>
     `;
   }
@@ -159,27 +165,39 @@ class ChatUI {
   // Load question buttons with disabled state for used questions
   loadQuestionButtons() {
     const buttonsContainer = document.getElementById('question-buttons');
+    const dropdown = document.getElementById('question-dropdown');
     const questions = this.game.getSuggestedQuestionsForBlank(this.activeChatBlank);
     
-    let html = '';
+    // Clear existing content
+    buttonsContainer.innerHTML = '';
+    dropdown.innerHTML = '<option value="">Select a question...</option>';
+    
+    // Build button grid for desktop and dropdown options
+    let buttonHtml = '';
     questions.forEach(question => {
       const isDisabled = question.used;
       const buttonClass = isDisabled
-        ? 'question-btn px-3 py-2 bg-gray-200 text-gray-500 rounded cursor-not-allowed text-sm font-medium'
-        : 'question-btn px-3 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 text-sm font-medium';
+        ? 'question-btn px-2 py-1 bg-gray-100 text-gray-500 rounded cursor-not-allowed text-xs'
+        : 'question-btn px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 text-xs border border-blue-200';
       
-      html += `
+      // Desktop buttons
+      buttonHtml += `
         <button class="${buttonClass}"
                 data-type="${question.type}"
                 ${isDisabled ? 'disabled' : ''}>
           ${question.text}${isDisabled ? ' ✓' : ''}
         </button>
       `;
+      
+      // Mobile dropdown options
+      if (!isDisabled) {
+        dropdown.innerHTML += `<option value="${question.type}">${question.text}</option>`;
+      }
     });
     
-    buttonsContainer.innerHTML = html;
+    buttonsContainer.innerHTML = buttonHtml;
     
-    // Add click listeners to individual question buttons (not the container)
+    // Add click listeners to desktop buttons
     buttonsContainer.querySelectorAll('.question-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         if (!btn.disabled) {
@@ -189,6 +207,14 @@ class ChatUI {
           this.askQuestion(questionType);
         }
       });
+    });
+    
+    // Add change listener to mobile dropdown
+    dropdown.addEventListener('change', (e) => {
+      if (e.target.value) {
+        this.askQuestion(e.target.value);
+        e.target.value = ''; // Reset dropdown
+      }
     });
   }
 

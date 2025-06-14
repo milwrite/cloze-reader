@@ -19,6 +19,11 @@ class ClozeGame {
     this.hints = [];
     this.chatService = new ChatService(aiService);
     this.lastResults = null; // Store results for answer revelation
+    
+    // Two-passage system properties
+    this.currentBooks = []; // Array of two books per round
+    this.passages = []; // Array of two passages per round
+    this.currentPassageIndex = 0; // 0 for first passage, 1 for second
   }
 
   async initialize() {
@@ -33,20 +38,30 @@ class ClozeGame {
 
   async startNewRound() {
     try {
-      // Get a random book (now async with HF streaming)
-      this.currentBook = await bookDataService.getRandomBook();
+      // Get two random books for this round
+      const book1 = await bookDataService.getRandomBook();
+      const book2 = await bookDataService.getRandomBook();
       
-      // Extract a coherent passage avoiding fragmented text
-      const fullText = this.currentBook.text;
-      let passage = this.extractCoherentPassage(fullText);
+      // Extract passages from both books
+      const passage1 = this.extractCoherentPassage(book1.text);
+      const passage2 = this.extractCoherentPassage(book2.text);
       
-      this.originalText = passage.trim();
+      // Store both books and passages
+      this.currentBooks = [book1, book2];
+      this.passages = [passage1.trim(), passage2.trim()];
+      this.currentPassageIndex = 0;
       
-      // Run AI calls in parallel for faster loading
-      const [clozeResult, contextualizationResult] = await Promise.all([
-        this.createClozeText(),
-        this.generateContextualization()
-      ]);
+      // Start with the first passage
+      this.currentBook = book1;
+      this.originalText = this.passages[0];
+      
+      // Run AI calls sequentially to avoid rate limiting
+      await this.createClozeText();
+      
+      // Add small delay between API calls to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      await this.generateContextualization();
       
       return {
         title: this.currentBook.title,
@@ -54,7 +69,9 @@ class ClozeGame {
         text: this.clozeText,
         blanks: this.blanks,
         contextualization: this.contextualization,
-        hints: this.hints
+        hints: this.hints,
+        passageNumber: 1,
+        totalPassages: 2
       };
     } catch (error) {
       console.error('Error starting new round:', error);
@@ -376,8 +393,8 @@ class ClozeGame {
       const inputHtml = `<input type="text" 
         class="cloze-input" 
         data-blank-index="${index}" 
-        placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}"
-        style="width: ${Math.max(80, blank.originalWord.length * 12)}px;">`;
+        placeholder="${'_ '.repeat(Math.max(3, blank.originalWord.length)).trim()}"
+        style="width: ${Math.max(80, blank.originalWord.length * 16)}px;">`;
       
       html = html.replace(`___BLANK_${index}___`, inputHtml);
     });
@@ -450,6 +467,48 @@ class ClozeGame {
       index: blank.index,
       word: blank.originalWord
     }));
+  }
+
+  async nextPassage() {
+    try {
+      // Move to the second passage in the current round
+      if (this.currentPassageIndex === 0 && this.passages && this.passages.length > 1) {
+        this.currentPassageIndex = 1;
+        this.currentBook = this.currentBooks[1];
+        this.originalText = this.passages[1];
+        
+        // Clear chat conversations for new passage
+        this.chatService.clearConversations();
+        
+        // Clear last results
+        this.lastResults = null;
+        
+        // Generate new cloze text and contextualization for second passage sequentially
+        await this.createClozeText();
+        
+        // Add small delay between API calls to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        await this.generateContextualization();
+        
+        return {
+          title: this.currentBook.title,
+          author: this.currentBook.author,
+          text: this.clozeText,
+          blanks: this.blanks,
+          contextualization: this.contextualization,
+          hints: this.hints,
+          passageNumber: 2,
+          totalPassages: 2
+        };
+      } else {
+        // If we're already on the second passage, move to next round
+        return this.nextRound();
+      }
+    } catch (error) {
+      console.error('Error loading next passage:', error);
+      throw error;
+    }
   }
 
   nextRound() {
@@ -547,8 +606,8 @@ class ClozeGame {
           <input type="text" 
             class="cloze-input" 
             data-blank-index="${index}" 
-            placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}"
-            style="width: ${Math.max(80, blank.originalWord.length * 12)}px;">
+            placeholder="${'_ '.repeat(Math.max(3, blank.originalWord.length)).trim()}"
+            style="width: ${Math.max(80, blank.originalWord.length * 16)}px;">
           <button id="${chatButtonId}" 
             class="chat-button text-blue-500 hover:text-blue-700 text-sm" 
             data-blank-index="${index}"

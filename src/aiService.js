@@ -138,6 +138,19 @@ Passage: "${passage}"`
       }
 
       const data = await response.json();
+      
+      // Check for OpenRouter error response
+      if (data.error) {
+        console.error('OpenRouter API error for word selection:', data.error);
+        throw new Error(`OpenRouter API error: ${data.error.message || JSON.stringify(data.error)}`);
+      }
+      
+      // Check if response has expected structure
+      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        console.error('Invalid word selection API response structure:', data);
+        throw new Error('API response missing expected content');
+      }
+      
       const content = data.choices[0].message.content.trim();
       
       // Try to parse as JSON array
@@ -207,13 +220,25 @@ Passage: "${passage}"`
       }
 
       const data = await response.json();
+      
+      // Check for OpenRouter error response
+      if (data.error) {
+        console.error('OpenRouter API error for contextualization:', data.error);
+        throw new Error(`OpenRouter API error: ${data.error.message || JSON.stringify(data.error)}`);
+      }
+      
+      // Check if response has expected structure
+      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        console.error('Invalid contextualization API response structure:', data);
+        throw new Error('API response missing expected content');
+      }
+      
       let content = data.choices[0].message.content.trim();
       
       // Clean up AI response artifacts
       content = content
         .replace(/^\s*["']|["']\s*$/g, '')  // Remove leading/trailing quotes
         .replace(/^\s*[:;]+\s*/, '')        // Remove leading colons and semicolons
-        .replace(/^\s*[a-z]+:\s*/i, '')     // Remove any word followed by colon (like "mas:")
         .replace(/\*+/g, '')                // Remove asterisks (markdown bold/italic)
         .replace(/_+/g, '')                 // Remove underscores (markdown)
         .replace(/#+\s*/g, '')              // Remove hash symbols (markdown headers)
