@@ -51,17 +51,33 @@ class ClozeGame {
       this.passages = [passage1.trim(), passage2.trim()];
       this.currentPassageIndex = 0;
       
-      // Start with the first passage
-      this.currentBook = book1;
-      this.originalText = this.passages[0];
+      // Calculate blanks per passage based on level
+      const blanksPerPassage = Math.min(this.currentLevel + 2, 5);
       
-      // Run AI calls sequentially to avoid rate limiting
-      await this.createClozeText();
-      
-      // Add small delay between API calls to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      await this.generateContextualization();
+      // Process both passages in a single API call
+      try {
+        const batchResult = await aiService.processBothPassages(
+          passage1, book1, passage2, book2, blanksPerPassage
+        );
+        
+        // Store the preprocessed data for both passages
+        this.preprocessedData = batchResult;
+        
+        // Set up first passage using preprocessed data
+        this.currentBook = book1;
+        this.originalText = this.passages[0];
+        await this.createClozeTextFromPreprocessed(0);
+        this.contextualization = this.preprocessedData.passage1.context;
+        
+      } catch (error) {
+        console.warn('Batch processing failed, falling back to sequential:', error);
+        // Fallback to sequential processing
+        this.currentBook = book1;
+        this.originalText = this.passages[0];
+        await this.createClozeText();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await this.generateContextualization();
+      }
       
       return {
         title: this.currentBook.title,
@@ -157,6 +173,66 @@ class ClozeGame {
     }
     
     return passage.trim();
+  }
+
+  async createClozeTextFromPreprocessed(passageIndex) {
+    // Use preprocessed word selection from batch API call
+    const preprocessed = passageIndex === 0 ? this.preprocessedData.passage1 : this.preprocessedData.passage2;
+    const selectedWords = preprocessed.words;
+    
+    // Split passage into words
+    const words = this.originalText.split(/(\s+)/);
+    const wordsOnly = words.filter(w => w.trim() !== '');
+    
+    // Find indices of selected words
+    const selectedIndices = [];
+    selectedWords.forEach(word => {
+      const index = wordsOnly.findIndex((w, idx) => 
+        w.toLowerCase().includes(word.toLowerCase()) && !selectedIndices.includes(idx)
+      );
+      if (index !== -1) {
+        selectedIndices.push(index);
+      }
+    });
+    
+    // Create blanks
+    this.blanks = [];
+    this.hints = [];
+    const clozeWords = [...wordsOnly];
+    
+    selectedIndices.forEach((wordIndex, blankIndex) => {
+      const originalWord = wordsOnly[wordIndex];
+      const cleanWord = originalWord.replace(/[^\w]/g, '');
+      
+      this.blanks.push({
+        index: blankIndex,
+        originalWord: cleanWord,
+        wordIndex: wordIndex
+      });
+      
+      // Generate structural hint
+      const hint = this.currentLevel <= 2
+        ? `${cleanWord.length} letters, starts with "${cleanWord[0]}", ends with "${cleanWord[cleanWord.length - 1]}"`
+        : `${cleanWord.length} letters, starts with "${cleanWord[0]}"`;
+      this.hints.push({ index: blankIndex, hint });
+      
+      // Replace with placeholder
+      clozeWords[wordIndex] = `___BLANK_${blankIndex}___`;
+    });
+    
+    // Reconstruct text with original spacing
+    let reconstructed = '';
+    let wordIndex = 0;
+    words.forEach(part => {
+      if (part.trim() === '') {
+        reconstructed += part;
+      } else {
+        reconstructed += clozeWords[wordIndex++];
+      }
+    });
+    
+    this.clozeText = reconstructed;
+    this.userAnswers = new Array(this.blanks.length).fill('');
   }
 
   async createClozeText() {
@@ -511,13 +587,16 @@ class ClozeGame {
         // Clear last results
         this.lastResults = null;
         
-        // Generate new cloze text and contextualization for second passage sequentially
-        await this.createClozeText();
-        
-        // Add small delay between API calls to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        await this.generateContextualization();
+        // Use preprocessed data if available
+        if (this.preprocessedData && this.preprocessedData.passage2) {
+          await this.createClozeTextFromPreprocessed(1);
+          this.contextualization = this.preprocessedData.passage2.context;
+        } else {
+          // Fallback to sequential processing
+          await this.createClozeText();
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await this.generateContextualization();
+        }
         
         return {
           title: this.currentBook.title,

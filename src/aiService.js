@@ -183,6 +183,75 @@ Passage: "${passage}"`
     }
   }
 
+  async processBothPassages(passage1, book1, passage2, book2, blanksPerPassage) {
+    // Process both passages in a single API call to avoid rate limits
+    const currentKey = this.getApiKey();
+    if (currentKey && !this.apiKey) {
+      this.apiKey = currentKey;
+    }
+    
+    if (!this.apiKey) {
+      throw new Error('API key required for passage processing');
+    }
+
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Cloze Reader'
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages: [{
+            role: 'system',
+            content: 'Process two passages for a cloze reading exercise. For each passage: 1) Select words for blanks, 2) Generate a contextual introduction. Return a JSON object with both passages\' data.'
+          }, {
+            role: 'user',
+            content: `Process these two passages for cloze exercises:
+
+PASSAGE 1:
+Title: "${book1.title}" by ${book1.author}
+Text: "${passage1}"
+Select ${blanksPerPassage} words for blanks.
+
+PASSAGE 2:
+Title: "${book2.title}" by ${book2.author}
+Text: "${passage2}"
+Select ${blanksPerPassage} words for blanks.
+
+For each passage return:
+- "words": array of selected words (exactly as they appear)
+- "context": one-sentence intro about the book/author
+
+Return as JSON: {"passage1": {...}, "passage2": {...}}`
+          }],
+          max_tokens: 500,
+          temperature: 0.3
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0].message.content.trim();
+      
+      try {
+        return JSON.parse(content);
+      } catch (e) {
+        console.error('Failed to parse batch response:', e);
+        throw new Error('Invalid API response format');
+      }
+    } catch (error) {
+      console.error('Error processing passages:', error);
+      throw error;
+    }
+  }
+
   async generateContextualization(title, author) {
     console.log('generateContextualization called for:', title, 'by', author);
     
