@@ -12,7 +12,7 @@ class OpenRouterService {
     if (typeof window !== 'undefined' && window.OPENROUTER_API_KEY) {
       return window.OPENROUTER_API_KEY;
     }
-    console.warn('No API key found in getApiKey()');
+    // console.warn('No API key found in getApiKey()');
     return '';
   }
 
@@ -238,13 +238,103 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
       }
 
       const data = await response.json();
+      
+      // Check for error response
+      if (data.error) {
+        console.error('OpenRouter API error for batch processing:', data.error);
+        throw new Error(`OpenRouter API error: ${data.error.message || JSON.stringify(data.error)}`);
+      }
+      
+      // Check if response has expected structure
+      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        console.error('Invalid batch API response structure:', data);
+        throw new Error('API response missing expected content');
+      }
+      
       const content = data.choices[0].message.content.trim();
       
       try {
-        return JSON.parse(content);
+        // Try to extract JSON from the response
+        // Sometimes the model returns JSON wrapped in markdown code blocks
+        const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
+        let jsonString = jsonMatch ? jsonMatch[1] : content;
+        
+        // Clean up the JSON string
+        jsonString = jsonString
+          .replace(/^\s*```json\s*/, '')
+          .replace(/\s*```\s*$/, '')
+          .trim();
+        
+        // Try to fix common JSON issues
+        // Check if JSON is truncated (missing closing braces)
+        const openBraces = (jsonString.match(/{/g) || []).length;
+        const closeBraces = (jsonString.match(/}/g) || []).length;
+        
+        if (openBraces > closeBraces) {
+          // Add missing closing braces
+          jsonString += '}'.repeat(openBraces - closeBraces);
+        }
+        
+        // Remove any trailing garbage after the last closing brace
+        const lastBrace = jsonString.lastIndexOf('}');
+        if (lastBrace !== -1 && lastBrace < jsonString.length - 1) {
+          jsonString = jsonString.substring(0, lastBrace + 1);
+        }
+        
+        const parsed = JSON.parse(jsonString);
+        
+        // Validate the structure
+        if (!parsed.passage1 || !parsed.passage2) {
+          console.error('Parsed response missing expected structure:', parsed);
+          throw new Error('Response missing passage1 or passage2');
+        }
+        
+        // Ensure words arrays exist and are arrays
+        if (!Array.isArray(parsed.passage1.words)) {
+          parsed.passage1.words = [];
+        }
+        if (!Array.isArray(parsed.passage2.words)) {
+          parsed.passage2.words = [];
+        }
+        
+        return parsed;
       } catch (e) {
         console.error('Failed to parse batch response:', e);
-        throw new Error('Invalid API response format');
+        console.error('Raw content:', content);
+        
+        // Try to extract any usable data from the partial response
+        try {
+          // Extract passage contexts using regex
+          const context1Match = content.match(/"context":\s*"([^"]+)"/);
+          const context2Match = content.match(/"passage2"[\s\S]*?"context":\s*"([^"]+)"/);
+          
+          // Extract words arrays using regex
+          const words1Match = content.match(/"words":\s*\[([^\]]+)\]/);
+          const words2Match = content.match(/"passage2"[\s\S]*?"words":\s*\[([^\]]+)\]/);
+          
+          const extractWords = (match) => {
+            if (!match) return [];
+            try {
+              return JSON.parse(`[${match[1]}]`);
+            } catch {
+              return match[1].split(',').map(w => w.trim().replace(/['"]/g, ''));
+            }
+          };
+          
+          return {
+            passage1: { 
+              words: extractWords(words1Match), 
+              context: context1Match ? context1Match[1] : `From "${book1.title}" by ${book1.author}` 
+            },
+            passage2: { 
+              words: extractWords(words2Match), 
+              context: context2Match ? context2Match[1] : `From "${book2.title}" by ${book2.author}` 
+            }
+          };
+        } catch (extractError) {
+          console.error('Failed to extract partial data:', extractError);
+          throw new Error('Invalid API response format');
+        }
       }
     } catch (error) {
       console.error('Error processing passages:', error);

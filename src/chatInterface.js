@@ -41,17 +41,12 @@ class ChatUI {
             </div>
           </div>
           
-          <!-- Question buttons area -->
+          <!-- Question dropdown area -->
           <div class="p-4 border-t">
-            <div class="text-sm text-gray-600 mb-3">Choose a question:</div>
-            <!-- Dropdown for mobile -->
-            <select id="question-dropdown" class="w-full p-2 border rounded md:hidden mb-2">
+            <!-- Dropdown for all devices -->
+            <select id="question-dropdown" class="w-full p-2 border rounded mb-2">
               <option value="">Select a question...</option>
             </select>
-            <!-- Button grid for desktop -->
-            <div id="question-buttons" class="hidden md:grid grid-cols-2 gap-2">
-              <!-- Question buttons will be inserted here -->
-            </div>
           </div>
         </div>
       </div>
@@ -110,9 +105,8 @@ class ChatUI {
   clearMessages() {
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.innerHTML = `
-      <div class="text-center text-gray-500 text-sm">
+      <div class="text-center text-gray-500 text-sm mb-4">
         Choose a question below to get help with this word.
-        <br>
       </div>
     `;
   }
@@ -162,54 +156,29 @@ class ChatUI {
     this.messageHistory.clear();
   }
 
-  // Load question buttons with disabled state for used questions
+  // Load question dropdown with disabled state for used questions
   loadQuestionButtons() {
-    const buttonsContainer = document.getElementById('question-buttons');
     const dropdown = document.getElementById('question-dropdown');
     const questions = this.game.getSuggestedQuestionsForBlank(this.activeChatBlank);
     
     // Clear existing content
-    buttonsContainer.innerHTML = '';
     dropdown.innerHTML = '<option value="">Select a question...</option>';
     
-    // Build button grid for desktop and dropdown options
-    let buttonHtml = '';
+    // Build dropdown options
     questions.forEach(question => {
       const isDisabled = question.used;
-      const buttonClass = isDisabled
-        ? 'question-btn px-2 py-1 bg-gray-100 text-gray-500 rounded cursor-not-allowed text-xs'
-        : 'question-btn px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 text-xs border border-blue-200';
+      const optionText = isDisabled ? `${question.text} ✓` : question.text;
       
-      // Desktop buttons
-      buttonHtml += `
-        <button class="${buttonClass}"
-                data-type="${question.type}"
-                ${isDisabled ? 'disabled' : ''}>
-          ${question.text}${isDisabled ? ' ✓' : ''}
-        </button>
-      `;
-      
-      // Mobile dropdown options
-      if (!isDisabled) {
-        dropdown.innerHTML += `<option value="${question.type}">${question.text}</option>`;
-      }
+      // Add all options but mark used ones as disabled
+      const option = document.createElement('option');
+      option.value = isDisabled ? '' : question.type;
+      option.textContent = optionText;
+      option.disabled = isDisabled;
+      option.style.color = isDisabled ? '#9CA3AF' : '#111827';
+      dropdown.appendChild(option);
     });
     
-    buttonsContainer.innerHTML = buttonHtml;
-    
-    // Add click listeners to desktop buttons
-    buttonsContainer.querySelectorAll('.question-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        if (!btn.disabled) {
-          e.preventDefault();
-          e.stopPropagation();
-          const questionType = btn.dataset.type;
-          this.askQuestion(questionType);
-        }
-      });
-    });
-    
-    // Add change listener to mobile dropdown
+    // Add change listener to dropdown
     dropdown.addEventListener('change', (e) => {
       if (e.target.value) {
         this.askQuestion(e.target.value);

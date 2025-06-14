@@ -52,7 +52,15 @@ class ClozeGame {
       this.currentPassageIndex = 0;
       
       // Calculate blanks per passage based on level
-      const blanksPerPassage = Math.min(this.currentLevel + 2, 5);
+      // Progressive difficulty: levels 1-2 = 1 blank, levels 3-4 = 2 blanks, level 5+ = 3 blanks
+      let blanksPerPassage;
+      if (this.currentLevel <= 2) {
+        blanksPerPassage = 1;
+      } else if (this.currentLevel <= 4) {
+        blanksPerPassage = 2;
+      } else {
+        blanksPerPassage = 3;
+      }
       
       // Process both passages in a single API call
       try {
@@ -209,6 +217,20 @@ class ClozeGame {
         originalWord: cleanWord,
         wordIndex: wordIndex
       });
+      
+      // Initialize chat context for this word
+      const wordContext = {
+        originalWord: cleanWord,
+        sentence: this.originalText,
+        passage: this.originalText,
+        bookTitle: this.currentBook.title,
+        author: this.currentBook.author,
+        year: this.currentBook.year,
+        wordPosition: wordIndex,
+        difficulty: this.calculateWordDifficulty(cleanWord, wordIndex, wordsOnly)
+      };
+      
+      this.chatService.initializeWordContext(`blank_${blankIndex}`, wordContext);
       
       // Generate structural hint
       const hint = this.currentLevel <= 2

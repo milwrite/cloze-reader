@@ -38,3 +38,24 @@ An interactive cloze reading practice application with AI-powered assistance. Pr
 ## Technology
 
 Built with vanilla JavaScript, powered by AI for intelligent word selection and contextual assistance.
+
+## Running Locally with Docker
+
+To run the Cloze Reader application locally using Docker:
+
+1. **Build the Docker image**:
+   ```bash
+   docker build -t cloze-reader .
+   ```
+
+2. **Run the container**:
+   ```bash
+   docker run -p 7860:7860 cloze-reader
+   ```
+
+3. **Access the application**:
+   Open your browser and navigate to `http://localhost:7860`
+
+### Prerequisites
+- Docker installed on your system
+- Port 7860 available on your machine

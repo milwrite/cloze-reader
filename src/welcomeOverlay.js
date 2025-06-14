@@ -6,13 +6,11 @@ class WelcomeOverlay {
   }
 
   show() {
-    console.log('WelcomeOverlay.show() called, hasBeenShown:', this.hasBeenShown);
     // Always show overlay regardless of previous views
     
     this.isVisible = true;
     const overlay = this.createOverlay();
     document.body.appendChild(overlay);
-    console.log('Welcome overlay added to DOM');
     
     // Animate in
     requestAnimationFrame(() => {

@@ -204,10 +204,13 @@ class App {
   async handleNext() {
     try {
       // Show loading immediately with specific message
-      this.showLoading(true, 'Loading next passage...');
+      this.showLoading(true, 'Loading passage...');
       
       // Clear chat history when starting new passage/round
       this.chatUI.clearChatHistory();
+      
+      // Always show loading for at least 1 second for smooth UX
+      const startTime = Date.now();
       
       // Check if we should load next passage or next round
       let roundData;
@@ -217,6 +220,12 @@ class App {
       } else {
         // Load next round (two new passages)
         roundData = await this.game.nextRound();
+      }
+      
+      // Ensure loading is shown for at least 1 second
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < 1000) {
+        await new Promise(resolve => setTimeout(resolve, 1000 - elapsedTime));
       }
       
       this.displayRound(roundData);
