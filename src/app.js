@@ -69,11 +69,10 @@ class App {
       <strong>${roundData.title}</strong> by ${roundData.author}
     `;
 
-    // Show level information with passage number
+    // Show level information without passage number
     const blanksCount = roundData.blanks.length;
     const difficultyText = blanksCount === 1 ? 'Easy' : blanksCount === 2 ? 'Medium' : 'Hard';
-    const passageInfo = roundData.passageNumber ? `Passage ${roundData.passageNumber}/${roundData.totalPassages} • ` : '';
-    this.elements.roundInfo.innerHTML = `Level ${this.game.currentLevel} • ${passageInfo}${blanksCount} blank${blanksCount > 1 ? 's' : ''} • ${difficultyText}`;
+    this.elements.roundInfo.innerHTML = `Level ${this.game.currentLevel} • ${blanksCount} blank${blanksCount > 1 ? 's' : ''} • ${difficultyText}`;
 
     // Show contextualization from AI agent
     this.elements.contextualization.innerHTML = `
