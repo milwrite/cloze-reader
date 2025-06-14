@@ -309,19 +309,23 @@ class ClozeGame {
       
       let wordIndex = -1;
       
-      // First try to find the word in the designated section (avoiding first 10 words)
+      // First try to find the word in the designated section (avoiding first 10 words and capitalized words)
       for (let i = Math.max(10, sectionStart); i < sectionEnd; i++) {
-        if (wordsLower[i] === cleanSignificant && !selectedIndices.includes(i)) {
+        const originalWord = words[i].replace(/[^\w]/g, '');
+        const isCapitalized = originalWord.length > 0 && originalWord[0] === originalWord[0].toUpperCase();
+        if (wordsLower[i] === cleanSignificant && !selectedIndices.includes(i) && !isCapitalized) {
           wordIndex = i;
           break;
         }
       }
       
-      // If not found in section, look globally (but still avoid first 10 words)
+      // If not found in section, look globally (but still avoid first 10 words and capitalized words)
       if (wordIndex === -1) {
-        wordIndex = wordsLower.findIndex((word, idx) => 
-          word === cleanSignificant && !selectedIndices.includes(idx) && idx >= 10
-        );
+        wordIndex = wordsLower.findIndex((word, idx) => {
+          const originalWord = words[idx].replace(/[^\w]/g, '');
+          const isCapitalized = originalWord.length > 0 && originalWord[0] === originalWord[0].toUpperCase();
+          return word === cleanSignificant && !selectedIndices.includes(idx) && idx >= 10 && !isCapitalized;
+        });
       }
       
       if (wordIndex !== -1) {
@@ -339,12 +343,14 @@ class ClozeGame {
       console.warn('No AI words matched in passage, using manual selection');
       const manualWords = this.selectWordsManually(words, numberOfBlanks);
       
-      // Try to match manual words (avoiding first 10 words)
+      // Try to match manual words (avoiding first 10 words and capitalized words)
       manualWords.forEach((manualWord, index) => {
         const cleanManual = manualWord.toLowerCase().replace(/[^\w]/g, '');
-        const wordIndex = wordsLower.findIndex((word, idx) => 
-          word === cleanManual && !selectedIndices.includes(idx) && idx >= 10
-        );
+        const wordIndex = wordsLower.findIndex((word, idx) => {
+          const originalWord = words[idx].replace(/[^\w]/g, '');
+          const isCapitalized = originalWord.length > 0 && originalWord[0] === originalWord[0].toUpperCase();
+          return word === cleanManual && !selectedIndices.includes(idx) && idx >= 10 && !isCapitalized;
+        });
         
         if (wordIndex !== -1) {
           selectedIndices.push(wordIndex);
@@ -459,7 +465,11 @@ class ClozeGame {
     const contentWordIndices = [];
     words.forEach((word, index) => {
       const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
-      if (cleanWord.length > 3 && cleanWord.length <= 12 && !functionWords.has(cleanWord)) {
+      const originalCleanWord = word.replace(/[^\w]/g, '');
+      // Skip capitalized words, function words, and words that are too short/long
+      if (cleanWord.length > 3 && cleanWord.length <= 12 && 
+          !functionWords.has(cleanWord) && 
+          originalCleanWord[0] === originalCleanWord[0].toLowerCase()) {
         contentWordIndices.push({ word: cleanWord, index });
       }
     });
@@ -519,8 +529,8 @@ class ClozeGame {
       const inputHtml = `<input type="text" 
         class="cloze-input" 
         data-blank-index="${index}" 
-        placeholder="${'_ '.repeat(Math.max(3, blank.originalWord.length)).trim()}"
-        style="width: ${Math.max(80, blank.originalWord.length * 16)}px;">`;
+        placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}"
+        style="width: ${Math.max(70, blank.originalWord.length * 14)}px;">`;
       
       html = html.replace(`___BLANK_${index}___`, inputHtml);
     });
@@ -731,12 +741,12 @@ class ClozeGame {
     this.blanks.forEach((blank, index) => {
       const chatButtonId = `chat-btn-${index}`;
       const inputHtml = `
-        <span class="inline-flex items-center gap-1">
+        <span class="inline-flex items-center">
           <input type="text" 
             class="cloze-input" 
             data-blank-index="${index}" 
-            placeholder="${'_ '.repeat(Math.max(3, blank.originalWord.length)).trim()}"
-            style="width: ${Math.max(80, blank.originalWord.length * 16)}px;">
+            placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}"
+            style="width: ${Math.max(70, blank.originalWord.length * 14)}px;">
           <button id="${chatButtonId}" 
             class="chat-button text-blue-500 hover:text-blue-700 text-sm" 
             data-blank-index="${index}"

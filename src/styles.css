@@ -31,6 +31,33 @@
   transform: scale(1.1);
 }
 
+/* Chat modal styling to match game font */
+#chat-modal {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+#chat-modal .bg-white {
+  background-color: var(--aged-paper-light);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+#chat-modal h3 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  color: var(--typewriter-ink);
+  font-weight: 600;
+}
+
+#chat-messages {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  color: var(--typewriter-ink);
+  line-height: 1.6;
+}
+
+#chat-messages .text-gray-500 {
+  color: #666 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
 .suggestion-btn, .question-btn {
   transition: all 0.2s ease;
   padding: 14px 18px;
@@ -121,8 +148,11 @@
   background: #1f2937;
   color: white;
   border: 2px solid #374151;
-  padding: 12px 24px;
+  padding: 8px 14px;
   font-weight: 600;
+  font-size: 14px;
+  min-width: 100px;
+  min-height: 36px;
   transition: all 0.2s ease;
 }
 
@@ -228,8 +258,8 @@
     color: var(--typewriter-ink);
     text-align: center;
     outline: none;
-    padding: 4px 6px;
-    margin: 0 2px;
+    padding: 3px 4px;
+    margin: 0 1px;
     min-width: 4ch;
     width: auto;
     font-size: inherit;
@@ -262,20 +292,20 @@
 
   .typewriter-button {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    min-width: 120px;
-    min-height: 44px;
-    padding: 10px 18px;
+    min-width: 100px;
+    min-height: 36px;
+    padding: 8px 14px;
     background-color: var(--aged-paper-dark);
     color: var(--typewriter-ink);
     border: 2px solid black;
     border-radius: 6px;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.15s ease;
     box-shadow: 
-      0 4px 0 rgba(0, 0, 0, 0.3),
-      0 6px 12px rgba(0, 0, 0, 0.1);
+      0 3px 0 rgba(0, 0, 0, 0.3),
+      0 4px 8px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
   }
@@ -284,15 +314,15 @@
     background-color: rgba(0, 0, 0, 0.05);
     transform: translateY(-1px);
     box-shadow: 
-      0 5px 0 rgba(0, 0, 0, 0.3),
-      0 8px 16px rgba(0, 0, 0, 0.15);
+      0 4px 0 rgba(0, 0, 0, 0.3),
+      0 6px 12px rgba(0, 0, 0, 0.15);
   }
 
   .typewriter-button:active:not(:disabled) {
     transform: translateY(2px);
     box-shadow: 
-      0 2px 0 rgba(0, 0, 0, 0.3),
-      0 3px 6px rgba(0, 0, 0, 0.1);
+      0 1px 0 rgba(0, 0, 0, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .typewriter-button:disabled {
@@ -326,28 +356,25 @@
   }
 
   .biblio-info {
-    font-family: 'Special Elite', 'Courier New', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     font-size: 0.85rem;
     color: #666;
-    letter-spacing: 0.03em;
     font-style: italic;
   }
 
   .context-box {
     background-color: rgba(245, 158, 11, 0.08);
     border-left: 4px solid #f59e0b;
-    font-family: 'Special Elite', 'Courier New', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     font-size: 0.9rem;
-    letter-spacing: 0.03em;
     line-height: 1.6;
   }
 
   .hints-box {
     background-color: rgba(245, 158, 11, 0.08);
     border-left: 4px solid #f59e0b;
-    font-family: 'Special Elite', 'Courier New', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     font-size: 0.9rem;
-    letter-spacing: 0.03em;
     line-height: 1.6;
   }
 
@@ -355,21 +382,23 @@
     background-color: rgba(245, 158, 11, 0.1);
     color: #666;
     border: 1px solid rgba(245, 158, 11, 0.2);
-    font-family: 'Special Elite', 'Courier New', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     font-weight: 600;
-    letter-spacing: 0.05em;
+  }
+
+  /* Ensure specific game info elements use accessible font */
+  #book-info, #round-info, #contextualization {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   }
 
   .loading-text {
-    font-family: 'Special Elite', 'Courier New', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     color: #666;
-    letter-spacing: 0.05em;
   }
 
   .result-text {
-    font-family: 'Special Elite', 'Courier New', monospace;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     font-weight: 600;
-    letter-spacing: 0.05em;
   }
 
   /* Responsive adjustments */
@@ -419,20 +448,20 @@
 
   /* Mobile dropdown styling */
   #question-dropdown {
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
+    background: var(--aged-paper-dark);
+    border: 2px solid rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
-    color: #495057;
+    color: var(--typewriter-ink);
     transition: all 0.2s ease;
   }
 
   #question-dropdown:focus {
     outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    border-color: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
   }
 
   /* Print styles */
