@@ -72,35 +72,5 @@ This is a **vanilla JavaScript modular application** with no build step. Key arc
 - `conversationManager.js` - AI conversation state management for chat functionality
 - `welcomeOverlay.js` - First-time user onboarding
 
-```mermaid
-graph TD
-    A[User loads app] --> B[Welcome Overlay]
-    B --> C[App.js - Main Controller]
-    C --> D[ClozeGameEngine.js]
-    C --> E[ChatInterface.js]
-    
-    D --> F[BookDataService.js]
-    F --> G[HuggingFace Datasets API]
-    
-    D --> H[AIService.js]
-    H --> I[OpenRouter API - Gemma 3]
-    
-    E --> J[ConversationManager.js]
-    J --> H
-    
-    D --> K[Word Selection Logic]
-    K --> L[Filter Capitalized Words]
-    K --> M[Progressive Difficulty]
-    
-    C --> N[UI State Management]
-    N --> O[Level Progression]
-    N --> P[Score Tracking]
-    N --> Q[Passage Display]
-    
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style I fill:#bbf,stroke:#333,stroke-width:2px
-    style G fill:#bbf,stroke:#333,stroke-width:2px
-    style L fill:#fbb,stroke:#333,stroke-width:2px
-```
-
+---
 [milwright](https://huggingface.co/milwright), *Zach Muhlbauer*, CUNY Graduate Center
