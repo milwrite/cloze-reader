@@ -44,7 +44,7 @@ class ChatUI {
           <!-- Question dropdown area -->
           <div class="p-4 border-t">
             <!-- Dropdown for all devices -->
-            <select id="question-dropdown" class="w-full p-2 border rounded mb-2">
+            <select id="question-dropdown" class="w-full p-2 border rounded mb-4">
               <option value="">Select a question...</option>
             </select>
           </div>
