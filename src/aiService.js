@@ -223,11 +223,10 @@ Passage: "${passage}"`
         body: JSON.stringify({
           model: this.model,
           messages: [{
-            role: 'system',
-            content: 'Process two passages for a cloze reading exercise. For each passage: 1) Select words for blanks, 2) Generate a contextual introduction. Return a JSON object with both passages\' data.'
-          }, {
             role: 'user',
-            content: `Process these two passages for cloze exercises:
+            content: `You process passages for cloze reading exercises. For each passage: 1) Select words for blanks, 2) Generate a contextual introduction. Return a JSON object with both passages' data.
+
+Process these two passages for cloze exercises:
 
 PASSAGE 1:
 Title: "${book1.title}" by ${book1.author}
