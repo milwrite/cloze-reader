@@ -121,10 +121,19 @@ class OpenRouterService {
           model: this.model,
           messages: [{
             role: 'system',
-            content: 'Select words for cloze reading exercises. Choose common, everyday words that students know. Avoid proper nouns (names, places), technical terms, archaic words, and words over 8 letters. Pick words students can guess from surrounding context.'
+            content: 'You are a vocabulary selector for educational cloze exercises. Select meaningful, properly-spelled content words that appear exactly as written in the passage.'
           }, {
             role: 'user',
-            content: `Select exactly ${count} meaningful content words for a cloze exercise. Choose nouns, verbs, adjectives that are 4+ letters long and important to meaning. NEVER select: articles (a, an, the), prepositions (in, on, at, to, for, of, with, by, from), conjunctions (and, or, but), pronouns (I, you, he, she, it, they), or auxiliary verbs (is, are, was, were, have, has, had). Return ONLY a JSON array of words.
+            content: `Select exactly ${count} words from this passage for a cloze exercise.
+
+REQUIREMENTS:
+- Choose clear, properly-spelled words (no OCR errors like "andsatires")
+- Select meaningful nouns, verbs, or adjectives (4-12 letters)
+- Words must appear EXACTLY as written in the passage
+- Avoid: function words, archaic terms, proper nouns, technical jargon
+- Skip any words that look malformed or concatenated
+
+Return ONLY a JSON array of the selected words.
 
 Passage: "${passage}"`
           }],

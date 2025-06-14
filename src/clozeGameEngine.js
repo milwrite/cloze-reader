@@ -85,13 +85,17 @@ class ClozeGame {
     const startFromMiddle = Math.floor(textLength * 0.3); // Skip first 30%
     const endAtThreeQuarters = Math.floor(textLength * 0.8); // Stop before last 20%
     
-    // Random position in the middle section
-    const availableLength = endAtThreeQuarters - startFromMiddle;
-    const randomOffset = Math.floor(Math.random() * Math.max(0, availableLength - 1000));
-    const startIndex = startFromMiddle + randomOffset;
+    let attempts = 0;
+    let passage = '';
     
-    // Extract longer initial passage for better sentence completion
-    let passage = text.substring(startIndex, startIndex + 1000);
+    while (attempts < 5) {
+      // Random position in the middle section
+      const availableLength = endAtThreeQuarters - startFromMiddle;
+      const randomOffset = Math.floor(Math.random() * Math.max(0, availableLength - 1000));
+      const startIndex = startFromMiddle + randomOffset;
+      
+      // Extract longer initial passage for better sentence completion
+      passage = text.substring(startIndex, startIndex + 1000);
     
     // Clean up start - find first complete sentence that starts with capital letter
     const firstSentenceMatch = passage.match(/[.!?]\s+([A-Z][^.!?]*)/);
@@ -106,12 +110,36 @@ class ClozeGame {
       }
     }
     
-    // Clean up end - ensure we end at a complete sentence
-    const sentences = passage.split(/(?<=[.!?])\s+/);
-    if (sentences.length > 1) {
-      // Remove the last sentence if it might be incomplete
-      sentences.pop();
-      passage = sentences.join(' ');
+      // Clean up end - ensure we end at a complete sentence
+      const sentences = passage.split(/(?<=[.!?])\s+/);
+      if (sentences.length > 1) {
+        // Remove the last sentence if it might be incomplete
+        sentences.pop();
+        passage = sentences.join(' ');
+      }
+      
+      // Quality check: reject passages with excessive caps, numbers, or special formatting
+      const words = passage.split(/\s+/);
+      const capsCount = words.filter(w => w.length > 1 && w === w.toUpperCase()).length;
+      const numbersCount = words.filter(w => /\d/.test(w)).length;
+      const totalWords = words.length;
+      
+      // Skip if more than 10% caps or 5% numbers
+      if (capsCount / totalWords > 0.1 || numbersCount / totalWords > 0.05) {
+        console.log(`Skipping passage with ${capsCount} caps and ${numbersCount} numbers out of ${totalWords} words`);
+        attempts++;
+        continue;
+      }
+      
+      // Check for other quality issues
+      if (passage.includes('CHAPTER') || passage.includes('Section') || 
+          passage.match(/\b(Fig\.|Table|Illustration)\b/)) {
+        attempts++;
+        continue;
+      }
+      
+      // Good passage found
+      break;
     }
     
     // Ensure minimum length - if too short, return what we have rather than infinite recursion
@@ -333,7 +361,7 @@ class ClozeGame {
     const contentWordIndices = [];
     words.forEach((word, index) => {
       const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
-      if (cleanWord.length > 3 && cleanWord.length <= 10 && !functionWords.has(cleanWord)) {
+      if (cleanWord.length > 3 && cleanWord.length <= 12 && !functionWords.has(cleanWord)) {
         contentWordIndices.push({ word: cleanWord, index });
       }
     });
