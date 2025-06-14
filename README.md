@@ -60,9 +60,7 @@ To run the Cloze Reader application locally using Docker:
 - Docker installed on your system
 - Port 7860 available on your machine
 
-## Architecture Overview
-
-### Frontend Structure
+## Architecture
 This is a **vanilla JavaScript modular application** with no build step. Key architectural patterns:
 
 **Module Organization:**
@@ -104,7 +102,5 @@ graph TD
     style G fill:#bbf,stroke:#333,stroke-width:2px
     style L fill:#fbb,stroke:#333,stroke-width:2px
 ```
-
----
 
 [milwright](https://huggingface.co/milwright), *Zach Muhlbauer*, CUNY Graduate Center
