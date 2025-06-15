@@ -43,10 +43,6 @@ class WelcomeOverlay {
       
       <div class="welcome-content">
         <p>
-          <strong>Practice reading comprehension</strong> by filling in missing words.
-        </p>
-        
-        <p>
           <strong>How to play:</strong> Read the passage, fill in the blanks, and use hints or chat help (💬) if needed. Progress through levels as you improve.
         </p>
         
