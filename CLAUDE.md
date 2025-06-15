@@ -1,1 +1,0 @@
-- Remember this command for launching this app in the future
