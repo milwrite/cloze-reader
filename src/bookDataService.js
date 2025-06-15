@@ -138,12 +138,29 @@ class HuggingFaceDatasetService {
       if (response.ok) {
         const data = await response.json();
         
+        // Check if data has expected structure
+        if (!data.rows || !Array.isArray(data.rows)) {
+          console.error('Unexpected HF API response structure:', data);
+          return;
+        }
+        
+        console.log(`📥 Received ${data.rows.length} books from HF API`);
+        
         // Process and filter books
         this.preloadedBooks = data.rows
-          .map(row => this.processHFBook(row.row))
-          .filter(book => this.isValidForCloze(book));
+          .map(row => {
+            try {
+              return this.processHFBook(row.row);
+            } catch (e) {
+              console.warn('Error processing book:', e);
+              return null;
+            }
+          })
+          .filter(book => book && this.isValidForCloze(book));
           
         console.log(`📚 Preloaded ${this.preloadedBooks.length} suitable books`);
+      } else {
+        console.error(`HF API request failed: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.warn('Failed to preload books:', error);
@@ -336,18 +353,19 @@ class HuggingFaceDatasetService {
     
     const textLength = book.text.length;
     
-    // Filter criteria for cloze exercises
-    if (textLength < 5000) return false;        // Too short
+    // Relaxed filter criteria for cloze exercises
+    if (textLength < 2000) return false;        // Minimum readable length
     if (textLength > 500000) return false;      // Too long for performance
     
     // Check for excessive formatting (likely reference material)
     const lineBreakRatio = (book.text.match(/\n\n/g) || []).length / textLength;
-    if (lineBreakRatio > 0.01) return false;    // Too fragmented
+    if (lineBreakRatio > 0.05) return false;    // Relaxed fragmentation threshold
     
     // Ensure it has actual narrative content
     const sentenceCount = (book.text.match(/[.!?]+/g) || []).length;
-    if (sentenceCount < 20) return false;       // Too few sentences
+    if (sentenceCount < 10) return false;       // Relaxed sentence requirement
     
+    console.log(`📖 Book validated: "${book.title}" (${textLength} chars, ${sentenceCount} sentences)`);
     return true;
   }
 
