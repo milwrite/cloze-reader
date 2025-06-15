@@ -69,3 +69,12 @@ IMPLEMENTATION_*.md
 # Local configuration files
 *.local
 .env
+
+# Development and testing files
+CLAUDE.md
+favicon.ico
+package-lock.json
+test-*.html
+
+# Documentation folder
+/docs
