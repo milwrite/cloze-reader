@@ -20,7 +20,7 @@ class OpenRouterService {
     this.apiKey = key;
   }
 
-  async retryRequest(requestFn, maxRetries = 3, delayMs = 1000) {
+  async retryRequest(requestFn, maxRetries = 3, delayMs = 500) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await requestFn();
@@ -140,13 +140,18 @@ ${prompt}`
             model: this.model,
             messages: [{
               role: 'user',
-              content: `You are a vocabulary selector for educational cloze exercises. Select exactly ${count} words from this passage for a cloze exercise.
+              content: `You are a cluemaster vocabulary selector for educational cloze exercises. Select exactly ${count} words from this passage for a cloze exercise.
+
+CLOZE DELETION PRINCIPLES:
+- Select words that require understanding context and vocabulary to identify
+- Choose words essential for comprehension that test language ability
+- Target words where deletion creates meaningful cognitive gaps
 
 REQUIREMENTS:
 - Choose clear, properly-spelled words (no OCR errors like "andsatires")
 - Select meaningful nouns, verbs, or adjectives (4-12 letters)
 - Words must appear EXACTLY as written in the passage
-- Avoid: function words, archaic terms, proper nouns, technical jargon
+- Avoid: capitalized words, function words, archaic terms, proper nouns, technical jargon
 - Skip any words that look malformed or concatenated
 
 Return ONLY a JSON array of the selected words.
@@ -244,8 +249,8 @@ For each passage return:
 
 Return as JSON: {"passage1": {...}, "passage2": {...}}`
           }],
-          max_tokens: 500,
-          temperature: 0.3
+          max_tokens: 800,
+          temperature: 0.5
         })
       });
 
@@ -282,6 +287,13 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
           .trim();
         
         // Try to fix common JSON issues
+        // Check for truncated strings (unterminated quotes)
+        const quoteCount = (jsonString.match(/"/g) || []).length;
+        if (quoteCount % 2 !== 0) {
+          // Add missing closing quote
+          jsonString += '"';
+        }
+        
         // Check if JSON is truncated (missing closing braces)
         const openBraces = (jsonString.match(/{/g) || []).length;
         const closeBraces = (jsonString.match(/}/g) || []).length;
@@ -388,7 +400,7 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
             model: this.model,
             messages: [{
               role: 'user',
-              content: `You are a literary expert. Write one factual sentence about "${title}" by ${author}. Focus on what type of work it is, when it was written, or its historical significance. Be accurate and concise. Do not add fictional details or characters.`
+              content: `You are a historical and literary expert of public domain entries in Project Gutenberg. Write one factual sentence about "${title}" by ${author}. Focus on what type of work it is, when it was written, or its historical significance. Be accurate and concise.`
             }],
             max_tokens: 80,
             temperature: 0.2
