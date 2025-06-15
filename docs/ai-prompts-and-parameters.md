@@ -15,13 +15,16 @@ The game uses a level-based system to control difficulty:
 - **Levels 6-10**: 2 blanks per passage
 - **Level 11+**: 3 blanks per passage
 
-### Word Length Constraints by Level
-- **Levels 1-3**: 3-10 letters (easier, shorter words)
-- **Levels 4+**: 5-13 letters (longer, more challenging words)
+### Level Progression Logic
+- Players must pass **at least one passage** per round to advance levels
+- Each round consists of two passages from different books
+- Level advancement is determined after completing both passages
 
-### Hint System by Level
-- **Levels 1-2**: Shows word length, first letter, and last letter
-- **Level 3+**: Shows word length and first letter only
+### Word Selection Constraints
+- **Word Length**: 4-12 letters for all levels
+- **Avoid**: Capitalized words, ALL-CAPS words, function words, archaic terms, proper nouns, technical jargon
+- **Placement**: Never select words from first or last sentence/clause of passages
+- **Focus**: Choose words from middle portions for better context dependency
 
 ## Request Types
 
@@ -72,7 +75,7 @@ The game uses a level-based system to control difficulty:
   "messages": [
     {
       "role": "user",
-      "content": "You are a cluemaster vocabulary selector for educational cloze exercises. Select exactly [COUNT] words from this passage for a cloze exercise.\n\nCLOZE DELETION PRINCIPLES:\n- Select words that require understanding context and vocabulary to identify\n- Choose words essential for comprehension that test language ability\n- Target words where deletion creates meaningful cognitive gaps\n\nREQUIREMENTS:\n- Choose clear, properly-spelled words (no OCR errors like \"andsatires\")\n- Select meaningful nouns, verbs, or adjectives ([WORD_LENGTH] letters)\n- Words must appear EXACTLY as written in the passage\n- Avoid: capitalized words, function words, archaic terms, proper nouns, technical jargon\n- Skip any words that look malformed or concatenated\n\nReturn ONLY a JSON array of the selected words.\n\nPassage: \"[PASSAGE_TEXT]\""
+      "content": "You are a cluemaster vocabulary selector for educational cloze exercises. Select exactly [COUNT] words from this passage for a cloze exercise.\n\nCLOZE DELETION PRINCIPLES:\n- Select words that require understanding context and vocabulary to identify\n- Choose words essential for comprehension that test language ability\n- Target words where deletion creates meaningful cognitive gaps\n\nREQUIREMENTS:\n- Choose clear, properly-spelled words (no OCR errors like \"andsatires\")\n- Select meaningful nouns, verbs, or adjectives (4-12 letters)\n- Words must appear EXACTLY as written in the passage\n- Avoid: capitalized words, ALL-CAPS words, function words, archaic terms, proper nouns, technical jargon\n- Skip any words that look malformed or concatenated\n- NEVER select words from the first or last sentence/clause of the passage\n- Choose words from the middle portions for better context dependency\n\nReturn ONLY a JSON array of the selected words.\n\nPassage: \"[PASSAGE_TEXT]\""
     }
   ],
   "max_tokens": 100,
@@ -80,9 +83,8 @@ The game uses a level-based system to control difficulty:
 }
 ```
 
-**Word Length by Level:**
-- Levels 1-3: 3-10 letters
-- Levels 4+: 5-13 letters
+**Word Length Constraints:**
+- All levels: 4-12 letters (consistent across all difficulty levels)
 
 **Response Format:** JSON array of strings
 ```json
@@ -104,7 +106,7 @@ The game uses a level-based system to control difficulty:
     },
     {
       "role": "user",
-      "content": "Process these two passages for cloze exercises:\n\nPASSAGE 1:\nTitle: \"[BOOK1_TITLE]\" by [BOOK1_AUTHOR]\nText: \"[PASSAGE1_TEXT]\"\nSelect [COUNT] words for blanks.\n\nPASSAGE 2:\nTitle: \"[BOOK2_TITLE]\" by [BOOK2_AUTHOR]\nText: \"[PASSAGE2_TEXT]\"\nSelect [COUNT] words for blanks.\n\nWORD SELECTION CRITERIA:\n[WORD_LENGTH_CRITERIA]\n- Choose meaningful nouns, verbs, or adjectives\n- Avoid capitalized words, function words, archaic terms\n- Words must appear EXACTLY as written in the passage\n\nFor each passage return:\n- \"words\": array of selected words (exactly as they appear)\n- \"context\": one-sentence intro about the book/author\n\nReturn as JSON: {\"passage1\": {...}, \"passage2\": {...}}"
+      "content": "Process these two passages for cloze exercises:\n\nPASSAGE 1:\nTitle: \"[BOOK1_TITLE]\" by [BOOK1_AUTHOR]\nText: \"[PASSAGE1_TEXT]\"\nSelect [COUNT] words for blanks.\n\nPASSAGE 2:\nTitle: \"[BOOK2_TITLE]\" by [BOOK2_AUTHOR]\nText: \"[PASSAGE2_TEXT]\"\nSelect [COUNT] words for blanks.\n\nSELECTION RULES:\n- Select EXACTLY [COUNT] word(s) per passage, no more, no less\n- Choose meaningful nouns, verbs, or adjectives (4-12 letters)\n- Avoid capitalized words, ALL-CAPS words, and table of contents entries\n- NEVER select words from the first or last sentence/clause of each passage\n- Choose words from the middle portions for better context dependency\n- Words must appear EXACTLY as written in the passage\n\nFor each passage return:\n- \"words\": array of EXACTLY [COUNT] selected word(s) (exactly as they appear in the text)\n- \"context\": one-sentence intro about the book/author\n\nCRITICAL: The \"words\" array must contain exactly [COUNT] element(s) for each passage.\n\nReturn as JSON: {\"passage1\": {...}, \"passage2\": {...}}"
     }
   ],
   "max_tokens": 800,
@@ -112,9 +114,9 @@ The game uses a level-based system to control difficulty:
 }
 ```
 
-**Word Length by Level:**
-- Levels 1-3: Select words 3-10 letters long
-- Levels 4+: Select words 5-13 letters long
+**Word Selection Constraints:**
+- All levels: 4-12 letters (consistent across all difficulty levels)
+- Exact count enforcement with robust JSON parsing and error handling
 
 **Response Format:**
 ```json
@@ -186,10 +188,12 @@ All requests include these headers:
 ## Response Processing
 
 ### JSON Parsing Strategy
-1. **Direct parsing**: Attempt to parse response as JSON
-2. **Markdown extraction**: Extract JSON from code blocks (```json ... ```)
-3. **Cleanup**: Remove markdown artifacts and fix truncated JSON
-4. **Fallback extraction**: Use regex to extract partial data
+1. **Markdown cleanup**: Remove ```json and ``` wrappers
+2. **Trailing comma fixes**: Remove trailing commas from arrays (e.g., `["word",]` → `["word"]`)
+3. **Direct parsing**: Attempt to parse cleaned response as JSON
+4. **Structure validation**: Ensure required fields exist and are properly typed
+5. **Empty string filtering**: Remove empty strings from word arrays
+6. **Fallback extraction**: Use regex to extract partial data when parsing fails
 
 ### Artifact Removal
 All responses are cleaned to remove AI formatting artifacts:
@@ -214,14 +218,16 @@ content = content
 
 ### Model Choice
 - **Model**: `google/gemma-3-27b-it:free`
-- **Rationale**: Free tier model suitable for educational use
-- **Limitations**: Rate limiting requires batch processing and careful request management
+- **Rationale**: Free tier model suitable for educational use with good performance
+- **Limitations**: Rate limiting and occasional JSON formatting issues
+- **Performance**: Handles batch processing well with proper prompt engineering
 
 ### Rate Limiting Strategy
-1. **Batch processing**: Combine multiple operations into single requests
-2. **Two-passage system**: Process pairs of passages to reduce total API calls
-3. **Fallback mechanisms**: Manual word selection when API unavailable
-4. **Retry logic**: Handle temporary failures gracefully
+1. **Batch processing**: Process two passages simultaneously in single API call
+2. **Round-based progression**: Two passages per round reduces API calls by 50%
+3. **Robust error handling**: JSON parsing fixes for malformed responses
+4. **Fallback mechanisms**: Sequential processing when batch fails
+5. **Retry logic**: Exponential backoff with 3 attempts for all requests
 
 ### Security Considerations
 - API keys loaded from environment variables via meta tags

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Blanks Count</title>
+</head>
+<body>
+    <h1>Testing Blanks Count</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        import ClozeGame from './src/clozeGameEngine.js';
+        
+        async function testBlanksCount() {
+            const output = document.getElementById('output');
+            const game = new ClozeGame();
+            
+            try {
+                await game.initialize();
+                output.innerHTML += '<p>Game initialized</p>';
+                
+                // Test level 1 (should have 1 blank)
+                game.currentLevel = 1;
+                const round1 = await game.startNewRound();
+                output.innerHTML += `<p>Level 1: ${round1.blanks.length} blanks</p>`;
+                
+                // Test level 5 (should have 1 blank)
+                game.currentLevel = 5;
+                const round5 = await game.startNewRound();
+                output.innerHTML += `<p>Level 5: ${round5.blanks.length} blanks</p>`;
+                
+                // Test level 6 (should have 2 blanks)
+                game.currentLevel = 6;
+                const round6 = await game.startNewRound();
+                output.innerHTML += `<p>Level 6: ${round6.blanks.length} blanks</p>`;
+                
+                // Test level 11 (should have 3 blanks)
+                game.currentLevel = 11;
+                const round11 = await game.startNewRound();
+                output.innerHTML += `<p>Level 11: ${round11.blanks.length} blanks</p>`;
+                
+            } catch (error) {
+                output.innerHTML += `<p style="color: red;">Error: ${error.message}</p>`;
+                console.error(error);
+            }
+        }
+        
+        testBlanksCount();
+    </script>
+</body>
+</html>

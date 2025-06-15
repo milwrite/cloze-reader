@@ -150,7 +150,6 @@ class App {
     // Submit answers and get results
     this.currentResults = this.game.submitAnswers(answers);
     this.displayResults(this.currentResults);
-    this.highlightAnswers(this.currentResults.results);
   }
 
   displayResults(results) {
@@ -253,11 +252,14 @@ class App {
           input.style.backgroundColor = '#fef2f2'; // Light red
           input.style.borderColor = '#dc2626'; // Red border
           
-          // Show correct answer below the input
-          const correctAnswerSpan = document.createElement('span');
-          correctAnswerSpan.className = 'text-sm text-green-600 font-semibold ml-2';
-          correctAnswerSpan.textContent = `✓ ${result.correctAnswer}`;
-          input.parentNode.appendChild(correctAnswerSpan);
+          // Show correct answer below the input (only if not already shown)
+          const existingAnswer = input.parentNode.querySelector('.correct-answer-reveal');
+          if (!existingAnswer) {
+            const correctAnswerSpan = document.createElement('span');
+            correctAnswerSpan.className = 'correct-answer-reveal text-sm text-green-600 font-semibold ml-2';
+            correctAnswerSpan.textContent = `✓ ${result.correctAnswer}`;
+            input.parentNode.appendChild(correctAnswerSpan);
+          }
         }
         input.disabled = true;
       }
