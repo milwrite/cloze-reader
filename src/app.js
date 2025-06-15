@@ -204,7 +204,7 @@ class App {
   async handleNext() {
     try {
       // Show loading immediately with specific message
-      this.showLoading(true, 'Loading passage...');
+      this.showLoading(true, 'Loading passages...');
       
       // Clear chat history when starting new passage/round
       this.chatUI.clearChatHistory();

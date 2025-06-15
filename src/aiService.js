@@ -151,8 +151,10 @@ REQUIREMENTS:
 - Choose clear, properly-spelled words (no OCR errors like "andsatires")
 - Select meaningful nouns, verbs, or adjectives (4-12 letters)
 - Words must appear EXACTLY as written in the passage
-- Avoid: capitalized words, function words, archaic terms, proper nouns, technical jargon
+- Avoid: capitalized words, ALL-CAPS words, function words, archaic terms, proper nouns, technical jargon
 - Skip any words that look malformed or concatenated
+- NEVER select words from the first or last sentence/clause of the passage
+- Choose words from the middle portions for better context dependency
 
 Return ONLY a JSON array of the selected words.
 
@@ -243,9 +245,19 @@ Title: "${book2.title}" by ${book2.author}
 Text: "${passage2}"
 Select ${blanksPerPassage} words for blanks.
 
+SELECTION RULES:
+- Select EXACTLY ${blanksPerPassage} word${blanksPerPassage > 1 ? 's' : ''} per passage, no more, no less
+- Choose meaningful nouns, verbs, or adjectives (4-12 letters)
+- Avoid capitalized words, ALL-CAPS words, and table of contents entries
+- NEVER select words from the first or last sentence/clause of each passage
+- Choose words from the middle portions for better context dependency
+- Words must appear EXACTLY as written in the passage
+
 For each passage return:
-- "words": array of selected words (exactly as they appear)
+- "words": array of EXACTLY ${blanksPerPassage} selected word${blanksPerPassage > 1 ? 's' : ''} (exactly as they appear in the text)
 - "context": one-sentence intro about the book/author
+
+CRITICAL: The "words" array must contain exactly ${blanksPerPassage} element${blanksPerPassage > 1 ? 's' : ''} for each passage.
 
 Return as JSON: {"passage1": {...}, "passage2": {...}}`
           }],
@@ -287,6 +299,9 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
           .trim();
         
         // Try to fix common JSON issues
+        // Fix trailing commas in arrays
+        jsonString = jsonString.replace(/,(\s*])/g, '$1');
+        
         // Check for truncated strings (unterminated quotes)
         const quoteCount = (jsonString.match(/"/g) || []).length;
         if (quoteCount % 2 !== 0) {
@@ -324,6 +339,10 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
         if (!Array.isArray(parsed.passage2.words)) {
           parsed.passage2.words = [];
         }
+        
+        // Filter out empty strings from words arrays (caused by trailing commas)
+        parsed.passage1.words = parsed.passage1.words.filter(word => word && word.trim() !== '');
+        parsed.passage2.words = parsed.passage2.words.filter(word => word && word.trim() !== '');
         
         return parsed;
       } catch (e) {

@@ -13,7 +13,5 @@ document.addEventListener('DOMContentLoaded', function() {
     if (hfMeta && hfMeta.content) {
         window.HF_API_KEY = hfMeta.content;
         console.log('HF API key loaded');
-    } else {
-        console.log('No HF API key found in meta tags');
     }
 });

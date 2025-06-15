@@ -19,6 +19,7 @@ class ClozeGame {
     this.hints = [];
     this.chatService = new ChatService(aiService);
     this.lastResults = null; // Store results for answer revelation
+    this.roundResults = []; // Store results for both passages in current round
     
     // Two-passage system properties
     this.currentBooks = []; // Array of two books per round
@@ -52,11 +53,11 @@ class ClozeGame {
       this.currentPassageIndex = 0;
       
       // Calculate blanks per passage based on level
-      // Progressive difficulty: levels 1-2 = 1 blank, levels 3-4 = 2 blanks, level 5+ = 3 blanks
+      // Levels 1-5: 1 blank, Levels 6-10: 2 blanks, Level 11+: 3 blanks
       let blanksPerPassage;
-      if (this.currentLevel <= 2) {
+      if (this.currentLevel <= 5) {
         blanksPerPassage = 1;
-      } else if (this.currentLevel <= 4) {
+      } else if (this.currentLevel <= 10) {
         blanksPerPassage = 2;
       } else {
         blanksPerPassage = 3;
@@ -65,11 +66,16 @@ class ClozeGame {
       // Process both passages in a single API call
       try {
         const batchResult = await aiService.processBothPassages(
-          passage1, book1, passage2, book2, blanksPerPassage
+          passage1, book1, passage2, book2, blanksPerPassage, this.currentLevel
         );
         
         // Store the preprocessed data for both passages
         this.preprocessedData = batchResult;
+        
+        // Debug: Log what the AI returned
+        console.log(`Level ${this.currentLevel}: Requested ${blanksPerPassage} blanks per passage`);
+        console.log(`Passage 1 received ${batchResult.passage1.words.length} words:`, batchResult.passage1.words);
+        console.log(`Passage 2 received ${batchResult.passage2.words.length} words:`, batchResult.passage2.words);
         
         // Set up first passage using preprocessed data
         this.currentBook = book1;
@@ -186,20 +192,49 @@ class ClozeGame {
   async createClozeTextFromPreprocessed(passageIndex) {
     // Use preprocessed word selection from batch API call
     const preprocessed = passageIndex === 0 ? this.preprocessedData.passage1 : this.preprocessedData.passage2;
-    const selectedWords = preprocessed.words;
+    let selectedWords = preprocessed.words;
+    
+    // Calculate expected number of blanks based on level
+    let expectedBlanks;
+    if (this.currentLevel <= 5) {
+      expectedBlanks = 1;
+    } else if (this.currentLevel <= 10) {
+      expectedBlanks = 2;
+    } else {
+      expectedBlanks = 3;
+    }
+    
+    // Limit selected words to expected number
+    if (selectedWords.length > expectedBlanks) {
+      console.log(`AI returned ${selectedWords.length} words but expected ${expectedBlanks}, limiting to ${expectedBlanks}`);
+      selectedWords = selectedWords.slice(0, expectedBlanks);
+    }
     
     // Split passage into words
     const words = this.originalText.split(/(\s+)/);
     const wordsOnly = words.filter(w => w.trim() !== '');
     
-    // Find indices of selected words
+    // Find indices of selected words using exact matching
     const selectedIndices = [];
     selectedWords.forEach(word => {
-      const index = wordsOnly.findIndex((w, idx) => 
-        w.toLowerCase().includes(word.toLowerCase()) && !selectedIndices.includes(idx)
-      );
+      // First try exact match (cleaned)
+      let index = wordsOnly.findIndex((w, idx) => {
+        const cleanW = w.replace(/[^\w]/g, '').toLowerCase();
+        const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
+        return cleanW === cleanWord && !selectedIndices.includes(idx);
+      });
+      
+      // Fallback to includes match if exact fails
+      if (index === -1) {
+        index = wordsOnly.findIndex((w, idx) => 
+          w.toLowerCase().includes(word.toLowerCase()) && !selectedIndices.includes(idx)
+        );
+      }
+      
       if (index !== -1) {
         selectedIndices.push(index);
+      } else {
+        console.warn(`Could not find word "${word}" in passage`);
       }
     });
     
@@ -207,6 +242,8 @@ class ClozeGame {
     this.blanks = [];
     this.hints = [];
     const clozeWords = [...wordsOnly];
+    
+    console.log(`Creating ${selectedIndices.length} blanks from ${selectedWords.length} selected words`);
     
     selectedIndices.forEach((wordIndex, blankIndex) => {
       const originalWord = wordsOnly[wordIndex];
@@ -259,11 +296,11 @@ class ClozeGame {
 
   async createClozeText() {
     const words = this.originalText.split(' ');
-    // Progressive difficulty: levels 1-2 = 1 blank, levels 3-4 = 2 blanks, level 5+ = 3 blanks
+    // Progressive difficulty: levels 1-5 = 1 blank, levels 6-10 = 2 blanks, level 11+ = 3 blanks
     let numberOfBlanks;
-    if (this.currentLevel <= 2) {
+    if (this.currentLevel <= 5) {
       numberOfBlanks = 1;
-    } else if (this.currentLevel <= 4) {
+    } else if (this.currentLevel <= 10) {
       numberOfBlanks = 2;
     } else {
       numberOfBlanks = 3;
@@ -277,7 +314,8 @@ class ClozeGame {
     try {
       significantWords = await aiService.selectSignificantWords(
         this.originalText, 
-        numberOfBlanks
+        numberOfBlanks,
+        this.currentLevel
       );
       console.log('AI selected words:', significantWords);
     } catch (error) {
@@ -580,6 +618,9 @@ class ClozeGame {
 
     // Store results for potential answer revelation
     this.lastResults = resultsData;
+    
+    // Store results for round-level tracking
+    this.roundResults[this.currentPassageIndex] = resultsData;
 
     return resultsData;
   }
@@ -616,7 +657,7 @@ class ClozeGame {
         // Clear chat conversations for new passage
         this.chatService.clearConversations();
         
-        // Clear last results
+        // Clear last results (but keep roundResults for level advancement)
         this.lastResults = null;
         
         // Use preprocessed data if available
@@ -651,14 +692,21 @@ class ClozeGame {
   }
 
   nextRound() {
-    // Check if user passed the previous round
-    const passed = this.lastResults && this.lastResults.passed;
+    // Check if user passed the previous round based on overall round performance
+    let roundPassed = false;
+    if (this.roundResults.length === 2) {
+      // Both passages completed - check if user passed at least one passage
+      roundPassed = this.roundResults.some(result => result && result.passed);
+    } else if (this.lastResults) {
+      // Fallback to single passage result
+      roundPassed = this.lastResults.passed;
+    }
     
     // Always increment round counter
     this.currentRound++;
     
-    // Only advance level if user passed
-    if (passed) {
+    // Only advance level if user passed the round
+    if (roundPassed) {
       this.currentLevel++;
     }
     // If failed, stay at same level
@@ -666,8 +714,9 @@ class ClozeGame {
     // Clear chat conversations for new round
     this.chatService.clearConversations();
     
-    // Clear last results since we're moving to new round
+    // Clear results since we're moving to new round
     this.lastResults = null;
+    this.roundResults = [];
     
     return this.startNewRound();
   }

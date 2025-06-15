@@ -6,6 +6,23 @@ This document outlines the different types of AI requests, prompts, and paramete
 
 The Cloze Reader uses OpenRouter's API with the `google/gemma-3-27b-it:free` model to power various AI-driven features. All requests use a consistent retry mechanism with exponential backoff (3 attempts, 0.5s initial delay).
 
+## Difficulty Progression
+
+The game uses a level-based system to control difficulty:
+
+### Blank Count by Level
+- **Levels 1-5**: 1 blank per passage
+- **Levels 6-10**: 2 blanks per passage
+- **Level 11+**: 3 blanks per passage
+
+### Word Length Constraints by Level
+- **Levels 1-3**: 3-10 letters (easier, shorter words)
+- **Levels 4+**: 5-13 letters (longer, more challenging words)
+
+### Hint System by Level
+- **Levels 1-2**: Shows word length, first letter, and last letter
+- **Level 3+**: Shows word length and first letter only
+
 ## Request Types
 
 ### 1. Contextual Hint Generation
@@ -55,13 +72,17 @@ The Cloze Reader uses OpenRouter's API with the `google/gemma-3-27b-it:free` mod
   "messages": [
     {
       "role": "user",
-      "content": "You are a cluemaster vocabulary selector for educational cloze exercises. Select exactly [COUNT] words from this passage for a cloze exercise.\n\nREQUIREMENTS:\n- Choose clear, properly-spelled words (no OCR errors like \"andsatires\")\n- Select meaningful nouns, verbs, or adjectives (4-12 letters)\n- Words must appear EXACTLY as written in the passage\n- Avoid: capitalized words, function words, archaic terms, proper nouns, technical jargon\n- Skip any words that look malformed or concatenated\n\nReturn ONLY a JSON array of the selected words.\n\nPassage: \"[PASSAGE_TEXT]\""
+      "content": "You are a cluemaster vocabulary selector for educational cloze exercises. Select exactly [COUNT] words from this passage for a cloze exercise.\n\nCLOZE DELETION PRINCIPLES:\n- Select words that require understanding context and vocabulary to identify\n- Choose words essential for comprehension that test language ability\n- Target words where deletion creates meaningful cognitive gaps\n\nREQUIREMENTS:\n- Choose clear, properly-spelled words (no OCR errors like \"andsatires\")\n- Select meaningful nouns, verbs, or adjectives ([WORD_LENGTH] letters)\n- Words must appear EXACTLY as written in the passage\n- Avoid: capitalized words, function words, archaic terms, proper nouns, technical jargon\n- Skip any words that look malformed or concatenated\n\nReturn ONLY a JSON array of the selected words.\n\nPassage: \"[PASSAGE_TEXT]\""
     }
   ],
   "max_tokens": 100,
-  "temperature": 0.5
+  "temperature": 0.3
 }
 ```
+
+**Word Length by Level:**
+- Levels 1-3: 3-10 letters
+- Levels 4+: 5-13 letters
 
 **Response Format:** JSON array of strings
 ```json
@@ -83,13 +104,17 @@ The Cloze Reader uses OpenRouter's API with the `google/gemma-3-27b-it:free` mod
     },
     {
       "role": "user",
-      "content": "Process these two passages for cloze exercises:\n\nPASSAGE 1:\nTitle: \"[BOOK1_TITLE]\" by [BOOK1_AUTHOR]\nText: \"[PASSAGE1_TEXT]\"\nSelect [COUNT] words for blanks.\n\nPASSAGE 2:\nTitle: \"[BOOK2_TITLE]\" by [BOOK2_AUTHOR]\nText: \"[PASSAGE2_TEXT]\"\nSelect [COUNT] words for blanks.\n\nFor each passage return:\n- \"words\": array of selected words (exactly as they appear)\n- \"context\": one-sentence intro about the book/author\n\nReturn as JSON: {\"passage1\": {...}, \"passage2\": {...}}"
+      "content": "Process these two passages for cloze exercises:\n\nPASSAGE 1:\nTitle: \"[BOOK1_TITLE]\" by [BOOK1_AUTHOR]\nText: \"[PASSAGE1_TEXT]\"\nSelect [COUNT] words for blanks.\n\nPASSAGE 2:\nTitle: \"[BOOK2_TITLE]\" by [BOOK2_AUTHOR]\nText: \"[PASSAGE2_TEXT]\"\nSelect [COUNT] words for blanks.\n\nWORD SELECTION CRITERIA:\n[WORD_LENGTH_CRITERIA]\n- Choose meaningful nouns, verbs, or adjectives\n- Avoid capitalized words, function words, archaic terms\n- Words must appear EXACTLY as written in the passage\n\nFor each passage return:\n- \"words\": array of selected words (exactly as they appear)\n- \"context\": one-sentence intro about the book/author\n\nReturn as JSON: {\"passage1\": {...}, \"passage2\": {...}}"
     }
   ],
-  "max_tokens": 500,
+  "max_tokens": 800,
   "temperature": 0.5
 }
 ```
+
+**Word Length by Level:**
+- Levels 1-3: Select words 3-10 letters long
+- Levels 4+: Select words 5-13 letters long
 
 **Response Format:**
 ```json
@@ -150,12 +175,12 @@ All requests include these headers:
 |---------|------------|-------------|-------------|
 | Hints | 50 | 0.6 | 3 attempts |
 | Word Selection | 100 | 0.3 | 3 attempts |
-| Batch Processing | 500 | 0.3 | 3 attempts |
-| Contextualization | 80 | 0.2 | 3 attempts |
+| Batch Processing | 800 | 0.5 | 3 attempts |
+| Contextualization | 80 | 0.5 | 3 attempts |
 
 ### Temperature Guidelines
-- **0.2**: Factual content (contextualization)
-- **0.3**: Structured tasks (word selection, batch processing)
+- **0.3**: Structured tasks (word selection)
+- **0.5**: Semi-structured tasks (batch processing, contextualization)
 - **0.6**: Creative tasks (hint generation)
 
 ## Response Processing
