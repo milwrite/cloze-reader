@@ -204,6 +204,15 @@ class ClozeGame {
       expectedBlanks = 3;
     }
     
+    // If AI didn't provide enough words, fall back to manual selection
+    if (selectedWords.length < expectedBlanks) {
+      console.warn(`AI provided ${selectedWords.length} words but need ${expectedBlanks}, using fallback`);
+      const words = this.originalText.split(/\s+/);
+      const fallbackWords = this.selectWordsManually(words, expectedBlanks - selectedWords.length);
+      selectedWords = [...selectedWords, ...fallbackWords].slice(0, expectedBlanks);
+      console.log(`Combined AI + fallback words:`, selectedWords);
+    }
+    
     // Limit selected words to expected number
     if (selectedWords.length > expectedBlanks) {
       console.log(`AI returned ${selectedWords.length} words but expected ${expectedBlanks}, limiting to ${expectedBlanks}`);

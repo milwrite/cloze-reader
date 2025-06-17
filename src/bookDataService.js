@@ -189,7 +189,6 @@ class HuggingFaceDatasetService {
       id: rowData.id || Math.random().toString(36),
       title: title,
       author: author,
-      year: extractedMetadata.year, // Extract year during lazy processing
       rawText: rawText,
       text: null, // Will clean when needed
       language: rowData.language || 'en',
@@ -204,12 +203,10 @@ class HuggingFaceDatasetService {
     console.log(`🔄 Processing "${book.title}" on demand...`);
     const startTime = Date.now();
     
-    // Clean text and extract metadata when actually needed
+    // Clean text when actually needed
     const cleanedText = this.cleanProjectGutenbergText(book.rawText);
-    const extractedMetadata = this.extractMetadata(book.rawText);
     
     book.text = cleanedText;
-    book.year = extractedMetadata.year || this.estimatePublicationYear(book.title, book.author);
     book.processed = true;
     
     // Validate after processing
@@ -311,7 +308,7 @@ class HuggingFaceDatasetService {
   }
 
   extractMetadata(text) {
-    const metadata = { title: 'Classic Literature', author: 'Unknown Author', year: null };
+    const metadata = { title: 'Classic Literature', author: 'Unknown Author' };
     
     if (!text) return metadata;
     
@@ -350,12 +347,6 @@ class HuggingFaceDatasetService {
         if (author && author.length > 1) {
           metadata.author = this.cleanMetadataField(author);
         }
-      } else if (line.includes('Release Date:')) {
-        // Try to extract year from release date
-        const yearMatch = line.match(/\b(1[789]\d\d|20[012]\d)\b/);
-        if (yearMatch) {
-          metadata.year = parseInt(yearMatch[1]);
-        }
       }
     }
     
@@ -369,37 +360,6 @@ class HuggingFaceDatasetService {
       .trim();
   }
 
-  estimatePublicationYear(title, author) {
-    // Return null to indicate unknown year rather than guessing
-    // This allows for truly random selection without bias
-    return null;
-  }
-
-  extractPublicationPeriod(text) {
-    // Look for publication year clues in the text itself
-    if (!text) return null;
-    
-    // Check first 200 lines for copyright or publication information
-    const lines = text.split('\n').slice(0, 200);
-    const textSnippet = lines.join(' ');
-    
-    // Look for explicit year mentions in copyright notices or metadata
-    const yearPatterns = [
-      /(?:copyright|©|published|publication date)[:\s]+.*?\b(1[6-9]\d{2}|20[0-2]\d)\b/i,
-      /\b(1[6-9]\d{2}|20[0-2]\d)\b[,\s]+by\s+/i,
-      /first published[:\s]+.*?\b(1[6-9]\d{2}|20[0-2]\d)\b/i,
-      /originally published[:\s]+.*?\b(1[6-9]\d{2}|20[0-2]\d)\b/i
-    ];
-    
-    for (const pattern of yearPatterns) {
-      const match = textSnippet.match(pattern);
-      if (match) {
-        return parseInt(match[1]);
-      }
-    }
-    
-    return null;
-  }
 
   isValidTitle(title) {
     if (!title || title.length < 3 || title.length > 100) return false;
@@ -446,47 +406,44 @@ class HuggingFaceDatasetService {
       throw new Error('Dataset not loaded');
     }
     
-    // Try multiple times to get an unused book
-    for (let attempt = 0; attempt < 10; attempt++) {
-      let book = null;
+    // First, try to find a successfully processed HF book
+    if (this.streamingEnabled && this.preloadedBooks.length > 0) {
+      const availableHFBooks = this.preloadedBooks.filter(book => 
+        !this.usedBooks.has(this.getBookId(book))
+      );
       
-      // Prioritize preloaded books for fast access (90% chance)
-      if (this.streamingEnabled && this.preloadedBooks.length > 0 && Math.random() > 0.1) {
-        const availableBooks = this.preloadedBooks.filter(book => 
-          !this.usedBooks.has(this.getBookId(book))
-        );
-        
-        if (availableBooks.length > 0) {
-          const randomIndex = Math.floor(Math.random() * availableBooks.length);
-          book = availableBooks[randomIndex];
-          
-          // Process book on demand
-          book = await this.processBookOnDemand(book);
-          if (!book) continue; // Book failed validation, try next
-        } else {
-          // All preloaded books used, try streaming
-          book = await this.getStreamingBook();
-        }
-      } else {
-        // Use local samples for remaining 10% + fallback
-        const fallbackBooks = this.books.length > 0 ? this.books : this.getSampleBooks();
-        const availableBooks = fallbackBooks.filter(book => 
-          !this.usedBooks.has(this.getBookId(book))
-        );
-        
-        if (availableBooks.length > 0) {
-          const randomIndex = Math.floor(Math.random() * availableBooks.length);
-          book = availableBooks[randomIndex];
+      for (const book of availableHFBooks) {
+        const processedBook = await this.processBookOnDemand(book);
+        if (processedBook) {
+          this.usedBooks.add(this.getBookId(processedBook));
+          console.log(`📚 Using HF book: "${processedBook.title}"`);
+          return processedBook;
         }
       }
       
-      if (book && !this.usedBooks.has(this.getBookId(book))) {
-        this.usedBooks.add(this.getBookId(book));
-        return book;
+      // If no HF books worked, try streaming
+      const streamedBook = await this.getStreamingBook();
+      if (streamedBook) {
+        this.usedBooks.add(this.getBookId(streamedBook));
+        return streamedBook;
       }
     }
     
-    // If all attempts failed, clear used books and start over
+    // Fallback to local samples
+    const fallbackBooks = this.books.length > 0 ? this.books : this.getSampleBooks();
+    const availableBooks = fallbackBooks.filter(book => 
+      !this.usedBooks.has(this.getBookId(book))
+    );
+    
+    if (availableBooks.length > 0) {
+      const randomIndex = Math.floor(Math.random() * availableBooks.length);
+      const book = availableBooks[randomIndex];
+      this.usedBooks.add(this.getBookId(book));
+      console.log(`📚 Using local book: "${book.title}"`);
+      return book;
+    }
+    
+    // If all books used, clear cache and start over
     this.usedBooks.clear();
     console.log('All books used, cleared used book cache');
     return this.getRandomBook();
@@ -532,65 +489,9 @@ class HuggingFaceDatasetService {
   }
 
   async getBookByLevelCriteria(level) {
-    let targetPeriod = null;
-    if (level <= 2) {
-      targetPeriod = { min: 1850, max: 1925 };
-    } else if (level <= 4) {
-      targetPeriod = { min: 1800, max: 1899 };
-    }
-    
-    if (targetPeriod) {
-      const periodBooks = await this.getBooksByPeriod(targetPeriod.min, targetPeriod.max);
-      
-      if (periodBooks.length > 0) {
-        const randomIndex = Math.floor(Math.random() * periodBooks.length);
-        let book = periodBooks[randomIndex];
-        
-        if (book.source === 'project_gutenberg' && !book.processed) {
-          book = await this.processBookOnDemand(book);
-          if (!book) {
-            return await this.getRandomBook();
-          }
-        }
-        
-        return book;
-      }
-    }
-    
     return await this.getRandomBook();
   }
 
-  async getBooksByPeriod(minYear, maxYear) {
-    const matchingBooks = [];
-    
-    if (this.streamingEnabled && this.preloadedBooks.length > 0) {
-      for (const book of this.preloadedBooks) {
-        if (!this.usedBooks.has(this.getBookId(book))) {
-          let year = book.year;
-          if (!year && book.rawText) {
-            year = this.extractPublicationPeriod(book.rawText);
-            book.year = year;
-          }
-          
-          if (year && year >= minYear && year <= maxYear) {
-            matchingBooks.push(book);
-          }
-        }
-      }
-    }
-    
-    const fallbackBooks = this.books.length > 0 ? this.books : this.getSampleBooks();
-    for (const book of fallbackBooks) {
-      if (!this.usedBooks.has(this.getBookId(book))) {
-        const year = book.year || this.extractPublicationPeriod(book.text);
-        if (year && year >= minYear && year <= maxYear) {
-          matchingBooks.push(book);
-        }
-      }
-    }
-    
-    return matchingBooks;
-  }
 
 
   getBookById(id) {
