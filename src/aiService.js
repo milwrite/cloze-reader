@@ -411,6 +411,28 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
         parsed.passage1.words = parsed.passage1.words.filter(word => word && word.trim() !== '');
         parsed.passage2.words = parsed.passage2.words.filter(word => word && word.trim() !== '');
         
+        // Validate word lengths based on level
+        const validateWords = (words) => {
+          return words.filter(word => {
+            const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+            if (level <= 2) {
+              return cleanWord.length >= 4 && cleanWord.length <= 7;
+            } else if (level <= 4) {
+              return cleanWord.length >= 4 && cleanWord.length <= 10;
+            } else {
+              return cleanWord.length >= 5 && cleanWord.length <= 14;
+            }
+          });
+        };
+        
+        const originalP1Count = parsed.passage1.words.length;
+        const originalP2Count = parsed.passage2.words.length;
+        
+        parsed.passage1.words = validateWords(parsed.passage1.words);
+        parsed.passage2.words = validateWords(parsed.passage2.words);
+        
+        console.log(`✅ Level ${level} batch validation: P1 ${parsed.passage1.words.length}/${originalP1Count}, P2 ${parsed.passage2.words.length}/${originalP2Count} words passed`);
+        
         return parsed;
       } catch (e) {
         console.error('Failed to parse batch response:', e);
