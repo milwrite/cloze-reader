@@ -71,8 +71,7 @@ class App {
 
     // Show level information without passage number
     const blanksCount = roundData.blanks.length;
-    const difficultyText = blanksCount === 1 ? 'Easy' : blanksCount === 2 ? 'Medium' : 'Hard';
-    this.elements.roundInfo.innerHTML = `Level ${this.game.currentLevel} • ${blanksCount} blank${blanksCount > 1 ? 's' : ''} • ${difficultyText}`;
+    this.elements.roundInfo.innerHTML = `Level ${this.game.currentLevel} • ${blanksCount} blank${blanksCount > 1 ? 's' : ''}`;
 
     // Show contextualization from AI agent
     this.elements.contextualization.innerHTML = `

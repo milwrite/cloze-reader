@@ -110,8 +110,8 @@ ${prompt}`
   }
 
 
-  async selectSignificantWords(passage, count) {
-    console.log('selectSignificantWords called with count:', count);
+  async selectSignificantWords(passage, count, level = 1) {
+    console.log('selectSignificantWords called with count:', count, 'level:', level);
     
     // Check for API key at runtime in case it was loaded after initialization
     const currentKey = this.getApiKey();
@@ -124,6 +124,19 @@ ${prompt}`
     if (!this.apiKey) {
       console.error('No API key for word selection');
       throw new Error('API key required for word selection');
+    }
+
+    // Define level-based constraints
+    let wordLengthConstraint, difficultyGuidance;
+    if (level <= 2) {
+      wordLengthConstraint = "EXACTLY 4-7 letters (no words longer than 7 letters)";
+      difficultyGuidance = "Select EASY vocabulary words - common, everyday words that most readers know. NEVER select words longer than 7 letters.";
+    } else if (level <= 4) {
+      wordLengthConstraint = "EXACTLY 4-10 letters (no words longer than 10 letters)";
+      difficultyGuidance = "Select MEDIUM difficulty words - mix of common and moderately challenging vocabulary. NEVER select words longer than 10 letters.";
+    } else {
+      wordLengthConstraint = "5-14 letters";
+      difficultyGuidance = "Select CHALLENGING words - sophisticated vocabulary that requires strong reading skills";
     }
 
     try {
@@ -142,6 +155,9 @@ ${prompt}`
               role: 'user',
               content: `You are a cluemaster vocabulary selector for educational cloze exercises. Select exactly ${count} words from this passage for a cloze exercise.
 
+DIFFICULTY LEVEL ${level}:
+${difficultyGuidance}
+
 CLOZE DELETION PRINCIPLES:
 - Select words that require understanding context and vocabulary to identify
 - Choose words essential for comprehension that test language ability
@@ -149,7 +165,7 @@ CLOZE DELETION PRINCIPLES:
 
 REQUIREMENTS:
 - Choose clear, properly-spelled words (no OCR errors like "andsatires")
-- Select meaningful nouns, verbs, or adjectives (4-12 letters)
+- Select meaningful nouns, verbs, or adjectives (${wordLengthConstraint})
 - Words must appear EXACTLY as written in the passage
 - Avoid: capitalized words, ALL-CAPS words, function words, archaic terms, proper nouns, technical jargon
 - Skip any words that look malformed or concatenated
@@ -189,13 +205,48 @@ Passage: "${passage}"`
         try {
           const words = JSON.parse(content);
           if (Array.isArray(words)) {
-            return words.slice(0, count);
+            // Validate word lengths based on level
+            const validWords = words.filter(word => {
+              const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+              if (level <= 2) {
+                return cleanWord.length >= 4 && cleanWord.length <= 7;
+              } else if (level <= 4) {
+                return cleanWord.length >= 4 && cleanWord.length <= 10;
+              } else {
+                return cleanWord.length >= 5 && cleanWord.length <= 14;
+              }
+            });
+            
+            if (validWords.length > 0) {
+              console.log(`✅ Level ${level} word validation: ${validWords.length}/${words.length} words passed`);
+              return validWords.slice(0, count);
+            } else {
+              console.warn(`❌ Level ${level}: No words met length requirements, rejecting all`);
+              throw new Error(`No valid words for level ${level}`);
+            }
           }
         } catch (e) {
           // If not valid JSON, try to extract words from the response
           const matches = content.match(/"([^"]+)"/g);
           if (matches) {
-            return matches.map(m => m.replace(/"/g, '')).slice(0, count);
+            const words = matches.map(m => m.replace(/"/g, ''));
+            // Validate word lengths
+            const validWords = words.filter(word => {
+              const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+              if (level <= 2) {
+                return cleanWord.length >= 4 && cleanWord.length <= 7;
+              } else if (level <= 4) {
+                return cleanWord.length >= 4 && cleanWord.length <= 10;
+              } else {
+                return cleanWord.length >= 5 && cleanWord.length <= 14;
+              }
+            });
+            
+            if (validWords.length > 0) {
+              return validWords.slice(0, count);
+            } else {
+              throw new Error(`No valid words for level ${level}`);
+            }
           }
         }
         
@@ -207,7 +258,7 @@ Passage: "${passage}"`
     }
   }
 
-  async processBothPassages(passage1, book1, passage2, book2, blanksPerPassage) {
+  async processBothPassages(passage1, book1, passage2, book2, blanksPerPassage, level = 1) {
     // Process both passages in a single API call to avoid rate limits
     const currentKey = this.getApiKey();
     if (currentKey && !this.apiKey) {
@@ -216,6 +267,19 @@ Passage: "${passage}"`
     
     if (!this.apiKey) {
       throw new Error('API key required for passage processing');
+    }
+
+    // Define level-based constraints
+    let wordLengthConstraint, difficultyGuidance;
+    if (level <= 2) {
+      wordLengthConstraint = "EXACTLY 4-7 letters (no words longer than 7 letters)";
+      difficultyGuidance = "Select EASY vocabulary words - common, everyday words that most readers know. NEVER select words longer than 7 letters.";
+    } else if (level <= 4) {
+      wordLengthConstraint = "EXACTLY 4-10 letters (no words longer than 10 letters)";
+      difficultyGuidance = "Select MEDIUM difficulty words - mix of common and moderately challenging vocabulary. NEVER select words longer than 10 letters.";
+    } else {
+      wordLengthConstraint = "5-14 letters";
+      difficultyGuidance = "Select CHALLENGING words - sophisticated vocabulary that requires strong reading skills";
     }
 
     try {
@@ -233,6 +297,9 @@ Passage: "${passage}"`
             role: 'user',
             content: `You process passages for cloze reading exercises. For each passage: 1) Select words for blanks, 2) Generate a contextual introduction. Return a JSON object with both passages' data.
 
+DIFFICULTY LEVEL ${level}:
+${difficultyGuidance}
+
 Process these two passages for cloze exercises:
 
 PASSAGE 1:
@@ -247,7 +314,7 @@ Select ${blanksPerPassage} words for blanks.
 
 SELECTION RULES:
 - Select EXACTLY ${blanksPerPassage} word${blanksPerPassage > 1 ? 's' : ''} per passage, no more, no less
-- Choose meaningful nouns, verbs, or adjectives (4-12 letters)
+- Choose meaningful nouns, verbs, or adjectives (${wordLengthConstraint})
 - Avoid capitalized words, ALL-CAPS words, and table of contents entries
 - NEVER select words from the first or last sentence/clause of each passage
 - Choose words from the middle portions for better context dependency

@@ -39,9 +39,9 @@ class ClozeGame {
 
   async startNewRound() {
     try {
-      // Get two random books for this round
-      const book1 = await bookDataService.getRandomBook();
-      const book2 = await bookDataService.getRandomBook();
+      // Get two books for this round based on current level criteria
+      const book1 = await bookDataService.getBookByLevelCriteria(this.currentLevel);
+      const book2 = await bookDataService.getBookByLevelCriteria(this.currentLevel);
       
       // Extract passages from both books
       const passage1 = this.extractCoherentPassage(book1.text);
