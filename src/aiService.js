@@ -169,6 +169,7 @@ REQUIREMENTS:
 - Words must appear EXACTLY as written in the passage
 - Avoid: capitalized words, ALL-CAPS words, function words, archaic terms, proper nouns, technical jargon
 - Skip any words that look malformed or concatenated
+- Avoid dated or potentially offensive terms
 - NEVER select words from the first or last sentence/clause of the passage
 - Choose words from the middle portions for better context dependency
 
@@ -205,9 +206,16 @@ Passage: "${passage}"`
         try {
           const words = JSON.parse(content);
           if (Array.isArray(words)) {
-            // Validate word lengths based on level
+            // Filter problematic words and validate word lengths based on level
+            const problematicWords = ['negro', 'retard', 'retarded', 'nigger', 'chinaman', 'jap', 'gypsy', 'savage', 'primitive', 'heathen'];
             const validWords = words.filter(word => {
               const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+              const lowerWord = cleanWord.toLowerCase();
+              
+              // Skip problematic words
+              if (problematicWords.includes(lowerWord)) return false;
+              
+              // Check length constraints
               if (level <= 2) {
                 return cleanWord.length >= 4 && cleanWord.length <= 7;
               } else if (level <= 4) {
@@ -230,9 +238,16 @@ Passage: "${passage}"`
           const matches = content.match(/"([^"]+)"/g);
           if (matches) {
             const words = matches.map(m => m.replace(/"/g, ''));
-            // Validate word lengths
+            // Filter problematic words and validate word lengths
+            const problematicWords = ['negro', 'retard', 'retarded', 'nigger', 'chinaman', 'jap', 'gypsy', 'savage', 'primitive', 'heathen'];
             const validWords = words.filter(word => {
               const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+              const lowerWord = cleanWord.toLowerCase();
+              
+              // Skip problematic words
+              if (problematicWords.includes(lowerWord)) return false;
+              
+              // Check length constraints
               if (level <= 2) {
                 return cleanWord.length >= 4 && cleanWord.length <= 7;
               } else if (level <= 4) {
@@ -316,6 +331,7 @@ SELECTION RULES:
 - Select EXACTLY ${blanksPerPassage} word${blanksPerPassage > 1 ? 's' : ''} per passage, no more, no less
 - Choose meaningful nouns, verbs, or adjectives (${wordLengthConstraint})
 - Avoid capitalized words, ALL-CAPS words, and table of contents entries
+- Avoid dated or potentially offensive terms
 - NEVER select words from the first or last sentence/clause of each passage
 - Choose words from the middle portions for better context dependency
 - Words must appear EXACTLY as written in the passage
@@ -411,10 +427,17 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
         parsed.passage1.words = parsed.passage1.words.filter(word => word && word.trim() !== '');
         parsed.passage2.words = parsed.passage2.words.filter(word => word && word.trim() !== '');
         
-        // Validate word lengths based on level
+        // Filter problematic words and validate word lengths based on level
         const validateWords = (words) => {
+          const problematicWords = ['negro', 'retard', 'retarded', 'nigger', 'chinaman', 'jap', 'gypsy', 'savage', 'primitive', 'heathen'];
           return words.filter(word => {
             const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+            const lowerWord = cleanWord.toLowerCase();
+            
+            // Skip problematic words
+            if (problematicWords.includes(lowerWord)) return false;
+            
+            // Check length constraints
             if (level <= 2) {
               return cleanWord.length >= 4 && cleanWord.length <= 7;
             } else if (level <= 4) {

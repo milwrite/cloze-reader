@@ -148,22 +148,37 @@ class ClozeGame {
         passage = sentences.join(' ');
       }
       
-      // Quality check: reject passages with excessive caps, numbers, or special formatting
+      // Enhanced quality check based on narrative flow characteristics
       const words = passage.split(/\s+/);
-      const capsCount = words.filter(w => w.length > 1 && w === w.toUpperCase()).length;
-      const numbersCount = words.filter(w => /\d/.test(w)).length;
       const totalWords = words.length;
       
-      // Skip if more than 10% caps or 5% numbers
-      if (capsCount / totalWords > 0.1 || numbersCount / totalWords > 0.05) {
-        console.log(`Skipping passage with ${capsCount} caps and ${numbersCount} numbers out of ${totalWords} words`);
-        attempts++;
-        continue;
-      }
+      // Count various quality indicators
+      const capsCount = words.filter(w => w.length > 1 && w === w.toUpperCase()).length;
+      const numbersCount = words.filter(w => /\d/.test(w)).length;
+      const shortWords = words.filter(w => w.length <= 3).length;
+      const punctuationMarks = (passage.match(/[;:()[\]{}]/g) || []).length;
+      const sentenceList = passage.split(/[.!?]+/).filter(s => s.trim().length > 10);
       
-      // Check for other quality issues
-      if (passage.includes('CHAPTER') || passage.includes('Section') || 
-          passage.match(/\b(Fig\.|Table|Illustration)\b/)) {
+      // Calculate quality ratios
+      const capsRatio = capsCount / totalWords;
+      const numbersRatio = numbersCount / totalWords;
+      const shortWordRatio = shortWords / totalWords;
+      const punctuationRatio = punctuationMarks / totalWords;
+      const avgWordsPerSentence = totalWords / Math.max(1, sentenceList.length);
+      
+      // Reject if passage shows signs of being technical/reference material
+      let qualityScore = 0;
+      let issues = [];
+      
+      if (capsRatio > 0.05) { qualityScore += capsRatio * 20; issues.push(`caps: ${Math.round(capsRatio * 100)}%`); }
+      if (numbersRatio > 0.03) { qualityScore += numbersRatio * 30; issues.push(`numbers: ${Math.round(numbersRatio * 100)}%`); }
+      if (punctuationRatio > 0.08) { qualityScore += punctuationRatio * 15; issues.push(`punct: ${Math.round(punctuationRatio * 100)}%`); }
+      if (avgWordsPerSentence < 8 || avgWordsPerSentence > 40) { qualityScore += 2; issues.push(`sent-len: ${Math.round(avgWordsPerSentence)}`); }
+      if (shortWordRatio < 0.3) { qualityScore += 2; issues.push(`short-words: ${Math.round(shortWordRatio * 100)}%`); }
+      
+      // Reject if quality score indicates technical/non-narrative content
+      if (qualityScore > 3) {
+        console.log(`Skipping low-quality passage (score: ${qualityScore.toFixed(1)}, issues: ${issues.join(', ')})`);
         attempts++;
         continue;
       }
