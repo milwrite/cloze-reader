@@ -385,17 +385,46 @@ class HuggingFaceDatasetService {
     
     const textLength = book.text.length;
     
-    // Relaxed filter criteria for cloze exercises
+    // Basic length criteria
     if (textLength < 2000) return false;        // Minimum readable length
     if (textLength > 500000) return false;      // Too long for performance
     
     // Check for excessive formatting (likely reference material)
     const lineBreakRatio = (book.text.match(/\n\n/g) || []).length / textLength;
-    if (lineBreakRatio > 0.05) return false;    // Relaxed fragmentation threshold
+    if (lineBreakRatio > 0.05) return false;    // Fragmentation threshold
     
     // Ensure it has actual narrative content
     const sentenceCount = (book.text.match(/[.!?]+/g) || []).length;
-    if (sentenceCount < 10) return false;       // Relaxed sentence requirement
+    if (sentenceCount < 10) return false;       // Sentence requirement
+    
+    // Sample text for quality check (first 5000 chars should be representative)
+    const sampleText = book.text.substring(0, 5000);
+    
+    // Check for index/TOC patterns
+    const indexPatterns = [
+      'CONTENTS', 'INDEX', 'CHAPTER', 'Volume', 'Vol.', 
+      'Part I', 'Part II', 'BOOK I', 'APPENDIX'
+    ];
+    const indexCount = indexPatterns.reduce((count, pattern) => 
+      count + (sampleText.match(new RegExp(pattern, 'gi')) || []).length, 0
+    );
+    const indexRatio = indexCount / (sampleText.split(/\s+/).length || 1);
+    
+    if (indexRatio > 0.05) {
+      console.log(`❌ Book rejected - appears to be index/TOC: "${book.title}" (index ratio: ${Math.round(indexRatio * 100)}%)`);
+      return false;
+    }
+    
+    // Check for catalog/bibliography patterns
+    if (book.title && (
+      book.title.toLowerCase().includes('index') ||
+      book.title.toLowerCase().includes('catalog') ||
+      book.title.toLowerCase().includes('bibliography') ||
+      book.title.toLowerCase().includes('contents')
+    )) {
+      console.log(`❌ Book rejected - title suggests index/catalog: "${book.title}"`);
+      return false;
+    }
     
     console.log(`📖 Book validated: "${book.title}" (${textLength} chars, ${sentenceCount} sentences)`);
     return true;

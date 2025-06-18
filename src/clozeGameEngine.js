@@ -153,11 +153,23 @@ class ClozeGame {
       const totalWords = words.length;
       
       // Count various quality indicators
-      const capsCount = words.filter(w => w.length > 1 && w === w.toUpperCase()).length;
+      const capsWords = words.filter(w => w.length > 1 && w === w.toUpperCase());
+      const capsCount = capsWords.length;
       const numbersCount = words.filter(w => /\d/.test(w)).length;
       const shortWords = words.filter(w => w.length <= 3).length;
-      const punctuationMarks = (passage.match(/[;:()[\]{}]/g) || []).length;
+      const punctuationMarks = (passage.match(/[;:()[\]{}—–]/g) || []).length;
       const sentenceList = passage.split(/[.!?]+/).filter(s => s.trim().length > 10);
+      const lines = passage.split('\n').filter(l => l.trim());
+      
+      // Check for repetitive patterns (common in indexes/TOCs)
+      const repeatedPhrases = ['CONTENTS', 'CHAPTER', 'Volume', 'Vol.', 'Part', 'Book'];
+      const repetitionCount = repeatedPhrases.reduce((count, phrase) => 
+        count + (passage.match(new RegExp(phrase, 'gi')) || []).length, 0
+      );
+      
+      // Check for title patterns (common in TOCs)
+      const titlePattern = /^[A-Z][A-Z\s]+$/m;
+      const titleLines = lines.filter(line => titlePattern.test(line.trim())).length;
       
       // Calculate quality ratios
       const capsRatio = capsCount / totalWords;
@@ -165,16 +177,24 @@ class ClozeGame {
       const shortWordRatio = shortWords / totalWords;
       const punctuationRatio = punctuationMarks / totalWords;
       const avgWordsPerSentence = totalWords / Math.max(1, sentenceList.length);
+      const repetitionRatio = repetitionCount / totalWords;
+      const titleLineRatio = titleLines / Math.max(1, lines.length);
+      
+      // Stricter thresholds for higher levels
+      const capsThreshold = this.currentLevel >= 3 ? 0.03 : 0.05;
+      const numbersThreshold = this.currentLevel >= 3 ? 0.02 : 0.03;
       
       // Reject if passage shows signs of being technical/reference material
       let qualityScore = 0;
       let issues = [];
       
-      if (capsRatio > 0.05) { qualityScore += capsRatio * 20; issues.push(`caps: ${Math.round(capsRatio * 100)}%`); }
-      if (numbersRatio > 0.03) { qualityScore += numbersRatio * 30; issues.push(`numbers: ${Math.round(numbersRatio * 100)}%`); }
+      if (capsRatio > capsThreshold) { qualityScore += capsRatio * 30; issues.push(`caps: ${Math.round(capsRatio * 100)}%`); }
+      if (numbersRatio > numbersThreshold) { qualityScore += numbersRatio * 40; issues.push(`numbers: ${Math.round(numbersRatio * 100)}%`); }
       if (punctuationRatio > 0.08) { qualityScore += punctuationRatio * 15; issues.push(`punct: ${Math.round(punctuationRatio * 100)}%`); }
       if (avgWordsPerSentence < 8 || avgWordsPerSentence > 40) { qualityScore += 2; issues.push(`sent-len: ${Math.round(avgWordsPerSentence)}`); }
       if (shortWordRatio < 0.3) { qualityScore += 2; issues.push(`short-words: ${Math.round(shortWordRatio * 100)}%`); }
+      if (repetitionRatio > 0.02) { qualityScore += repetitionRatio * 50; issues.push(`repetitive: ${Math.round(repetitionRatio * 100)}%`); }
+      if (titleLineRatio > 0.2) { qualityScore += 5; issues.push(`title-lines: ${Math.round(titleLineRatio * 100)}%`); }
       
       // Reject if quality score indicates technical/non-narrative content
       if (qualityScore > 3) {
