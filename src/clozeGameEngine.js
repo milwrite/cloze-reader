@@ -178,6 +178,23 @@ class ClozeGame {
       const parenthesesCount = (passage.match(/[()]/g) || []).length;
       const squareBrackets = (passage.match(/[\[\]]/g) || []).length;
       
+      // Dictionary/glossary patterns
+      const hashSymbols = (passage.match(/#/g) || []).length;
+      const abbreviationPattern = /\b(n\.|adj\.|adv\.|v\.|pl\.|sg\.|cf\.|e\.g\.|i\.e\.|etc\.|vs\.|viz\.|OE\.|OFr\.|L\.|ME\.|NE\.|AN\.|ON\.|MDu\.|MLG\.|MHG\.|Ger\.|Du\.|Dan\.|Sw\.|Icel\.)\b/gi;
+      const abbreviations = (passage.match(abbreviationPattern) || []).length;
+      const etymologyBrackets = (passage.match(/\[[^\]]+\]/g) || []).length;
+      const referenceNumbers = (passage.match(/\b[IVX]+\s+[abc]?\s*\d+/g) || []).length;
+      const definitionPattern = /^[^.]+,\s*(n\.|adj\.|adv\.|v\.)/gm;
+      const definitionLines = (passage.match(definitionPattern) || []).length;
+      
+      // Academic/reference patterns
+      const citationPattern = /\(\d{4}\)|p\.\s*\d+|pp\.\s*\d+-\d+|vol\.\s*\d+|ch\.\s*\d+/gi;
+      const citations = (passage.match(citationPattern) || []).length;
+      const technicalTerms = ['etymology', 'phoneme', 'morpheme', 'lexicon', 'syntax', 'semantics', 'glossary', 'vocabulary', 'dialect', 'pronunciation'];
+      const technicalTermCount = technicalTerms.reduce((count, term) => 
+        count + (passage.match(new RegExp(term, 'gi')) || []).length, 0
+      );
+      
       // Check for repetitive patterns (common in indexes/TOCs)
       const repeatedPhrases = ['CONTENTS', 'CHAPTER', 'Volume', 'Vol.', 'Part', 'Book'];
       const repetitionCount = repeatedPhrases.reduce((count, phrase) => 
@@ -199,6 +216,11 @@ class ClozeGame {
       const dashRatio = totalDashes / totalWords;
       const parenthesesRatio = parenthesesCount / totalWords;
       const squareBracketRatio = squareBrackets / totalWords;
+      const hashRatio = hashSymbols / totalWords;
+      const abbreviationRatio = abbreviations / totalWords;
+      const etymologyRatio = etymologyBrackets / totalWords;
+      const definitionRatio = definitionLines / Math.max(1, lines.length);
+      const technicalRatio = technicalTermCount / totalWords;
       
       // Stricter thresholds for higher levels
       const capsThreshold = this.currentLevel >= 3 ? 0.03 : 0.05;
@@ -224,6 +246,15 @@ class ClozeGame {
       if (numberedLines > 3) { qualityScore += 2; issues.push(`numbered-list: ${numberedLines} items`); }
       if (parenthesesRatio > 0.05) { qualityScore += 2; issues.push(`excessive-parentheses: ${Math.round(parenthesesRatio * 100)}%`); }
       if (squareBracketRatio > 0.02) { qualityScore += 2; issues.push(`excessive-brackets: ${Math.round(squareBracketRatio * 100)}%`); }
+      
+      // Dictionary/glossary/academic content detection
+      if (hashRatio > 0.01) { qualityScore += hashRatio * 100; issues.push(`hash-symbols: ${hashSymbols}`); }
+      if (abbreviationRatio > 0.03) { qualityScore += abbreviationRatio * 50; issues.push(`abbreviations: ${abbreviations}`); }
+      if (etymologyRatio > 0.005) { qualityScore += etymologyRatio * 100; issues.push(`etymology-brackets: ${etymologyBrackets}`); }
+      if (definitionRatio > 0.1) { qualityScore += definitionRatio * 20; issues.push(`definition-lines: ${Math.round(definitionRatio * 100)}%`); }
+      if (referenceNumbers > 0) { qualityScore += referenceNumbers * 2; issues.push(`reference-numbers: ${referenceNumbers}`); }
+      if (citations > 0) { qualityScore += citations * 2; issues.push(`citations: ${citations}`); }
+      if (technicalRatio > 0.01) { qualityScore += technicalRatio * 30; issues.push(`technical-terms: ${technicalTermCount}`); }
       
       // Reject if quality score indicates technical/non-narrative content
       if (qualityScore > 3) {
