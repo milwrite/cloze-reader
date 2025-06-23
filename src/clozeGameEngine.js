@@ -299,13 +299,13 @@ class ClozeGame {
       expectedBlanks = 3;
     }
     
-    // If AI didn't provide enough words, fall back to manual selection
-    if (selectedWords.length < expectedBlanks) {
-      console.warn(`AI provided ${selectedWords.length} words but need ${expectedBlanks}, using fallback`);
+    // Only use fallback if AI provided no words at all
+    if (selectedWords.length === 0) {
+      console.warn(`AI provided no words, using manual fallback selection`);
       const words = this.originalText.split(/\s+/);
-      const fallbackWords = this.selectWordsManually(words, expectedBlanks - selectedWords.length);
-      selectedWords = [...selectedWords, ...fallbackWords].slice(0, expectedBlanks);
-      console.log(`Combined AI + fallback words:`, selectedWords);
+      const fallbackWords = this.selectWordsManually(words, expectedBlanks);
+      selectedWords = fallbackWords;
+      console.log(`Fallback words:`, selectedWords);
     }
     
     // Limit selected words to expected number
@@ -320,7 +320,9 @@ class ClozeGame {
     
     // Find indices of selected words using flexible matching
     const selectedIndices = [];
-    selectedWords.forEach(word => {
+    selectedWords.forEach((word, wordIdx) => {
+      console.log(`Searching for word ${wordIdx + 1}/${selectedWords.length}: "${word}"`);
+      
       // First try exact match (cleaned)
       let index = wordsOnly.findIndex((w, idx) => {
         const cleanW = w.replace(/[^\w]/g, '').toLowerCase();
@@ -328,29 +330,37 @@ class ClozeGame {
         return cleanW === cleanWord && !selectedIndices.includes(idx);
       });
       
-      // Fallback to includes match if exact fails
-      if (index === -1) {
+      if (index !== -1) {
+        console.log(`✓ Found exact match: "${wordsOnly[index]}" at position ${index}`);
+      } else {
+        // Fallback to includes match if exact fails
         index = wordsOnly.findIndex((w, idx) => 
           w.toLowerCase().includes(word.toLowerCase()) && !selectedIndices.includes(idx)
         );
-      }
-      
-      // Enhanced fallback: try base word matching (remove common suffixes)
-      if (index === -1) {
-        const baseWord = word.replace(/[^\w]/g, '').toLowerCase().replace(/(ed|ing|s|es|er|est)$/, '');
-        if (baseWord.length > 2) {
-          index = wordsOnly.findIndex((w, idx) => {
-            const cleanW = w.replace(/[^\w]/g, '').toLowerCase();
-            const baseW = cleanW.replace(/(ed|ing|s|es|er|est)$/, '');
-            return baseW === baseWord && !selectedIndices.includes(idx);
-          });
+        
+        if (index !== -1) {
+          console.log(`✓ Found includes match: "${wordsOnly[index]}" at position ${index}`);
+        } else {
+          // Enhanced fallback: try base word matching (remove common suffixes)
+          const baseWord = word.replace(/[^\w]/g, '').toLowerCase().replace(/(ed|ing|s|es|er|est)$/, '');
+          if (baseWord.length > 2) {
+            index = wordsOnly.findIndex((w, idx) => {
+              const cleanW = w.replace(/[^\w]/g, '').toLowerCase();
+              const baseW = cleanW.replace(/(ed|ing|s|es|er|est)$/, '');
+              return baseW === baseWord && !selectedIndices.includes(idx);
+            });
+            
+            if (index !== -1) {
+              console.log(`✓ Found base word match: "${wordsOnly[index]}" at position ${index}`);
+            }
+          }
         }
       }
       
       if (index !== -1) {
         selectedIndices.push(index);
       } else {
-        console.warn(`Could not find word "${word}" in passage`);
+        console.warn(`✗ Could not find word "${word}" in passage`);
       }
     });
     
