@@ -164,6 +164,10 @@ class ClozeGame {
       const sentenceList = passage.split(/[.!?]+/).filter(s => s.trim().length > 10);
       const lines = passage.split('\n').filter(l => l.trim());
       
+      // Count excessive dashes (n-dashes, m-dashes, hyphens in sequence)
+      const dashSequences = (passage.match(/[-—–]{3,}/g) || []).length;
+      const totalDashes = (passage.match(/[-—–]/g) || []).length;
+      
       // Check for repetitive patterns (common in indexes/TOCs)
       const repeatedPhrases = ['CONTENTS', 'CHAPTER', 'Volume', 'Vol.', 'Part', 'Book'];
       const repetitionCount = repeatedPhrases.reduce((count, phrase) => 
@@ -182,6 +186,7 @@ class ClozeGame {
       const avgWordsPerSentence = totalWords / Math.max(1, sentenceList.length);
       const repetitionRatio = repetitionCount / totalWords;
       const titleLineRatio = titleLines / Math.max(1, lines.length);
+      const dashRatio = totalDashes / totalWords;
       
       // Stricter thresholds for higher levels
       const capsThreshold = this.currentLevel >= 3 ? 0.03 : 0.05;
@@ -198,6 +203,8 @@ class ClozeGame {
       if (shortWordRatio < 0.3) { qualityScore += 2; issues.push(`short-words: ${Math.round(shortWordRatio * 100)}%`); }
       if (repetitionRatio > 0.02) { qualityScore += repetitionRatio * 50; issues.push(`repetitive: ${Math.round(repetitionRatio * 100)}%`); }
       if (titleLineRatio > 0.2) { qualityScore += 5; issues.push(`title-lines: ${Math.round(titleLineRatio * 100)}%`); }
+      if (dashSequences > 0) { qualityScore += dashSequences * 3; issues.push(`dash-sequences: ${dashSequences}`); }
+      if (dashRatio > 0.02) { qualityScore += dashRatio * 25; issues.push(`dashes: ${Math.round(dashRatio * 100)}%`); }
       
       // Reject if quality score indicates technical/non-narrative content
       if (qualityScore > 3) {
