@@ -464,6 +464,92 @@
     box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
   }
 
+  /* Sticky Control Panel */
+  .sticky-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--aged-paper-light);
+    border-top: 2px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    padding: 12px 16px;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+  }
+
+  .sticky-controls .controls-inner {
+    max-width: 1024px;
+    margin: 0 auto;
+    display: flex;
+    gap: 1px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sticky-controls .typewriter-button {
+    flex: 1;
+    max-width: 200px;
+    min-height: 44px;
+    margin: 0;
+    border-radius: 0;
+    font-size: 16px;
+    font-weight: 600;
+    position: relative;
+  }
+
+  .sticky-controls .typewriter-button:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+  }
+
+  .sticky-controls .typewriter-button:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+
+  .sticky-controls .typewriter-button:not(:last-child) {
+    border-right: 1px solid rgba(0, 0, 0, 0.2);
+  }
+
+  .controls-divider {
+    height: 24px;
+    width: 2px;
+    background: rgba(0, 0, 0, 0.3);
+    margin: 0 -1px;
+    z-index: 1;
+  }
+
+  /* Add bottom padding to main content to prevent overlap */
+  #game-container {
+    padding-bottom: 100px;
+  }
+
+  /* Mobile optimizations for sticky controls */
+  @media (max-width: 640px) {
+    .sticky-controls {
+      padding: 10px 12px;
+    }
+    
+    .sticky-controls .typewriter-button {
+      min-height: 48px;
+      font-size: 16px;
+      padding: 12px 8px;
+    }
+    
+    #game-container {
+      padding-bottom: 90px;
+    }
+  }
+
+  /* Ensure controls stay above mobile keyboards */
+  @media (max-width: 640px) and (max-height: 500px) {
+    .sticky-controls {
+      position: fixed;
+      bottom: 0;
+    }
+  }
+
   /* Print styles */
   @media print {
     body {
@@ -477,6 +563,14 @@
     
     .typewriter-button {
       display: none;
+    }
+    
+    .sticky-controls {
+      display: none;
+    }
+    
+    #game-container {
+      padding-bottom: 0;
     }
   }
 }

@@ -36,21 +36,29 @@
                         <div class="text-sm font-semibold mb-2">👉👈 Hints:</div>
                         <div id="hints-list" class="text-sm space-y-1"></div>
                     </div>
-                    <div id="controls" class="flex gap-4 justify-center flex-wrap">
-                        <button type="button" id="submit-btn" class="typewriter-button">
-                            Submit
-                        </button>
-                        <button type="button" id="next-btn" class="typewriter-button hidden">
-                            Next Passage
-                        </button>
-                        <button type="button" id="hint-btn" class="typewriter-button">
-                            Show Hints
-                        </button>
+                    <div id="controls" class="hidden">
+                        <!-- Controls moved to sticky footer -->
                     </div>
                     <div id="result" class="mt-4 text-center result-text"></div>
                 </div>
             </div>
         </main>
+    </div>
+    
+    <!-- Sticky Control Panel -->
+    <div id="sticky-controls" class="sticky-controls hidden">
+        <div class="controls-inner">
+            <button type="button" id="hint-btn" class="typewriter-button">
+                Show Hints
+            </button>
+            <div class="controls-divider"></div>
+            <button type="button" id="submit-btn" class="typewriter-button">
+                Submit
+            </button>
+            <button type="button" id="next-btn" class="typewriter-button hidden">
+                Next Passage
+            </button>
+        </div>
     </div>
     
     <script src="./src/app.js" type="module"></script>

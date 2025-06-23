@@ -11,6 +11,7 @@ class App {
     this.elements = {
       loading: document.getElementById('loading'),
       gameArea: document.getElementById('game-area'),
+      stickyControls: document.getElementById('sticky-controls'),
       bookInfo: document.getElementById('book-info'),
       roundInfo: document.getElementById('round-info'),
       contextualization: document.getElementById('contextualization'),
@@ -315,9 +316,11 @@ class App {
       `;
       this.elements.loading.classList.remove('hidden');
       this.elements.gameArea.classList.add('hidden');
+      this.elements.stickyControls.classList.add('hidden');
     } else {
       this.elements.loading.classList.add('hidden');
       this.elements.gameArea.classList.remove('hidden');
+      this.elements.stickyControls.classList.remove('hidden');
     }
   }
 
