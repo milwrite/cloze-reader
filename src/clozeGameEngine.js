@@ -168,6 +168,16 @@ class ClozeGame {
       const dashSequences = (passage.match(/[-—–]{3,}/g) || []).length;
       const totalDashes = (passage.match(/[-—–]/g) || []).length;
       
+      // Count additional formatting patterns
+      const asteriskSequences = (passage.match(/\*{3,}/g) || []).length;
+      const asteriskLines = (passage.match(/^\s*\*+\s*$/gm) || []).length;
+      const underscoreSequences = (passage.match(/_{3,}/g) || []).length;
+      const equalSequences = (passage.match(/={3,}/g) || []).length;
+      const pipeCount = (passage.match(/\|/g) || []).length;
+      const numberedLines = (passage.match(/^\s*\d+[\.\)]\s/gm) || []).length;
+      const parenthesesCount = (passage.match(/[()]/g) || []).length;
+      const squareBrackets = (passage.match(/[\[\]]/g) || []).length;
+      
       // Check for repetitive patterns (common in indexes/TOCs)
       const repeatedPhrases = ['CONTENTS', 'CHAPTER', 'Volume', 'Vol.', 'Part', 'Book'];
       const repetitionCount = repeatedPhrases.reduce((count, phrase) => 
@@ -187,6 +197,8 @@ class ClozeGame {
       const repetitionRatio = repetitionCount / totalWords;
       const titleLineRatio = titleLines / Math.max(1, lines.length);
       const dashRatio = totalDashes / totalWords;
+      const parenthesesRatio = parenthesesCount / totalWords;
+      const squareBracketRatio = squareBrackets / totalWords;
       
       // Stricter thresholds for higher levels
       const capsThreshold = this.currentLevel >= 3 ? 0.03 : 0.05;
@@ -205,6 +217,13 @@ class ClozeGame {
       if (titleLineRatio > 0.2) { qualityScore += 5; issues.push(`title-lines: ${Math.round(titleLineRatio * 100)}%`); }
       if (dashSequences > 0) { qualityScore += dashSequences * 3; issues.push(`dash-sequences: ${dashSequences}`); }
       if (dashRatio > 0.02) { qualityScore += dashRatio * 25; issues.push(`dashes: ${Math.round(dashRatio * 100)}%`); }
+      if (asteriskSequences > 0 || asteriskLines > 0) { qualityScore += (asteriskSequences + asteriskLines) * 2; issues.push(`asterisk-separators: ${asteriskSequences + asteriskLines}`); }
+      if (underscoreSequences > 0) { qualityScore += underscoreSequences * 2; issues.push(`underscore-lines: ${underscoreSequences}`); }
+      if (equalSequences > 0) { qualityScore += equalSequences * 2; issues.push(`equal-lines: ${equalSequences}`); }
+      if (pipeCount > 5) { qualityScore += 3; issues.push(`table-formatting: ${pipeCount} pipes`); }
+      if (numberedLines > 3) { qualityScore += 2; issues.push(`numbered-list: ${numberedLines} items`); }
+      if (parenthesesRatio > 0.05) { qualityScore += 2; issues.push(`excessive-parentheses: ${Math.round(parenthesesRatio * 100)}%`); }
+      if (squareBracketRatio > 0.02) { qualityScore += 2; issues.push(`excessive-brackets: ${Math.round(squareBracketRatio * 100)}%`); }
       
       // Reject if quality score indicates technical/non-narrative content
       if (qualityScore > 3) {
@@ -268,7 +287,7 @@ class ClozeGame {
     const words = this.originalText.split(/(\s+)/);
     const wordsOnly = words.filter(w => w.trim() !== '');
     
-    // Find indices of selected words using exact matching
+    // Find indices of selected words using flexible matching
     const selectedIndices = [];
     selectedWords.forEach(word => {
       // First try exact match (cleaned)
@@ -285,12 +304,42 @@ class ClozeGame {
         );
       }
       
+      // Enhanced fallback: try base word matching (remove common suffixes)
+      if (index === -1) {
+        const baseWord = word.replace(/[^\w]/g, '').toLowerCase().replace(/(ed|ing|s|es|er|est)$/, '');
+        if (baseWord.length > 2) {
+          index = wordsOnly.findIndex((w, idx) => {
+            const cleanW = w.replace(/[^\w]/g, '').toLowerCase();
+            const baseW = cleanW.replace(/(ed|ing|s|es|er|est)$/, '');
+            return baseW === baseWord && !selectedIndices.includes(idx);
+          });
+        }
+      }
+      
       if (index !== -1) {
         selectedIndices.push(index);
       } else {
         console.warn(`Could not find word "${word}" in passage`);
       }
     });
+    
+    // Ensure we have at least the expected number of blanks
+    if (selectedIndices.length < expectedBlanks) {
+      console.warn(`Only found ${selectedIndices.length} words, need ${expectedBlanks}. Using fallback selection.`);
+      const fallbackWords = this.selectWordsManually(wordsOnly, expectedBlanks - selectedIndices.length);
+      
+      // Add fallback word indices
+      fallbackWords.forEach(fallbackWord => {
+        const cleanFallback = fallbackWord.toLowerCase().replace(/[^\w]/g, '');
+        const index = wordsOnly.findIndex((w, idx) => {
+          const cleanW = w.replace(/[^\w]/g, '').toLowerCase();
+          return cleanW === cleanFallback && !selectedIndices.includes(idx);
+        });
+        if (index !== -1) {
+          selectedIndices.push(index);
+        }
+      });
+    }
     
     // Create blanks
     this.blanks = [];
