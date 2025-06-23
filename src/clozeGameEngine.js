@@ -25,6 +25,9 @@ class ClozeGame {
     this.currentBooks = []; // Array of two books per round
     this.passages = []; // Array of two passages per round
     this.currentPassageIndex = 0; // 0 for first passage, 1 for second
+    
+    // Level progression tracking
+    this.roundsPassedAtCurrentLevel = 0; // Track successful rounds at current level
   }
 
   async initialize() {
@@ -749,11 +752,21 @@ class ClozeGame {
     // Always increment round counter
     this.currentRound++;
     
-    // Only advance level if user passed the round
+    // Track successful rounds and advance level after 2 successful rounds
     if (roundPassed) {
-      this.currentLevel++;
+      this.roundsPassedAtCurrentLevel++;
+      console.log(`Round passed! Total rounds passed at level ${this.currentLevel}: ${this.roundsPassedAtCurrentLevel}`);
+      
+      // Advance level after 2 successful rounds
+      if (this.roundsPassedAtCurrentLevel >= 2) {
+        this.currentLevel++;
+        this.roundsPassedAtCurrentLevel = 0; // Reset counter for new level
+        console.log(`Advancing to level ${this.currentLevel} after 2 successful rounds`);
+      }
+    } else {
+      // Failed round - do not reset the counter, user must accumulate 2 passes
+      console.log(`Round failed. Still need ${2 - this.roundsPassedAtCurrentLevel} more passed round(s) to advance from level ${this.currentLevel}`);
     }
-    // If failed, stay at same level
     
     // Clear chat conversations for new round
     this.chatService.clearConversations();

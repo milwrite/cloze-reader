@@ -69,9 +69,11 @@ class App {
       <strong>${roundData.title}</strong> by ${roundData.author}
     `;
 
-    // Show level information without passage number
+    // Show level information
     const blanksCount = roundData.blanks.length;
-    this.elements.roundInfo.innerHTML = `Level ${this.game.currentLevel} • ${blanksCount} blank${blanksCount > 1 ? 's' : ''}`;
+    const levelInfo = `Level ${this.game.currentLevel} • ${blanksCount} blank${blanksCount > 1 ? 's' : ''}`;
+    
+    this.elements.roundInfo.innerHTML = levelInfo;
 
     // Show contextualization from AI agent
     this.elements.contextualization.innerHTML = `
@@ -160,7 +162,13 @@ class App {
     }
     
     if (results.passed) {
-      message += ` - Excellent! Advancing to Level ${this.game.currentLevel + 1}! 🎉`;
+      // Check if this completes the requirements for level advancement
+      const roundsCompleted = this.game.roundsPassedAtCurrentLevel + 1; // +1 for this round
+      if (roundsCompleted >= 2) {
+        message += ` - Excellent! Advancing to Level ${this.game.currentLevel + 1}! 🎉`;
+      } else {
+        message += ` - Great job! ${roundsCompleted}/2 rounds completed for Level ${this.game.currentLevel + 1}`;
+      }
       this.elements.result.className = 'mt-4 text-center font-semibold text-green-600';
     } else {
       if (this.game.currentLevel >= 3) {

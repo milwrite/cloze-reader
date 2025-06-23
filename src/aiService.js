@@ -428,7 +428,7 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
         parsed.passage2.words = parsed.passage2.words.filter(word => word && word.trim() !== '');
         
         // Filter problematic words and validate word lengths based on level
-        const validateWords = (words) => {
+        const validateWords = (words, passageText) => {
           const problematicWords = ['negro', 'retard', 'retarded', 'nigger', 'chinaman', 'jap', 'gypsy', 'savage', 'primitive', 'heathen'];
           return words.filter(word => {
             const cleanWord = word.replace(/[^a-zA-Z]/g, '');
@@ -436,6 +436,12 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
             
             // Skip problematic words
             if (problematicWords.includes(lowerWord)) return false;
+            
+            // Check if word appears in all caps in the passage (like "VOLUME")
+            if (passageText.includes(word.toUpperCase()) && word === word.toUpperCase()) {
+              console.log(`Skipping all-caps word: ${word}`);
+              return false;
+            }
             
             // Check length constraints
             if (level <= 2) {
@@ -451,8 +457,8 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
         const originalP1Count = parsed.passage1.words.length;
         const originalP2Count = parsed.passage2.words.length;
         
-        parsed.passage1.words = validateWords(parsed.passage1.words);
-        parsed.passage2.words = validateWords(parsed.passage2.words);
+        parsed.passage1.words = validateWords(parsed.passage1.words, passage1);
+        parsed.passage2.words = validateWords(parsed.passage2.words, passage2);
         
         console.log(`✅ Level ${level} batch validation: P1 ${parsed.passage1.words.length}/${originalP1Count}, P2 ${parsed.passage2.words.length}/${originalP2Count} words passed`);
         
