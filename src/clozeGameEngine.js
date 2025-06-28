@@ -156,13 +156,19 @@ class ClozeGame {
       const totalWords = words.length;
       
       // Count various quality indicators
-      const capsWords = words.filter(w => w.length > 1 && w === w.toUpperCase());
+      const capsWords = words.filter(w => w.length > 1 && w === w.toUpperCase() && !/^\d+$/.test(w));
       const capsCount = capsWords.length;
       const numbersCount = words.filter(w => /\d/.test(w)).length;
       const shortWords = words.filter(w => w.length <= 3).length;
       const punctuationMarks = (passage.match(/[;:()[\]{}—–]/g) || []).length;
       const sentenceList = passage.split(/[.!?]+/).filter(s => s.trim().length > 10);
       const lines = passage.split('\n').filter(l => l.trim());
+      
+      // Debug logging for caps detection
+      if (capsCount > 5) {
+        console.log(`High caps count detected: ${capsCount}/${totalWords} words (${Math.round((capsCount/totalWords) * 100)}%)`);
+        console.log(`Sample caps words:`, capsWords.slice(0, 10));
+      }
       
       // Count excessive dashes (n-dashes, m-dashes, hyphens in sequence)
       const dashSequences = (passage.match(/[-—–]{3,}/g) || []).length;
@@ -205,6 +211,19 @@ class ClozeGame {
       const titlePattern = /^[A-Z][A-Z\s]+$/m;
       const titleLines = lines.filter(line => titlePattern.test(line.trim())).length;
       
+      // Check for consecutive all-caps lines (title pages, copyright notices)
+      let consecutiveCapsLines = 0;
+      let maxConsecutiveCaps = 0;
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed.length > 3 && trimmed === trimmed.toUpperCase() && !/^\d+$/.test(trimmed)) {
+          consecutiveCapsLines++;
+          maxConsecutiveCaps = Math.max(maxConsecutiveCaps, consecutiveCapsLines);
+        } else {
+          consecutiveCapsLines = 0;
+        }
+      });
+      
       // Calculate quality ratios
       const capsRatio = capsCount / totalWords;
       const numbersRatio = numbersCount / totalWords;
@@ -230,7 +249,21 @@ class ClozeGame {
       let qualityScore = 0;
       let issues = [];
       
-      if (capsRatio > capsThreshold) { qualityScore += capsRatio * 30; issues.push(`caps: ${Math.round(capsRatio * 100)}%`); }
+      // Immediate rejection for excessive caps (title pages, headers, etc)
+      if (capsRatio > 0.15) {
+        console.log(`Rejecting passage with excessive caps: ${Math.round(capsRatio * 100)}%`);
+        attempts++;
+        continue;
+      }
+      
+      // Immediate rejection for consecutive all-caps lines (title pages, copyright)
+      if (maxConsecutiveCaps >= 2) {
+        console.log(`Rejecting passage with ${maxConsecutiveCaps} consecutive all-caps lines`);
+        attempts++;
+        continue;
+      }
+      
+      if (capsRatio > capsThreshold) { qualityScore += capsRatio * 100; issues.push(`caps: ${Math.round(capsRatio * 100)}%`); }
       if (numbersRatio > numbersThreshold) { qualityScore += numbersRatio * 40; issues.push(`numbers: ${Math.round(numbersRatio * 100)}%`); }
       if (punctuationRatio > 0.08) { qualityScore += punctuationRatio * 15; issues.push(`punct: ${Math.round(punctuationRatio * 100)}%`); }
       if (avgWordsPerSentence < 8 || avgWordsPerSentence > 40) { qualityScore += 2; issues.push(`sent-len: ${Math.round(avgWordsPerSentence)}`); }

@@ -170,8 +170,8 @@ REQUIREMENTS:
 - Avoid: capitalized words, ALL-CAPS words, function words, archaic terms, proper nouns, technical jargon
 - Skip any words that look malformed or concatenated
 - Avoid dated or potentially offensive terms
-- NEVER select words from the first or last sentence/clause of the passage
-- Choose words from the middle portions for better context dependency
+- PREFER words from the middle portions of the passage when possible
+- If struggling to find ${count} perfect words, prioritize returning SOMETHING over returning nothing
 
 Return ONLY a JSON array of the selected words.
 
