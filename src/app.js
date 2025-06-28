@@ -157,10 +157,8 @@ class App {
   displayResults(results) {
     let message = `Score: ${results.correct}/${results.total} (${results.percentage}%)`;
     
-    // Only show "Required" information at Level 3 and above
-    if (this.game.currentLevel >= 3) {
-      message += ` - Required: ${results.requiredCorrect}/${results.total}`;
-    }
+    // Show "Required" information at all levels for consistency
+    message += ` - Required: ${results.requiredCorrect}/${results.total}`;
     
     if (results.passed) {
       // Check if this completes the requirements for level advancement
@@ -172,11 +170,7 @@ class App {
       }
       this.elements.result.className = 'mt-4 text-center font-semibold text-green-600';
     } else {
-      if (this.game.currentLevel >= 3) {
-        message += ` - Need ${results.requiredCorrect} correct to advance. Keep practicing! 💪`;
-      } else {
-        message += ` - Keep practicing! 💪`;
-      }
+      message += ` - Need ${results.requiredCorrect} correct to advance. Keep practicing! 💪`;
       this.elements.result.className = 'mt-4 text-center font-semibold text-red-600';
     }
     

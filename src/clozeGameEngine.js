@@ -805,14 +805,14 @@ class ClozeGame {
   // Calculate required correct answers based on total blanks
   calculateRequiredCorrect(totalBlanks) {
     if (totalBlanks === 1) {
-      // Level 1: Must get the single word correct
+      // 1 blank: Must get it correct
       return 1;
-    } else if (totalBlanks % 2 === 1) {
-      // Odd number of blanks (3, 5, etc.): require all but one
-      return totalBlanks - 1;
+    } else if (totalBlanks === 2) {
+      // 2 blanks: Need both correct (keeps current Level 6-10 difficulty)
+      return 2;
     } else {
-      // Even number of blanks: require all correct
-      return totalBlanks;
+      // 3+ blanks: Need all but one (fixes Level 11+ to be harder than Level 10)
+      return totalBlanks - 1;
     }
   }
 

@@ -298,6 +298,10 @@ Passage: "${passage}"`
     }
 
     try {
+      // Add timeout controller to prevent aborted operations
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
@@ -306,6 +310,7 @@ Passage: "${passage}"`
           'HTTP-Referer': window.location.origin,
           'X-Title': 'Cloze Reader'
         },
+        signal: controller.signal,
         body: JSON.stringify({
           model: this.model,
           messages: [{
@@ -348,6 +353,9 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
           temperature: 0.5
         })
       });
+
+      // Clear timeout on successful response
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`API request failed: ${response.status}`);
@@ -502,6 +510,17 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
         }
       }
     } catch (error) {
+      // Clear timeout in error case too
+      if (typeof timeoutId !== 'undefined') {
+        clearTimeout(timeoutId);
+      }
+      
+      // Handle specific abort error
+      if (error.name === 'AbortError') {
+        console.error('Batch processing timed out after 15 seconds');
+        throw new Error('Request timed out - falling back to sequential processing');
+      }
+      
       console.error('Error processing passages:', error);
       throw error;
     }
