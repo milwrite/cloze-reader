@@ -166,7 +166,7 @@ class App {
       if (roundsCompleted >= 2) {
         message += ` - Excellent! Advancing to Level ${this.game.currentLevel + 1}! 🎉`;
       } else {
-        message += ` - Great job! ${roundsCompleted}/2 rounds completed for Level ${this.game.currentLevel + 1}`;
+        message += ` - Great job! ${roundsCompleted}/2 rounds completed for Level ${this.game.currentLevel}`;
       }
       this.elements.result.className = 'mt-4 text-center font-semibold text-green-600';
     } else {
