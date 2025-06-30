@@ -37,7 +37,7 @@ An interactive cloze reading practice application with AI-powered assistance. Pr
 
 ## Technology
 
-Built with vanilla JavaScript, powered by AI for intelligent word selection and contextual assistance.
+Built with vanilla JavaScript, powered by AI for intelligent word selection and contextual assistance. Supports both OpenRouter API and local LLM integration.
 
 ## Running Locally with Docker
 
@@ -59,6 +59,31 @@ To run the Cloze Reader application locally using Docker:
 ### Prerequisites
 - Docker installed on your system
 - Port 7860 available on your machine
+
+## Local LLM Integration
+
+The `local-llm-integration` branch adds support for running with a local LLM server instead of OpenRouter API:
+
+### Setup
+1. **Start your local LLM server** on port 1234 (e.g., using LM Studio with Gemma-3-12b)
+2. **Run the development server**:
+   ```bash
+   make dev  # or python3 local-server.py 8000
+   ```
+3. **Access with local LLM**:
+   - Navigate to `http://localhost:8000/index.html?local=true`
+   - The `?local=true` parameter switches from OpenRouter to your local LLM
+
+### Local LLM Features
+- **No API key required** - works entirely offline with your local model
+- **Automatic response cleaning** - handles local LLM output artifacts
+- **Compatible with LM Studio** and other OpenAI-compatible local servers
+- **Same game experience** - all features work identically to cloud version
+
+### Testing Local Integration
+- Test page: `http://localhost:8000/test-local-llm.html?local=true`
+- Stress test script: `node test-local-llm.js`
+- Direct integration test available in test files
 
 ## Architecture
 This is a **vanilla JavaScript modular application** with no build step. Key architectural patterns:

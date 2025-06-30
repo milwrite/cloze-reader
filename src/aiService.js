@@ -1,11 +1,31 @@
 class OpenRouterService {
   constructor() {
-    this.apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
+    // Check for local LLM mode
+    this.isLocalMode = this.checkLocalMode();
+    this.apiUrl = this.isLocalMode ? 'http://localhost:1234/v1/chat/completions' : 'https://openrouter.ai/api/v1/chat/completions';
     this.apiKey = this.getApiKey();
-    this.model = 'google/gemma-3-27b-it:free';
+    this.model = this.isLocalMode ? 'gemma-3-12b' : 'google/gemma-3-27b-it:free';
+    
+    console.log('AI Service initialized:', {
+      mode: this.isLocalMode ? 'Local LLM' : 'OpenRouter',
+      url: this.apiUrl,
+      model: this.model
+    });
+  }
+  
+  checkLocalMode() {
+    if (typeof window !== 'undefined' && window.location) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('local') === 'true';
+    }
+    return false;
   }
 
   getApiKey() {
+    // Local mode doesn't need API key
+    if (this.isLocalMode) {
+      return 'local-mode-no-key';
+    }
     if (typeof process !== 'undefined' && process.env && process.env.OPENROUTER_API_KEY) {
       return process.env.OPENROUTER_API_KEY;
     }
@@ -51,14 +71,20 @@ class OpenRouterService {
     }
 
     try {
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Only add auth headers for OpenRouter
+      if (!this.isLocalMode) {
+        headers['Authorization'] = `Bearer ${this.apiKey}`;
+        headers['HTTP-Referer'] = window.location.origin;
+        headers['X-Title'] = 'Cloze Reader';
+      }
+      
       const response = await fetch(this.apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Cloze Reader'
-        },
+        headers,
         body: JSON.stringify({
           model: this.model,
           messages: [{
@@ -200,11 +226,35 @@ Passage: "${passage}"`
           throw new Error('API response missing expected content');
         }
         
-        const content = data.choices[0].message.content.trim();
+        let content = data.choices[0].message.content.trim();
+        
+        // Clean up local LLM artifacts
+        if (this.isLocalMode) {
+          content = this.cleanLocalLLMResponse(content);
+        }
         
         // Try to parse as JSON array
         try {
-          const words = JSON.parse(content);
+          let words;
+          
+          // For local LLM, try different parsing strategies
+          if (this.isLocalMode) {
+            // Try JSON parse first
+            try {
+              words = JSON.parse(content);
+            } catch {
+              // If not JSON, try comma-separated
+              if (content.includes(',')) {
+                words = content.split(',').map(w => w.trim());
+              } else {
+                // Single word
+                words = [content.trim()];
+              }
+            }
+          } else {
+            words = JSON.parse(content);
+          }
+          
           if (Array.isArray(words)) {
             // Filter problematic words and validate word lengths based on level
             const problematicWords = ['negro', 'retard', 'retarded', 'nigger', 'chinaman', 'jap', 'gypsy', 'savage', 'primitive', 'heathen'];
@@ -302,14 +352,20 @@ Passage: "${passage}"`
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
       
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Only add auth headers for OpenRouter
+      if (!this.isLocalMode) {
+        headers['Authorization'] = `Bearer ${this.apiKey}`;
+        headers['HTTP-Referer'] = window.location.origin;
+        headers['X-Title'] = 'Cloze Reader';
+      }
+      
       const response = await fetch(this.apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Cloze Reader'
-        },
+        headers,
         signal: controller.signal,
         body: JSON.stringify({
           model: this.model,
@@ -604,6 +660,16 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
     }
   }
 
+  cleanLocalLLMResponse(content) {
+    // Remove common artifacts from local LLM responses
+    return content
+      .replace(/\["?/g, '')       // Remove opening bracket and quote
+      .replace(/"?\]/g, '')       // Remove closing quote and bracket  
+      .replace(/^[>"|']+/g, '')   // Remove leading > or quotes
+      .replace(/[>"|']+$/g, '')   // Remove trailing > or quotes
+      .replace(/\\n/g, ' ')       // Replace escaped newlines
+      .trim();
+  }
 }
 
 export { OpenRouterService as AIService };
