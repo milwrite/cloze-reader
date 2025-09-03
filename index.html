@@ -62,5 +62,13 @@
     </div>
     
     <script src="./src/app.js" type="module"></script>
+    <script type="module">
+        // Load test runner and ranking interface only in test mode
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('testMode') === 'true') {
+            import('./src/testGameRunner.js');
+            import('./src/userRankingInterface.js');
+        }
+    </script>
 </body>
 </html>

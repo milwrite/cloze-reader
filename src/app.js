@@ -72,7 +72,8 @@ class App {
 
     // Show level information
     const blanksCount = roundData.blanks.length;
-    const levelInfo = `Level ${this.game.currentLevel} • ${blanksCount} blank${blanksCount > 1 ? 's' : ''}`;
+    const passageNumber = this.game.currentPassageIndex + 1;
+    const levelInfo = `Level ${this.game.currentLevel} • Passage ${passageNumber}/2 • ${blanksCount} blank${blanksCount > 1 ? 's' : ''}`;
     
     this.elements.roundInfo.innerHTML = levelInfo;
 
@@ -155,22 +156,19 @@ class App {
   }
 
   displayResults(results) {
-    let message = `Score: ${results.correct}/${results.total} (${results.percentage}%)`;
-    
-    // Show "Required" information at all levels for consistency
-    message += ` - Required: ${results.requiredCorrect}/${results.total}`;
+    let message = `Score: ${results.correct}/${results.total}`;
     
     if (results.passed) {
       // Check if this completes the requirements for level advancement
       const roundsCompleted = this.game.roundsPassedAtCurrentLevel + 1; // +1 for this round
       if (roundsCompleted >= 2) {
-        message += ` - Excellent! Advancing to Level ${this.game.currentLevel + 1}! 🎉`;
+        message += ` ✓ Level ${this.game.currentLevel + 1} unlocked!`;
       } else {
-        message += ` - Great job! ${roundsCompleted}/2 rounds completed for Level ${this.game.currentLevel}`;
+        message += ` ✓ Passed (1 more round needed for next level)`;
       }
       this.elements.result.className = 'mt-4 text-center font-semibold text-green-600';
     } else {
-      message += ` - Need ${results.requiredCorrect} correct to advance. Keep practicing! 💪`;
+      message += ` - Try again (need ${results.requiredCorrect}/${results.total})`;
       this.elements.result.className = 'mt-4 text-center font-semibold text-red-600';
     }
     

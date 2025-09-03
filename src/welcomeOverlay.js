@@ -43,7 +43,7 @@ class WelcomeOverlay {
       
       <div class="welcome-content">
         <p>
-          <strong>How to play:</strong> Read the passage, fill in the blanks, and use hints or chat help (💬) if needed. Progress through levels as you improve.
+          <strong>How to play:</strong> Fill in the blanks in each passage. Complete 2 passages per round. Pass 2 rounds to advance to the next level.
         </p>
         
         <p>
@@ -51,7 +51,7 @@ class WelcomeOverlay {
         </p>
         
         <p style="margin-bottom: 0;">
-          <strong>AI assistance:</strong> Powered by Google's Gemma 3 model via OpenRouter for intelligent word selection and contextual hints.
+          <strong>AI assistance:</strong> Powered by Google's Gemma models via OpenRouter - Gemma-3-27b for contextual hints and Gemma-3-12b for word selection and processing.
         </p>
       </div>
 

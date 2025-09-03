@@ -4,12 +4,17 @@ class OpenRouterService {
     this.isLocalMode = this.checkLocalMode();
     this.apiUrl = this.isLocalMode ? 'http://localhost:1234/v1/chat/completions' : 'https://openrouter.ai/api/v1/chat/completions';
     this.apiKey = this.getApiKey();
-    this.model = this.isLocalMode ? 'gemma-3-12b' : 'google/gemma-3-27b-it:free';
+    
+    // Dual model configuration: Gemma-3-27b for hints/query-answering, Gemma-3-12b for everything else
+    this.hintModel = this.isLocalMode ? 'gemma-3-12b' : 'google/gemma-3-27b-it';
+    this.primaryModel = this.isLocalMode ? 'gemma-3-12b' : 'google/gemma-3-12b-it';
+    this.model = this.primaryModel; // Default model for backward compatibility
     
     console.log('AI Service initialized:', {
       mode: this.isLocalMode ? 'Local LLM' : 'OpenRouter',
       url: this.apiUrl,
-      model: this.model
+      primaryModel: this.primaryModel,
+      hintModel: this.hintModel
     });
   }
   
@@ -86,15 +91,18 @@ class OpenRouterService {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          model: this.model,
+          model: this.hintModel,  // Use Gemma-3-27b for hints
           messages: [{
+            role: 'system',
+            content: 'You are a helpful assistant that provides hints for word puzzles. Never reveal the answer word directly.'
+          }, {
             role: 'user',
-            content: `You provide clues for word puzzles. You will be told the target word that players need to guess, but you must NEVER mention, spell, or reveal that word in your response. Follow the EXACT format requested. Be concise and direct about the target word without revealing it. Use plain text only - no bold, italics, asterisks, or markdown formatting. Stick to word limits.
-
-${prompt}`
+            content: prompt
           }],
-          max_tokens: 50,
-          temperature: 0.6
+          max_tokens: 150,
+          temperature: 0.7,
+          // Try to disable reasoning mode for hints
+          response_format: { type: "text" }
         })
       });
 
@@ -104,19 +112,73 @@ ${prompt}`
 
       const data = await response.json();
       
+      console.log('Hint API response:', JSON.stringify(data, null, 2));
+      
       // Check if data and choices exist before accessing
       if (!data || !data.choices || data.choices.length === 0) {
         console.error('Invalid API response structure:', data);
         return 'Unable to generate hint at this time';
       }
       
-      // Check if message content exists
-      if (!data.choices[0].message || !data.choices[0].message.content) {
-        console.error('No content in API response');
+      // Check if message exists
+      if (!data.choices[0].message) {
+        console.error('No message in API response');
         return 'Unable to generate hint at this time';
       }
       
-      let content = data.choices[0].message.content.trim();
+      // OSS-20B model returns content in 'reasoning' field when using reasoning mode
+      let content = data.choices[0].message.content || '';
+      
+      // If content is empty, check for reasoning field
+      if (!content && data.choices[0].message.reasoning) {
+        content = data.choices[0].message.reasoning;
+      }
+      
+      // Still no content? Check reasoning_details
+      if (!content && data.choices[0].message.reasoning_details?.length > 0) {
+        content = data.choices[0].message.reasoning_details[0].text;
+      }
+      
+      if (!content) {
+        console.error('No content found in hint response');
+        // Provide a generic hint based on the prompt type
+        if (prompt.toLowerCase().includes('synonym')) {
+          return 'Think of a word that means something similar';
+        } else if (prompt.toLowerCase().includes('definition')) {
+          return 'Consider what this word means in context';
+        } else if (prompt.toLowerCase().includes('category')) {
+          return 'Think about what type or category this word belongs to';
+        } else {
+          return 'Consider the context around the blank';
+        }
+      }
+      
+      content = content.trim();
+      
+      // For OSS-20B, extract hint from reasoning text if needed
+      if (content.includes('The user') || content.includes('We need to')) {
+        // This looks like reasoning text, try to extract the actual hint
+        // Look for text about synonyms, definitions, or clues
+        const hintPatterns = [
+          /synonym[s]?.*?(?:is|are|include[s]?|would be)\s+([^.]+)/i,
+          /means?\s+([^.]+)/i,
+          /refers? to\s+([^.]+)/i,
+          /describes?\s+([^.]+)/i,
+        ];
+        
+        for (const pattern of hintPatterns) {
+          const match = content.match(pattern);
+          if (match) {
+            content = match[1];
+            break;
+          }
+        }
+        
+        // If still has reasoning markers, just return a fallback
+        if (content.includes('The user') || content.includes('We need to')) {
+          return 'Think about words that mean something similar';
+        }
+      }
       
       // Clean up AI response artifacts  
       content = content
@@ -176,35 +238,20 @@ ${prompt}`
             'X-Title': 'Cloze Reader'
           },
           body: JSON.stringify({
-            model: this.model,
+            model: this.primaryModel,  // Use Gemma-3-12b for word selection
             messages: [{
+              role: 'system',
+              content: 'Select words for a cloze exercise. Return ONLY a JSON array of words, nothing else.'
+            }, {
               role: 'user',
-              content: `You are a cluemaster vocabulary selector for educational cloze exercises. Select exactly ${count} words from this passage for a cloze exercise.
-
-DIFFICULTY LEVEL ${level}:
-${difficultyGuidance}
-
-CLOZE DELETION PRINCIPLES:
-- Select words that require understanding context and vocabulary to identify
-- Choose words essential for comprehension that test language ability
-- Target words where deletion creates meaningful cognitive gaps
-
-REQUIREMENTS:
-- Choose clear, properly-spelled words (no OCR errors like "andsatires")
-- Select meaningful nouns, verbs, or adjectives (${wordLengthConstraint})
-- Words must appear EXACTLY as written in the passage
-- Avoid: capitalized words, ALL-CAPS words, function words, archaic terms, proper nouns, technical jargon
-- Skip any words that look malformed or concatenated
-- Avoid dated or potentially offensive terms
-- PREFER words from the middle portions of the passage when possible
-- If struggling to find ${count} perfect words, prioritize returning SOMETHING over returning nothing
-
-Return ONLY a JSON array of the selected words.
+              content: `Select ${count} ${level <= 2 ? 'easy' : level <= 4 ? 'medium' : 'challenging'} words (${wordLengthConstraint}) from this passage. Choose meaningful nouns, verbs, or adjectives. Avoid capitalized words and proper nouns.
 
 Passage: "${passage}"`
             }],
-            max_tokens: 100,
-            temperature: 0.3
+            max_tokens: 200,
+            temperature: 0.5,
+            // Try to disable reasoning mode for word selection
+            response_format: { type: "text" }
           })
         });
 
@@ -220,13 +267,35 @@ Passage: "${passage}"`
           throw new Error(`OpenRouter API error: ${data.error.message || JSON.stringify(data.error)}`);
         }
         
+        // Log the full response to debug structure
+        console.log('Full API response:', JSON.stringify(data, null, 2));
+        
         // Check if response has expected structure
-        if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
           console.error('Invalid word selection API response structure:', data);
-          throw new Error('API response missing expected content');
+          console.error('Choices[0]:', data.choices?.[0]);
+          throw new Error('API response missing expected structure');
         }
         
-        let content = data.choices[0].message.content.trim();
+        // OSS-20B model returns content in 'reasoning' field when using reasoning mode
+        let content = data.choices[0].message.content || '';
+        
+        // If content is empty, check for reasoning field
+        if (!content && data.choices[0].message.reasoning) {
+          content = data.choices[0].message.reasoning;
+        }
+        
+        // Still no content? Check reasoning_details
+        if (!content && data.choices[0].message.reasoning_details?.length > 0) {
+          content = data.choices[0].message.reasoning_details[0].text;
+        }
+        
+        if (!content) {
+          console.error('No content found in API response');
+          throw new Error('API response missing content');
+        }
+        
+        content = content.trim();
         
         // Clean up local LLM artifacts
         if (this.isLocalMode) {
@@ -237,33 +306,55 @@ Passage: "${passage}"`
         try {
           let words;
           
-          // For local LLM, try different parsing strategies
-          if (this.isLocalMode) {
-            // Try JSON parse first
-            try {
+          // Try to parse JSON first
+          try {
+            // Check if content contains JSON array anywhere in it
+            const jsonMatch = content.match(/\[[\s\S]*?\]/);
+            if (jsonMatch) {
+              words = JSON.parse(jsonMatch[0]);
+            } else {
               words = JSON.parse(content);
-            } catch {
-              // If not JSON, try comma-separated
+            }
+          } catch {
+            // If not JSON, check if this is reasoning text from OSS-20B
+            if (content.includes('pick') || content.includes('Let\'s')) {
+              // Extract words from reasoning text
+              // Look for quoted words or words after "pick"
+              const quotedWords = content.match(/"([^"]+)"/g);
+              if (quotedWords) {
+                words = quotedWords.map(w => w.replace(/"/g, ''));
+              } else {
+                // Look for pattern like "Let's pick 'word'" or "pick word"
+                const pickMatch = content.match(/pick\s+['"]?(\w+)['"]?/i);
+                if (pickMatch) {
+                  words = [pickMatch[1]];
+                } else {
+                  // For local LLM, try comma-separated
+                  if (this.isLocalMode && content.includes(',')) {
+                    words = content.split(',').map(w => w.trim());
+                  } else {
+                    // Single word
+                    words = [content.trim()];
+                  }
+                }
+              }
+            } else if (this.isLocalMode) {
+              // For local LLM, try comma-separated
               if (content.includes(',')) {
                 words = content.split(',').map(w => w.trim());
               } else {
                 // Single word
                 words = [content.trim()];
               }
+            } else {
+              throw new Error('Could not parse words from response');
             }
-          } else {
-            words = JSON.parse(content);
           }
           
           if (Array.isArray(words)) {
-            // Filter problematic words and validate word lengths based on level
-            const problematicWords = ['negro', 'retard', 'retarded', 'nigger', 'chinaman', 'jap', 'gypsy', 'savage', 'primitive', 'heathen'];
+            // Validate word lengths based on level
             const validWords = words.filter(word => {
               const cleanWord = word.replace(/[^a-zA-Z]/g, '');
-              const lowerWord = cleanWord.toLowerCase();
-              
-              // Skip problematic words
-              if (problematicWords.includes(lowerWord)) return false;
               
               // Check length constraints
               if (level <= 2) {
@@ -288,14 +379,9 @@ Passage: "${passage}"`
           const matches = content.match(/"([^"]+)"/g);
           if (matches) {
             const words = matches.map(m => m.replace(/"/g, ''));
-            // Filter problematic words and validate word lengths
-            const problematicWords = ['negro', 'retard', 'retarded', 'nigger', 'chinaman', 'jap', 'gypsy', 'savage', 'primitive', 'heathen'];
+            // Validate word lengths
             const validWords = words.filter(word => {
               const cleanWord = word.replace(/[^a-zA-Z]/g, '');
-              const lowerWord = cleanWord.toLowerCase();
-              
-              // Skip problematic words
-              if (problematicWords.includes(lowerWord)) return false;
               
               // Check length constraints
               if (level <= 2) {
@@ -368,45 +454,25 @@ Passage: "${passage}"`
         headers,
         signal: controller.signal,
         body: JSON.stringify({
-          model: this.model,
+          model: this.primaryModel,  // Use Gemma-3-12b for batch processing
           messages: [{
+            role: 'system',
+            content: 'Process passages for cloze exercises. Return ONLY a JSON object.'
+          }, {
             role: 'user',
-            content: `You process passages for cloze reading exercises. For each passage: 1) Select words for blanks, 2) Generate a contextual introduction. Return a JSON object with both passages' data.
+            content: `Select ${blanksPerPassage} ${level <= 2 ? 'easy' : level <= 4 ? 'medium' : 'challenging'} words (${wordLengthConstraint}) from each passage.
 
-DIFFICULTY LEVEL ${level}:
-${difficultyGuidance}
+Passage 1 ("${book1.title}" by ${book1.author}):
+${passage1}
 
-Process these two passages for cloze exercises:
+Passage 2 ("${book2.title}" by ${book2.author}):
+${passage2}
 
-PASSAGE 1:
-Title: "${book1.title}" by ${book1.author}
-Text: "${passage1}"
-Select ${blanksPerPassage} words for blanks.
-
-PASSAGE 2:
-Title: "${book2.title}" by ${book2.author}
-Text: "${passage2}"
-Select ${blanksPerPassage} words for blanks.
-
-SELECTION RULES:
-- Select EXACTLY ${blanksPerPassage} word${blanksPerPassage > 1 ? 's' : ''} per passage, no more, no less
-- Choose meaningful nouns, verbs, or adjectives (${wordLengthConstraint})
-- Avoid capitalized words, ALL-CAPS words, and table of contents entries
-- Avoid dated or potentially offensive terms
-- NEVER select words from the first or last sentence/clause of each passage
-- Choose words from the middle portions for better context dependency
-- Words must appear EXACTLY as written in the passage
-
-For each passage return:
-- "words": array of EXACTLY ${blanksPerPassage} selected word${blanksPerPassage > 1 ? 's' : ''} (exactly as they appear in the text)
-- "context": one-sentence intro about the book/author
-
-CRITICAL: The "words" array must contain exactly ${blanksPerPassage} element${blanksPerPassage > 1 ? 's' : ''} for each passage.
-
-Return as JSON: {"passage1": {...}, "passage2": {...}}`
+Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one sentence about book"}, "passage2": {"words": [${blanksPerPassage} words], "context": "one sentence about book"}}`
           }],
           max_tokens: 800,
-          temperature: 0.5
+          temperature: 0.5,
+          response_format: { type: "text" }
         })
       });
 
@@ -425,13 +491,34 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
         throw new Error(`OpenRouter API error: ${data.error.message || JSON.stringify(data.error)}`);
       }
       
+      console.log('Batch API response:', JSON.stringify(data, null, 2));
+      
       // Check if response has expected structure
-      if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         console.error('Invalid batch API response structure:', data);
-        throw new Error('API response missing expected content');
+        console.error('Choices[0]:', data.choices?.[0]);
+        throw new Error('API response missing expected structure');
       }
       
-      const content = data.choices[0].message.content.trim();
+      // OSS-20B model returns content in 'reasoning' field when using reasoning mode
+      let content = data.choices[0].message.content || '';
+      
+      // If content is empty, check for reasoning field
+      if (!content && data.choices[0].message.reasoning) {
+        content = data.choices[0].message.reasoning;
+      }
+      
+      // Still no content? Check reasoning_details
+      if (!content && data.choices[0].message.reasoning_details?.length > 0) {
+        content = data.choices[0].message.reasoning_details[0].text;
+      }
+      
+      if (!content) {
+        console.error('No content found in batch API response');
+        throw new Error('API response missing content');
+      }
+      
+      content = content.trim();
       
       try {
         // Try to extract JSON from the response
@@ -491,15 +578,10 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
         parsed.passage1.words = parsed.passage1.words.filter(word => word && word.trim() !== '');
         parsed.passage2.words = parsed.passage2.words.filter(word => word && word.trim() !== '');
         
-        // Filter problematic words and validate word lengths based on level
+        // Validate word lengths based on level
         const validateWords = (words, passageText) => {
-          const problematicWords = ['negro', 'retard', 'retarded', 'nigger', 'chinaman', 'jap', 'gypsy', 'savage', 'primitive', 'heathen'];
           return words.filter(word => {
             const cleanWord = word.replace(/[^a-zA-Z]/g, '');
-            const lowerWord = cleanWord.toLowerCase();
-            
-            // Skip problematic words
-            if (problematicWords.includes(lowerWord)) return false;
             
             // Check if word appears in all caps in the passage (like "VOLUME")
             if (passageText.includes(word.toUpperCase()) && word === word.toUpperCase()) {
@@ -609,13 +691,17 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
             'X-Title': 'Cloze Reader'
           },
           body: JSON.stringify({
-            model: this.model,
+            model: this.primaryModel,  // Use Gemma-3-12b for contextualization
             messages: [{
+              role: 'system',
+              content: 'Write one factual sentence about the given literary work.'
+            }, {
               role: 'user',
-              content: `You are a historical and literary expert of public domain entries in Project Gutenberg. Write one factual sentence about "${title}" by ${author}. Focus on what type of work it is, when it was written, or its historical significance. Be accurate and concise.`
+              content: `"${title}" by ${author}`
             }],
-            max_tokens: 80,
-            temperature: 0.2
+            max_tokens: 150,
+            temperature: 0.5,
+            response_format: { type: "text" }
           })
         });
 
@@ -633,13 +719,34 @@ Return as JSON: {"passage1": {...}, "passage2": {...}}`
           throw new Error(`OpenRouter API error: ${data.error.message || JSON.stringify(data.error)}`);
         }
         
+        console.log('Context API response:', JSON.stringify(data, null, 2));
+        
         // Check if response has expected structure
-        if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
           console.error('Invalid contextualization API response structure:', data);
-          throw new Error('API response missing expected content');
+          console.error('Choices[0]:', data.choices?.[0]);
+          throw new Error('API response missing expected structure');
         }
         
-        let content = data.choices[0].message.content.trim();
+        // OSS-20B model returns content in 'reasoning' field when using reasoning mode
+        let content = data.choices[0].message.content || '';
+        
+        // If content is empty, check for reasoning field
+        if (!content && data.choices[0].message.reasoning) {
+          content = data.choices[0].message.reasoning;
+        }
+        
+        // Still no content? Check reasoning_details
+        if (!content && data.choices[0].message.reasoning_details?.length > 0) {
+          content = data.choices[0].message.reasoning_details[0].text;
+        }
+        
+        if (!content) {
+          console.error('No content found in context API response');
+          throw new Error('API response missing content');
+        }
+        
+        content = content.trim();
         
         // Clean up AI response artifacts
         content = content

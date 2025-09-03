@@ -885,17 +885,17 @@ class ClozeGame {
     // Track successful rounds and advance level after 2 successful rounds
     if (roundPassed) {
       this.roundsPassedAtCurrentLevel++;
-      console.log(`Round passed! Total rounds passed at level ${this.currentLevel}: ${this.roundsPassedAtCurrentLevel}`);
+      console.log(`Round passed at level ${this.currentLevel}`);
       
       // Advance level after 2 successful rounds
       if (this.roundsPassedAtCurrentLevel >= 2) {
         this.currentLevel++;
         this.roundsPassedAtCurrentLevel = 0; // Reset counter for new level
-        console.log(`Advancing to level ${this.currentLevel} after 2 successful rounds`);
+        console.log(`Advanced to level ${this.currentLevel}`);
       }
     } else {
       // Failed round - do not reset the counter, user must accumulate 2 passes
-      console.log(`Round failed. Still need ${2 - this.roundsPassedAtCurrentLevel} more passed round(s) to advance from level ${this.currentLevel}`);
+      console.log(`Round not passed. Need ${2 - this.roundsPassedAtCurrentLevel} more round(s) to advance`);
     }
     
     // Clear chat conversations for new round
