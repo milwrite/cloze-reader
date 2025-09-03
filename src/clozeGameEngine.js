@@ -84,7 +84,7 @@ class ClozeGame {
         this.currentBook = book1;
         this.originalText = this.passages[0];
         await this.createClozeTextFromPreprocessed(0);
-        this.contextualization = this.preprocessedData.passage1.context;
+        await this.generateContextualization();
         
       } catch (error) {
         console.warn('Batch processing failed, falling back to sequential:', error);
@@ -840,7 +840,7 @@ class ClozeGame {
         // Use preprocessed data if available
         if (this.preprocessedData && this.preprocessedData.passage2) {
           await this.createClozeTextFromPreprocessed(1);
-          this.contextualization = this.preprocessedData.passage2.context;
+          await this.generateContextualization();
         } else {
           // Fallback to sequential processing
           await this.createClozeText();
@@ -984,9 +984,10 @@ class ClozeGame {
             placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}"
             style="width: ${Math.max(50, blank.originalWord.length * 10)}px;">
           <button id="${chatButtonId}" 
-            class="chat-button text-blue-500 hover:text-blue-700 text-sm" 
+            class="chat-button text-blue-500 hover:text-blue-700" 
             data-blank-index="${index}"
-            title="Ask question about this word">
+            title="Ask question about this word"
+            style="font-size: 1.5rem; line-height: 1;">
             💬
           </button>
         </span>`;

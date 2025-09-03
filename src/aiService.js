@@ -694,10 +694,10 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
             model: this.primaryModel,  // Use Gemma-3-12b for contextualization
             messages: [{
               role: 'system',
-              content: 'Write one factual sentence about the given literary work.'
+              content: 'You are a literary expert. Provide ONE interesting fact about this book or its author. Focus on: publication year, genre, historical context, author biography, literary significance, or themes. Do NOT quote or paraphrase passages from the book. Keep it under 20 words.'
             }, {
               role: 'user',
-              content: `"${title}" by ${author}`
+              content: `Book: "${title}" by ${author}. Give me a brief fact about this work or author, not a quote from the text.`
             }],
             max_tokens: 150,
             temperature: 0.5,

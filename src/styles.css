@@ -23,12 +23,37 @@
 .chat-button {
   transition: all 0.2s ease;
   border-radius: 4px;
-  padding: 2px 4px;
+  padding: 4px 6px;
+  font-size: 1.5rem;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 .chat-button:hover {
   background-color: rgba(59, 130, 246, 0.1);
-  transform: scale(1.1);
+  transform: scale(1.15);
+}
+
+/* Responsive sizing for mobile */
+@media (max-width: 640px) {
+  .chat-button {
+    font-size: 1.25rem;
+    min-width: 28px;
+    min-height: 28px;
+  }
+}
+
+/* Larger screens get bigger icons */
+@media (min-width: 1024px) {
+  .chat-button {
+    font-size: 1.75rem;
+    min-width: 36px;
+    min-height: 36px;
+  }
 }
 
 /* Chat modal styling to match game font */
