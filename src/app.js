@@ -159,12 +159,13 @@ class App {
     let message = `Score: ${results.correct}/${results.total}`;
     
     if (results.passed) {
-      // Check if this completes the requirements for level advancement
-      const roundsCompleted = this.game.roundsPassedAtCurrentLevel + 1; // +1 for this round
-      if (roundsCompleted >= 2) {
-        message += ` ✓ Level ${this.game.currentLevel + 1} unlocked!`;
+      // Check if level was just advanced
+      if (results.justAdvancedLevel) {
+        message += ` ✓ Level ${results.currentLevel} unlocked!`;
+      } else if (results.passagesPassedAtCurrentLevel === 1) {
+        message += ` ✓ Passed (1 more passage needed for next level)`;
       } else {
-        message += ` ✓ Passed (1 more round needed for next level)`;
+        message += ` ✓ Passed`;
       }
       this.elements.result.className = 'mt-4 text-center font-semibold text-green-600';
     } else {

@@ -27,7 +27,8 @@ class ClozeGame {
     this.currentPassageIndex = 0; // 0 for first passage, 1 for second
     
     // Level progression tracking
-    this.roundsPassedAtCurrentLevel = 0; // Track successful rounds at current level
+    this.passagesPassedAtCurrentLevel = 0; // Track successful passages at current level (not rounds)
+    console.log('🎮 GAME ENGINE INITIALIZED - Starting at Level 1, Passages passed: 0');
   }
 
   async initialize() {
@@ -42,6 +43,7 @@ class ClozeGame {
 
   async startNewRound() {
     try {
+      console.log(`🎲 STARTING NEW ROUND - Round: ${this.currentRound}, Level: ${this.currentLevel}, Progress: ${this.passagesPassedAtCurrentLevel}/2`);
       // Get two books for this round based on current level criteria
       const book1 = await bookDataService.getBookByLevelCriteria(this.currentLevel);
       const book2 = await bookDataService.getBookByLevelCriteria(this.currentLevel);
@@ -780,7 +782,28 @@ class ClozeGame {
     const totalBlanks = this.blanks.length;
     const requiredCorrect = this.calculateRequiredCorrect(totalBlanks);
     const passed = correctCount >= requiredCorrect;
+    
+    // Track successful passages for level advancement
+    if (passed) {
+      this.passagesPassedAtCurrentLevel++;
+      console.log(`✅ PASSAGE PASSED - Level: ${this.currentLevel}, Passages passed at current level: ${this.passagesPassedAtCurrentLevel}/2`);
+      
+      // Advance level after 2 successful passages (not rounds)
+      if (this.passagesPassedAtCurrentLevel >= 2) {
+        const previousLevel = this.currentLevel;
+        this.currentLevel++;
+        this.passagesPassedAtCurrentLevel = 0; // Reset counter for new level
+        console.log(`🎉 LEVEL ADVANCEMENT: ${previousLevel} → ${this.currentLevel} (counter reset to 0)`);
+      } else {
+        console.log(`📊 Progress: Need ${2 - this.passagesPassedAtCurrentLevel} more passage(s) to advance from level ${this.currentLevel}`);
+      }
+    } else {
+      console.log(`❌ PASSAGE FAILED - Level: ${this.currentLevel}, Passages passed remains: ${this.passagesPassedAtCurrentLevel}/2`);
+    }
 
+    // Track if we just advanced levels
+    const justAdvancedLevel = passed && this.passagesPassedAtCurrentLevel === 0 && this.currentLevel > 1;
+    
     const resultsData = {
       correct: correctCount,
       total: this.blanks.length,
@@ -790,7 +813,9 @@ class ClozeGame {
       canAdvanceLevel: passed,
       shouldRevealAnswers: !passed,
       requiredCorrect: requiredCorrect,
-      currentLevel: this.currentLevel
+      currentLevel: this.currentLevel,
+      passagesPassedAtCurrentLevel: this.passagesPassedAtCurrentLevel,
+      justAdvancedLevel: justAdvancedLevel
     };
 
     // Store results for potential answer revelation
@@ -828,6 +853,7 @@ class ClozeGame {
       // Move to the second passage in the current round
       if (this.currentPassageIndex === 0 && this.passages && this.passages.length > 1) {
         this.currentPassageIndex = 1;
+        console.log(`📖 MOVING TO PASSAGE 2/2 in Round ${this.currentRound} - Level: ${this.currentLevel}, Progress: ${this.passagesPassedAtCurrentLevel}/2`);
         this.currentBook = this.currentBooks[1];
         this.originalText = this.passages[1];
         
@@ -869,34 +895,11 @@ class ClozeGame {
   }
 
   nextRound() {
-    // Check if user passed the previous round based on overall round performance
-    let roundPassed = false;
-    if (this.roundResults.length === 2) {
-      // Both passages completed - check if user passed at least one passage
-      roundPassed = this.roundResults.some(result => result && result.passed);
-    } else if (this.lastResults) {
-      // Fallback to single passage result
-      roundPassed = this.lastResults.passed;
-    }
-    
     // Always increment round counter
     this.currentRound++;
+    console.log(`🔄 NEW ROUND ${this.currentRound} - Level: ${this.currentLevel}, Passages passed at current level: ${this.passagesPassedAtCurrentLevel}/2`);
     
-    // Track successful rounds and advance level after 2 successful rounds
-    if (roundPassed) {
-      this.roundsPassedAtCurrentLevel++;
-      console.log(`Round passed at level ${this.currentLevel}`);
-      
-      // Advance level after 2 successful rounds
-      if (this.roundsPassedAtCurrentLevel >= 2) {
-        this.currentLevel++;
-        this.roundsPassedAtCurrentLevel = 0; // Reset counter for new level
-        console.log(`Advanced to level ${this.currentLevel}`);
-      }
-    } else {
-      // Failed round - do not reset the counter, user must accumulate 2 passes
-      console.log(`Round not passed. Need ${2 - this.roundsPassedAtCurrentLevel} more round(s) to advance`);
-    }
+    // Level advancement is now handled in submitAnswers() based on individual passages
     
     // Clear chat conversations for new round
     this.chatService.clearConversations();
