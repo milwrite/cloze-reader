@@ -1,2 +1,0 @@
-- DO NOT SIGN OFF COMMIT MESSAGES WITH CLAUDE AS AN AUTHOR
-- Remember to review this file at the end of prompt engineering related changes or when the user tells you to or at the end of a long session. If changes have been made to OpenRouter prompt language or programming logic, low or high level, then update this file accordingly.
