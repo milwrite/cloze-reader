@@ -354,7 +354,19 @@ Passage: "${passage}"`
           if (Array.isArray(words)) {
             // Validate word lengths based on level
             const validWords = words.filter(word => {
+              // First check if the word contains at least one letter
+              if (!/[a-zA-Z]/.test(word)) {
+                console.log(`❌ Rejecting non-alphabetic word: "${word}"`);
+                return false;
+              }
+              
               const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+              
+              // If cleanWord is empty after removing non-letters, reject
+              if (cleanWord.length === 0) {
+                console.log(`❌ Rejecting word with no letters: "${word}"`);
+                return false;
+              }
               
               // Check length constraints
               if (level <= 2) {
@@ -381,7 +393,19 @@ Passage: "${passage}"`
             const words = matches.map(m => m.replace(/"/g, ''));
             // Validate word lengths
             const validWords = words.filter(word => {
+              // First check if the word contains at least one letter
+              if (!/[a-zA-Z]/.test(word)) {
+                console.log(`❌ Rejecting non-alphabetic word: "${word}"`);
+                return false;
+              }
+              
               const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+              
+              // If cleanWord is empty after removing non-letters, reject
+              if (cleanWord.length === 0) {
+                console.log(`❌ Rejecting word with no letters: "${word}"`);
+                return false;
+              }
               
               // Check length constraints
               if (level <= 2) {
@@ -581,7 +605,19 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
         // Validate word lengths based on level
         const validateWords = (words, passageText) => {
           return words.filter(word => {
+            // First check if the word contains at least one letter
+            if (!/[a-zA-Z]/.test(word)) {
+              console.log(`❌ Rejecting non-alphabetic word: "${word}"`);
+              return false;
+            }
+            
             const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+            
+            // If cleanWord is empty after removing non-letters, reject
+            if (cleanWord.length === 0) {
+              console.log(`❌ Rejecting word with no letters: "${word}"`);
+              return false;
+            }
             
             // Check if word appears in all caps in the passage (like "VOLUME")
             if (passageText.includes(word.toUpperCase()) && word === word.toUpperCase()) {
