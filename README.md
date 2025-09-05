@@ -62,7 +62,7 @@ To run the Cloze Reader application locally using Docker:
 
 ## Local LLM Integration
 
-The `local-llm-integration` branch adds support for running with a local LLM server instead of OpenRouter API:
+Cloze Reader supports running with a local LLM server instead of OpenRouter API:
 
 ### Setup
 1. **Start your local LLM server** on port 1234 (e.g., using LM Studio with Gemma-3-12b)
