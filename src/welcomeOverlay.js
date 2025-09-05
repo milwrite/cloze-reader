@@ -51,7 +51,7 @@ class WelcomeOverlay {
         </p>
         
         <p style="margin-bottom: 0;">
-          <strong>AI assistance:</strong> Powered by Google's Gemma models via OpenRouter - Gemma-3-27b for contextual hints and Gemma-3-12b for word selection and processing.
+          <strong>AI assistance:</strong> Powered by Google's Gemma models via OpenRouter - Gemma-3-27b for hints and Gemma-3-12b for word selection and processing.
         </p>
       </div>
 
