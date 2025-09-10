@@ -31,6 +31,43 @@ class ClozeGame {
     console.log('🎮 GAME ENGINE INITIALIZED - Starting at Level 1, Passages passed: 0');
   }
 
+  // --- User-visible framing helpers ---
+  getBlanksPerPassage(level = this.currentLevel) {
+    if (level <= 5) return 1;
+    if (level <= 10) return 2;
+    return 3;
+  }
+
+  getProgressSnapshot() {
+    return {
+      round: this.currentRound,
+      level: this.currentLevel,
+      passageNumber: this.currentPassageIndex + 1,
+      totalPassages: 2,
+      blanksPerPassage: this.getBlanksPerPassage(),
+      passagesPassedAtCurrentLevel: this.passagesPassedAtCurrentLevel
+    };
+  }
+
+  formatProgressText(snapshot = this.getProgressSnapshot()) {
+    const blanksLabel = `${snapshot.blanksPerPassage} blank${snapshot.blanksPerPassage > 1 ? 's' : ''}`;
+    return `Level ${snapshot.level} • Passage ${snapshot.passageNumber}/${snapshot.totalPassages} • ${blanksLabel}`;
+  }
+
+  formatAdvancementText({ passed, correctCount, requiredCorrect, justAdvancedLevel }) {
+    if (passed) {
+      if (justAdvancedLevel) {
+        return `✓ Passed • Level up! Welcome to Level ${this.currentLevel}`;
+      }
+      const needed = Math.max(0, 2 - this.passagesPassedAtCurrentLevel);
+      if (needed === 0) {
+        return `✓ Passed`;
+      }
+      return `✓ Passed • ${needed} more passage${needed > 1 ? 's' : ''} to reach Level ${this.currentLevel + 1}`;
+    }
+    return `Try again • Need ${requiredCorrect}/${this.blanks.length} correct (you got ${correctCount})`;
+  }
+
   async initialize() {
     try {
       await bookDataService.loadDataset();
@@ -58,15 +95,8 @@ class ClozeGame {
       this.currentPassageIndex = 0;
       
       // Calculate blanks per passage based on level
-      // Levels 1-5: 1 blank, Levels 6-10: 2 blanks, Level 11+: 3 blanks
-      let blanksPerPassage;
-      if (this.currentLevel <= 5) {
-        blanksPerPassage = 1;
-      } else if (this.currentLevel <= 10) {
-        blanksPerPassage = 2;
-      } else {
-        blanksPerPassage = 3;
-      }
+      // Levels 1-5: 1 blank, 6-10: 2 blanks, 11+: 3 blanks
+      const blanksPerPassage = this.getBlanksPerPassage();
       
       // Process both passages in a single API call
       try {
@@ -98,6 +128,7 @@ class ClozeGame {
         await this.generateContextualization();
       }
       
+      const snapshot = this.getProgressSnapshot();
       return {
         title: this.currentBook.title,
         author: this.currentBook.author,
@@ -106,7 +137,8 @@ class ClozeGame {
         contextualization: this.contextualization,
         hints: this.hints,
         passageNumber: 1,
-        totalPassages: 2
+        totalPassages: 2,
+        progressText: this.formatProgressText(snapshot)
       };
     } catch (error) {
       console.error('Error starting new round:', error);
@@ -803,7 +835,8 @@ class ClozeGame {
 
     // Track if we just advanced levels
     const justAdvancedLevel = passed && this.passagesPassedAtCurrentLevel === 0 && this.currentLevel > 1;
-    
+
+    const snapshot = this.getProgressSnapshot();
     const resultsData = {
       correct: correctCount,
       total: this.blanks.length,
@@ -815,7 +848,13 @@ class ClozeGame {
       requiredCorrect: requiredCorrect,
       currentLevel: this.currentLevel,
       passagesPassedAtCurrentLevel: this.passagesPassedAtCurrentLevel,
-      justAdvancedLevel: justAdvancedLevel
+      justAdvancedLevel: justAdvancedLevel,
+      round: snapshot.round,
+      passageNumber: snapshot.passageNumber,
+      totalPassages: snapshot.totalPassages,
+      progressText: this.formatProgressText(snapshot),
+      feedbackText: this.formatAdvancementText({ passed, correctCount, requiredCorrect, justAdvancedLevel }),
+      nextActionText: snapshot.passageNumber === snapshot.totalPassages ? 'Next round' : 'Next passage'
     };
 
     // Store results for potential answer revelation
@@ -874,6 +913,7 @@ class ClozeGame {
           await this.generateContextualization();
         }
         
+        const snapshot = this.getProgressSnapshot();
         return {
           title: this.currentBook.title,
           author: this.currentBook.author,
@@ -882,7 +922,8 @@ class ClozeGame {
           contextualization: this.contextualization,
           hints: this.hints,
           passageNumber: 2,
-          totalPassages: 2
+          totalPassages: 2,
+          progressText: this.formatProgressText(snapshot)
         };
       } else {
         // If we're already on the second passage, move to next round
