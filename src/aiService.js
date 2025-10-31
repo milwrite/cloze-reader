@@ -51,11 +51,9 @@ class OpenRouterService {
         return await requestFn();
       } catch (error) {
         console.log(`API request attempt ${attempt}/${maxRetries} failed:`, error.message);
-        
         if (attempt === maxRetries) {
           throw error; // Final attempt failed, throw the error
         }
-        
         // Wait before retrying, with exponential backoff
         const delay = delayMs * Math.pow(2, attempt - 1);
         console.log(`Retrying in ${delay}ms...`);

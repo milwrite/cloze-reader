@@ -30,12 +30,11 @@ app.add_middleware(
 )
 
 # Initialize HF Leaderboard Service
-# repo_id will auto-detect from SPACE_ID env var (set automatically in HF Spaces)
-# For local testing, you can set SPACE_ID manually or pass repo_id explicitly
+# Using dedicated leaderboard Space: milwright/cloze-leaderboard
 hf_token = os.getenv("HF_TOKEN")
 try:
     hf_leaderboard = HFLeaderboardService(
-        repo_id=os.getenv("SPACE_ID"),  # Auto-detect Space ID
+        repo_id="milwright/cloze-leaderboard",  # Dedicated leaderboard Space
         token=hf_token
     )
 except ValueError as e:
