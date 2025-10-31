@@ -170,7 +170,6 @@ export class LeaderboardUI {
       <div class="initials-modal">
         <div class="initials-header">
           <h2 class="initials-title">New High Score</h2>
-          <button class="leaderboard-close" aria-label="Close without saving">×</button>
           <div class="initials-achievement">
             You reached <span class="highlight">Level ${level}</span>
             <br>
@@ -179,7 +178,7 @@ export class LeaderboardUI {
         </div>
 
         <div class="initials-content">
-          <p class="initials-prompt">Enter your initials:</p>
+          <p class="initials-prompt">Enter or update your initials:</p>
 
           <div class="initials-slots">
             ${this.initials.map((letter, index) => `
@@ -196,7 +195,7 @@ export class LeaderboardUI {
           <div class="initials-instructions">
             <p>Use arrow keys ↑↓ to change letters</p>
             <p>Press Tab or ←→ to move between slots</p>
-            <p>Press Enter to confirm, ESC to cancel</p>
+            <p>Press Enter to submit</p>
           </div>
 
           <button class="initials-submit typewriter-button">

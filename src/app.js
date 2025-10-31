@@ -339,25 +339,19 @@ class App {
     if (this.game.checkForHighScore()) {
       const rank = this.game.getHighScoreRank();
       const stats = this.game.leaderboardService.getStats();
-      const profile = this.game.leaderboardService.getPlayerProfile();
 
-      // If player hasn't entered initials yet, show initials entry
-      if (!profile.hasEnteredInitials) {
-        this.leaderboardUI.showInitialsEntry(
-          stats.highestLevel,
-          stats.roundAtHighestLevel,
-          rank,
-          (initials) => {
-            // Save to leaderboard
-            const finalRank = this.game.addToLeaderboard(initials);
-            console.log(`Added to leaderboard at rank ${finalRank}`);
-          }
-        );
-      } else {
-        // Update existing entry
-        const finalRank = this.game.addToLeaderboard(profile.initials);
-        console.log(`Updated leaderboard entry at rank ${finalRank}`);
-      }
+      // Always show initials entry when achieving a high score
+      // Pre-fills with previous initials if available, allowing changes
+      this.leaderboardUI.showInitialsEntry(
+        stats.highestLevel,
+        stats.roundAtHighestLevel,
+        rank,
+        (initials) => {
+          // Save to leaderboard
+          const finalRank = this.game.addToLeaderboard(initials);
+          console.log(`Added to leaderboard at rank ${finalRank}`);
+        }
+      );
     }
   }
 }

@@ -30,11 +30,18 @@ app.add_middleware(
 )
 
 # Initialize HF Leaderboard Service
-hf_token = os.getenv("HF_TOKEN") or os.getenv("HF_API_KEY")
-hf_leaderboard = HFLeaderboardService(
-    repo_id=os.getenv("HF_LEADERBOARD_REPO", "zmuhls/cloze-reader-leaderboard"),
-    token=hf_token
-)
+# repo_id will auto-detect from SPACE_ID env var (set automatically in HF Spaces)
+# For local testing, you can set SPACE_ID manually or pass repo_id explicitly
+hf_token = os.getenv("HF_TOKEN")
+try:
+    hf_leaderboard = HFLeaderboardService(
+        repo_id=os.getenv("SPACE_ID"),  # Auto-detect Space ID
+        token=hf_token
+    )
+except ValueError as e:
+    logger.warning(f"Could not initialize HF Leaderboard Service: {e}")
+    logger.warning("Leaderboard will use localStorage fallback only")
+    hf_leaderboard = None
 
 # Pydantic models for API
 class LeaderboardEntry(BaseModel):
@@ -87,6 +94,13 @@ async def get_leaderboard():
     """
     Get current leaderboard data from HF Hub
     """
+    if not hf_leaderboard:
+        return {
+            "success": True,
+            "leaderboard": [],
+            "message": "HF leaderboard not available (using localStorage only)"
+        }
+
     try:
         leaderboard = hf_leaderboard.get_leaderboard()
         return {
@@ -104,6 +118,9 @@ async def add_leaderboard_entry(entry: LeaderboardEntry):
     """
     Add new entry to leaderboard
     """
+    if not hf_leaderboard:
+        raise HTTPException(status_code=503, detail="HF leaderboard not available")
+
     try:
         success = hf_leaderboard.add_entry(entry.dict())
         if success:
@@ -125,6 +142,9 @@ async def update_leaderboard(entries: List[LeaderboardEntry]):
     """
     Update entire leaderboard (replace all data)
     """
+    if not hf_leaderboard:
+        raise HTTPException(status_code=503, detail="HF leaderboard not available")
+
     try:
         success = hf_leaderboard.update_leaderboard([e.dict() for e in entries])
         if success:
@@ -146,6 +166,9 @@ async def clear_leaderboard():
     """
     Clear all leaderboard data (admin only)
     """
+    if not hf_leaderboard:
+        raise HTTPException(status_code=503, detail="HF leaderboard not available")
+
     try:
         success = hf_leaderboard.clear_leaderboard()
         if success:

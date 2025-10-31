@@ -352,22 +352,46 @@ Passage: "${passage}"`
           }
           
           if (Array.isArray(words)) {
-            // Validate word lengths based on level
+            // Create passage word array with position and capitalization info (matches clozeGameEngine logic)
+            const passageWords = passage.split(/\s+/);
+            const passageWordMap = new Map();
+
+            passageWords.forEach((word, idx) => {
+              const cleanOriginal = word.replace(/[^\w]/g, '');
+              const cleanLower = cleanOriginal.toLowerCase();
+              const isCapitalized = cleanOriginal.length > 0 && cleanOriginal[0] === cleanOriginal[0].toUpperCase();
+
+              // Only track non-capitalized words after position 10 (matches game engine constraints)
+              if (!isCapitalized && idx >= 10) {
+                if (!passageWordMap.has(cleanLower)) {
+                  passageWordMap.set(cleanLower, []);
+                }
+                passageWordMap.get(cleanLower).push(idx);
+              }
+            });
+
+            // Validate word lengths based on level and passage presence
             const validWords = words.filter(word => {
               // First check if the word contains at least one letter
               if (!/[a-zA-Z]/.test(word)) {
                 console.log(`❌ Rejecting non-alphabetic word: "${word}"`);
                 return false;
               }
-              
+
               const cleanWord = word.replace(/[^a-zA-Z]/g, '');
-              
+
               // If cleanWord is empty after removing non-letters, reject
               if (cleanWord.length === 0) {
                 console.log(`❌ Rejecting word with no letters: "${word}"`);
                 return false;
               }
-              
+
+              // Check if word exists as non-capitalized word after position 10 (matches game engine)
+              if (!passageWordMap.has(cleanWord.toLowerCase())) {
+                console.log(`❌ Rejecting word not matchable in passage: "${word}" (capitalized or in first 10 words)`);
+                return false;
+              }
+
               // Check length constraints
               if (level <= 2) {
                 return cleanWord.length >= 4 && cleanWord.length <= 7;
@@ -391,22 +415,47 @@ Passage: "${passage}"`
           const matches = content.match(/"([^"]+)"/g);
           if (matches) {
             const words = matches.map(m => m.replace(/"/g, ''));
-            // Validate word lengths
+
+            // Create passage word array with position and capitalization info (matches clozeGameEngine logic)
+            const passageWords = passage.split(/\s+/);
+            const passageWordMap = new Map();
+
+            passageWords.forEach((word, idx) => {
+              const cleanOriginal = word.replace(/[^\w]/g, '');
+              const cleanLower = cleanOriginal.toLowerCase();
+              const isCapitalized = cleanOriginal.length > 0 && cleanOriginal[0] === cleanOriginal[0].toUpperCase();
+
+              // Only track non-capitalized words after position 10 (matches game engine constraints)
+              if (!isCapitalized && idx >= 10) {
+                if (!passageWordMap.has(cleanLower)) {
+                  passageWordMap.set(cleanLower, []);
+                }
+                passageWordMap.get(cleanLower).push(idx);
+              }
+            });
+
+            // Validate word lengths and passage presence
             const validWords = words.filter(word => {
               // First check if the word contains at least one letter
               if (!/[a-zA-Z]/.test(word)) {
                 console.log(`❌ Rejecting non-alphabetic word: "${word}"`);
                 return false;
               }
-              
+
               const cleanWord = word.replace(/[^a-zA-Z]/g, '');
-              
+
               // If cleanWord is empty after removing non-letters, reject
               if (cleanWord.length === 0) {
                 console.log(`❌ Rejecting word with no letters: "${word}"`);
                 return false;
               }
-              
+
+              // Check if word exists as non-capitalized word after position 10 (matches game engine)
+              if (!passageWordMap.has(cleanWord.toLowerCase())) {
+                console.log(`❌ Rejecting word not matchable in passage: "${word}" (capitalized or in first 10 words)`);
+                return false;
+              }
+
               // Check length constraints
               if (level <= 2) {
                 return cleanWord.length >= 4 && cleanWord.length <= 7;
@@ -602,29 +651,53 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
         parsed.passage1.words = parsed.passage1.words.filter(word => word && word.trim() !== '');
         parsed.passage2.words = parsed.passage2.words.filter(word => word && word.trim() !== '');
         
-        // Validate word lengths based on level
+        // Validate word lengths based on level and passage presence
         const validateWords = (words, passageText) => {
+          // Create passage word array with position and capitalization info (matches clozeGameEngine logic)
+          const passageWords = passageText.split(/\s+/);
+          const passageWordMap = new Map();
+
+          passageWords.forEach((word, idx) => {
+            const cleanOriginal = word.replace(/[^\w]/g, '');
+            const cleanLower = cleanOriginal.toLowerCase();
+            const isCapitalized = cleanOriginal.length > 0 && cleanOriginal[0] === cleanOriginal[0].toUpperCase();
+
+            // Only track non-capitalized words after position 10 (matches game engine constraints)
+            if (!isCapitalized && idx >= 10) {
+              if (!passageWordMap.has(cleanLower)) {
+                passageWordMap.set(cleanLower, []);
+              }
+              passageWordMap.get(cleanLower).push(idx);
+            }
+          });
+
           return words.filter(word => {
             // First check if the word contains at least one letter
             if (!/[a-zA-Z]/.test(word)) {
               console.log(`❌ Rejecting non-alphabetic word: "${word}"`);
               return false;
             }
-            
+
             const cleanWord = word.replace(/[^a-zA-Z]/g, '');
-            
+
             // If cleanWord is empty after removing non-letters, reject
             if (cleanWord.length === 0) {
               console.log(`❌ Rejecting word with no letters: "${word}"`);
               return false;
             }
-            
+
+            // Check if word exists as non-capitalized word after position 10 (matches game engine)
+            if (!passageWordMap.has(cleanWord.toLowerCase())) {
+              console.log(`❌ Rejecting word not matchable in passage: "${word}" (capitalized or in first 10 words)`);
+              return false;
+            }
+
             // Check if word appears in all caps in the passage (like "VOLUME")
             if (passageText.includes(word.toUpperCase()) && word === word.toUpperCase()) {
               console.log(`Skipping all-caps word: ${word}`);
               return false;
             }
-            
+
             // Check length constraints
             if (level <= 2) {
               return cleanWord.length >= 4 && cleanWord.length <= 7;

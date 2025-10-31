@@ -7,7 +7,7 @@ import json
 import os
 from datetime import datetime
 from typing import List, Dict, Optional
-from huggingface_hub import HfApi, hf_hub_download, HfFolder
+from huggingface_hub import HfApi, hf_hub_download, CommitOperationAdd
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,57 +16,36 @@ logger = logging.getLogger(__name__)
 class HFLeaderboardService:
     """
     Service for managing leaderboard data on Hugging Face Hub
-    Stores leaderboard as a JSON file in a HF dataset
+    Stores leaderboard as a JSON file in the current HF Space repository
     """
 
-    def __init__(self, repo_id: str = "zmuhls/cloze-reader-leaderboard", token: Optional[str] = None):
+    def __init__(self, repo_id: Optional[str] = None, token: Optional[str] = None):
         """
         Initialize HF Leaderboard Service
 
         Args:
             repo_id: HF Hub repository ID (format: username/repo-name)
+                    If not provided, uses SPACE_ID env var (auto-set in HF Spaces)
             token: HF API token (if not provided, uses HF_TOKEN env var)
         """
-        self.repo_id = repo_id
-        self.token = token or os.getenv("HF_TOKEN") or os.getenv("HF_API_KEY")
+        # Use SPACE_ID if available (automatically set in HF Spaces)
+        self.repo_id = repo_id or os.getenv("SPACE_ID")
+        if not self.repo_id:
+            raise ValueError("No repo_id provided and SPACE_ID env var not set. Cannot determine target repository.")
+
+        self.token = token or os.getenv("HF_TOKEN")
         self.api = HfApi()
         self.leaderboard_file = "leaderboard.json"
+        self.repo_type = "space"  # Store in Space repo, not separate dataset
 
         if not self.token:
             logger.warning("No HF token provided. Read-only mode (if repo is public)")
 
-        # Ensure repo exists
-        self._ensure_repo_exists()
-
-    def _ensure_repo_exists(self):
-        """Create the HF dataset repository if it doesn't exist"""
-        if not self.token:
-            return
-
-        try:
-            # Try to get repo info
-            self.api.repo_info(repo_id=self.repo_id, repo_type="dataset", token=self.token)
-            logger.info(f"Using existing HF dataset: {self.repo_id}")
-        except Exception as e:
-            # Repo doesn't exist, create it
-            try:
-                self.api.create_repo(
-                    repo_id=self.repo_id,
-                    repo_type="dataset",
-                    token=self.token,
-                    private=False,
-                    exist_ok=True
-                )
-                logger.info(f"Created HF dataset: {self.repo_id}")
-
-                # Initialize with empty leaderboard
-                self._save_to_hub([])
-            except Exception as create_error:
-                logger.error(f"Failed to create HF repo: {create_error}")
+        logger.info(f"HF Leaderboard Service initialized for Space: {self.repo_id}")
 
     def _save_to_hub(self, data: List[Dict]):
         """
-        Save leaderboard data to HF Hub
+        Save leaderboard data to HF Hub using best practice commit pattern
 
         Args:
             data: List of leaderboard entries
@@ -74,7 +53,7 @@ class HFLeaderboardService:
         if not self.token:
             raise ValueError("No HF token available for writing")
 
-        # Create temporary file
+        # Create temporary file with leaderboard data
         temp_file = f"/tmp/{self.leaderboard_file}"
         with open(temp_file, "w") as f:
             json.dump({
@@ -83,19 +62,26 @@ class HFLeaderboardService:
                 "version": "1.0"
             }, f, indent=2)
 
-        # Upload to HF Hub
+        # Commit to HF Hub using best practice pattern
         try:
-            self.api.upload_file(
-                path_or_fileobj=temp_file,
-                path_in_repo=self.leaderboard_file,
+            operations = [
+                CommitOperationAdd(
+                    path_or_fileobj=temp_file,
+                    path_in_repo=self.leaderboard_file
+                )
+            ]
+
+            self.api.create_commit(
                 repo_id=self.repo_id,
-                repo_type="dataset",
-                token=self.token,
-                commit_message=f"Update leaderboard - {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC"
+                operations=operations,
+                commit_message=f"update leaderboard - {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} utc",
+                repo_type=self.repo_type,
+                token=self.token
             )
+
             logger.info(f"Leaderboard saved to HF Hub: {self.repo_id}")
         except Exception as e:
-            logger.error(f"Failed to upload to HF Hub: {e}")
+            logger.error(f"Failed to commit to HF Hub: {e}")
             raise
         finally:
             # Clean up temp file
@@ -114,7 +100,7 @@ class HFLeaderboardService:
             file_path = hf_hub_download(
                 repo_id=self.repo_id,
                 filename=self.leaderboard_file,
-                repo_type="dataset",
+                repo_type=self.repo_type,
                 token=self.token
             )
 
