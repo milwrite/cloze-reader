@@ -2,12 +2,14 @@
 import ClozeGame from './clozeGameEngine.js';
 import ChatUI from './chatInterface.js';
 import WelcomeOverlay from './welcomeOverlay.js';
+import { LeaderboardUI } from './leaderboardUI.js';
 
 class App {
   constructor() {
     this.game = new ClozeGame();
     this.chatUI = new ChatUI(this.game);
     this.welcomeOverlay = new WelcomeOverlay();
+    this.leaderboardUI = new LeaderboardUI(this.game.leaderboardService);
     this.elements = {
       loading: document.getElementById('loading'),
       gameArea: document.getElementById('game-area'),
@@ -21,9 +23,10 @@ class App {
       submitBtn: document.getElementById('submit-btn'),
       nextBtn: document.getElementById('next-btn'),
       hintBtn: document.getElementById('hint-btn'),
-      result: document.getElementById('result')
+      result: document.getElementById('result'),
+      leaderboardBtn: document.getElementById('leaderboard-btn')
     };
-    
+
     this.currentResults = null;
     this.setupEventListeners();
   }
@@ -44,7 +47,14 @@ class App {
     this.elements.submitBtn.addEventListener('click', () => this.handleSubmit());
     this.elements.nextBtn.addEventListener('click', () => this.handleNext());
     this.elements.hintBtn.addEventListener('click', () => this.toggleHints());
-    
+
+    // Leaderboard button
+    if (this.elements.leaderboardBtn) {
+      this.elements.leaderboardBtn.addEventListener('click', () => {
+        this.leaderboardUI.show();
+      });
+    }
+
     // Allow Enter key to submit when focused on an input
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.target.classList.contains('cloze-input')) {
@@ -72,9 +82,8 @@ class App {
 
     // Show level information
     const blanksCount = roundData.blanks.length;
-    const passageNumber = this.game.currentPassageIndex + 1;
-    const levelInfo = `Level ${this.game.currentLevel} • Passage ${passageNumber}/2 • ${blanksCount} blank${blanksCount > 1 ? 's' : ''}`;
-    
+    const levelInfo = `Level ${this.game.currentLevel} • ${blanksCount} blank${blanksCount > 1 ? 's' : ''}`;
+
     this.elements.roundInfo.innerHTML = levelInfo;
 
     // Show contextualization from AI agent
@@ -157,13 +166,19 @@ class App {
 
   displayResults(results) {
     let message = `Score: ${results.correct}/${results.total}`;
-    
+
     if (results.passed) {
       // Check if level was just advanced
       if (results.justAdvancedLevel) {
         message += ` ✓ Level ${results.currentLevel} unlocked!`;
-      } else if (results.passagesPassedAtCurrentLevel === 1) {
-        message += ` ✓ Passed (1 more passage needed for next level)`;
+
+        // Check for milestone notification (every 5 levels)
+        if (results.currentLevel % 5 === 0) {
+          this.leaderboardUI.showMilestoneNotification(results.currentLevel);
+        }
+
+        // Check for high score
+        this.checkForHighScore();
       } else {
         message += ` ✓ Passed`;
       }
@@ -172,12 +187,12 @@ class App {
       message += ` - Try again (need ${results.requiredCorrect}/${results.total})`;
       this.elements.result.className = 'mt-4 text-center font-semibold text-red-600';
     }
-    
+
     this.elements.result.textContent = message;
-    
+
     // Always reveal answers at the end of each round
     this.revealAnswersInPlace(results.results);
-    
+
     // Show next button and hide submit button
     this.elements.submitBtn.style.display = 'none';
     this.elements.nextBtn.classList.remove('hidden');
@@ -205,35 +220,28 @@ class App {
     try {
       // Show loading immediately with specific message
       this.showLoading(true, 'Loading passages...');
-      
-      // Clear chat history when starting new passage/round
+
+      // Clear chat history when starting new round
       this.chatUI.clearChatHistory();
-      
+
       // Always show loading for at least 1 second for smooth UX
       const startTime = Date.now();
-      
-      // Check if we should load next passage or next round
-      let roundData;
-      if (this.game.currentPassageIndex === 0) {
-        // Load second passage in current round
-        roundData = await this.game.nextPassage();
-      } else {
-        // Load next round (two new passages)
-        roundData = await this.game.nextRound();
-      }
-      
+
+      // Load next round
+      const roundData = await this.game.nextRound();
+
       // Ensure loading is shown for at least half a second
       const elapsedTime = Date.now() - startTime;
       if (elapsedTime < 500) {
         await new Promise(resolve => setTimeout(resolve, 500 - elapsedTime));
       }
-      
+
       this.displayRound(roundData);
       this.resetUI();
       this.showLoading(false);
     } catch (error) {
-      console.error('Error loading next passage:', error);
-      this.showError('Could not load next passage. Please try again.');
+      console.error('Error loading next round:', error);
+      this.showError('Could not load next round. Please try again.');
     }
   }
 
@@ -328,6 +336,33 @@ class App {
     `;
     this.elements.loading.classList.remove('hidden');
     this.elements.gameArea.classList.add('hidden');
+  }
+
+  checkForHighScore() {
+    // Check if current score qualifies for leaderboard
+    if (this.game.checkForHighScore()) {
+      const rank = this.game.getHighScoreRank();
+      const stats = this.game.leaderboardService.getStats();
+      const profile = this.game.leaderboardService.getPlayerProfile();
+
+      // If player hasn't entered initials yet, show initials entry
+      if (!profile.hasEnteredInitials) {
+        this.leaderboardUI.showInitialsEntry(
+          stats.highestLevel,
+          stats.roundAtHighestLevel,
+          rank,
+          (initials) => {
+            // Save to leaderboard
+            const finalRank = this.game.addToLeaderboard(initials);
+            console.log(`Added to leaderboard at rank ${finalRank}`);
+          }
+        );
+      } else {
+        // Update existing entry
+        const finalRank = this.game.addToLeaderboard(profile.initials);
+        console.log(`Updated leaderboard entry at rank ${finalRank}`);
+      }
+    }
   }
 }
 

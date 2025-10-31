@@ -12,11 +12,21 @@
 <body class="min-h-screen">
     <div id="app" class="container mx-auto px-4 py-8 max-w-4xl">
         <header class="text-center mb-8">
-            <div class="flex items-center justify-center gap-3 mb-2">
-                <img src="./icon.png" alt="Cloze Reader" class="w-12 h-12">
-                <h1 class="text-4xl font-bold typewriter-text">Cloze Reader</h1>
+            <div class="flex items-start justify-between mb-4 gap-4">
+                <div class="flex-1 min-w-0"></div>
+                <div class="flex flex-col items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <img src="./icon.png" alt="Cloze Reader" class="w-12 h-12">
+                        <h1 class="text-4xl font-bold typewriter-text">Cloze Reader</h1>
+                    </div>
+                    <p class="typewriter-subtitle">Fill in the blanks to practice reading comprehension</p>
+                </div>
+                <div class="flex-1 min-w-0 flex justify-end items-end">
+                    <button id="leaderboard-btn" class="typewriter-button-small" title="View leaderboard">
+                        Leaderboard
+                    </button>
+                </div>
             </div>
-            <p class="typewriter-subtitle">Fill in the blanks to practice reading comprehension</p>
         </header>
         
         <main id="game-container" class="space-y-6">

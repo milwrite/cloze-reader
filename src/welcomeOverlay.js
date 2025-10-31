@@ -43,15 +43,15 @@ class WelcomeOverlay {
       
       <div class="welcome-content">
         <p>
-          <strong>How to play:</strong> Fill in the blanks in each passage. Complete 2 passages per round. Pass 2 rounds to advance to the next level.
+          <strong>How to play:</strong> Fill in the blanks to advance through levels with increasing difficulty and vocabulary complexity.
         </p>
-        
+
         <p>
-          <strong>Data source:</strong> Randomly excerpted historical and literary texts from Project Gutenberg's public domain collection, processed via Hugging Face Datasets.
+          <strong>Data source:</strong> Excerpted historical and literary texts from Project Gutenberg's public domain collection, processed via Hugging Face Datasets.
         </p>
-        
+
         <p style="margin-bottom: 0;">
-          <strong>AI assistance:</strong> Powered by Google's Gemma models via OpenRouter - Gemma-3-27b for hints and Gemma-3-12b for word selection and processing.
+          <strong>AI assistance:</strong> Powered by Google's Gemma-3-27b model via OpenRouter for word selection, hints, and contextualization.
         </p>
       </div>
 

@@ -5,9 +5,9 @@ class OpenRouterService {
     this.apiUrl = this.isLocalMode ? 'http://localhost:1234/v1/chat/completions' : 'https://openrouter.ai/api/v1/chat/completions';
     this.apiKey = this.getApiKey();
     
-    // Dual model configuration: Gemma-3-27b for hints/query-answering, Gemma-3-12b for everything else
+    // Single model configuration: Gemma-3-27b for all operations
     this.hintModel = this.isLocalMode ? 'gemma-3-12b' : 'google/gemma-3-27b-it';
-    this.primaryModel = this.isLocalMode ? 'gemma-3-12b' : 'google/gemma-3-12b-it';
+    this.primaryModel = this.isLocalMode ? 'gemma-3-12b' : 'google/gemma-3-27b-it';
     this.model = this.primaryModel; // Default model for backward compatibility
     
     console.log('AI Service initialized:', {
@@ -700,20 +700,20 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
     }
   }
 
-  async generateContextualization(title, author) {
+  async generateContextualization(title, author, passage) {
     console.log('generateContextualization called for:', title, 'by', author);
-    
+
     // Check for API key at runtime
     const currentKey = this.getApiKey();
     if (currentKey && !this.apiKey) {
       this.apiKey = currentKey;
     }
-    
+
     console.log('API key available for contextualization:', !!this.apiKey);
-    
+
     if (!this.apiKey) {
       console.log('No API key, returning fallback contextualization');
-      return `📜 Practice with literature from ${author}'s "${title}"`;
+      return `A passage from ${author}'s "${title}"`;
     }
 
     try {
@@ -727,16 +727,16 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
             'X-Title': 'Cloze Reader'
           },
           body: JSON.stringify({
-            model: this.primaryModel,  // Use Gemma-3-12b for contextualization
+            model: this.primaryModel,  // Use Gemma-3-27b for contextualization
             messages: [{
               role: 'system',
-              content: 'You are a literary expert. Provide ONE interesting fact about this book or its author. Focus on: publication year, genre, historical context, author biography, literary significance, or themes. Do NOT quote or paraphrase passages from the book. Keep it under 20 words.'
+              content: 'Provide a single contextual insight about the passage: historical context, literary technique, thematic observation, or relevant fact. Be specific and direct. Maximum 25 words. Do not use dashes or em-dashes. Output ONLY the insight itself with no preamble, acknowledgments, or meta-commentary.'
             }, {
               role: 'user',
-              content: `Book: "${title}" by ${author}. Give me a brief fact about this work or author, not a quote from the text.`
+              content: `From "${title}" by ${author}:\n\n${passage}`
             }],
             max_tokens: 150,
-            temperature: 0.5,
+            temperature: 0.7,
             response_format: { type: "text" }
           })
         });
@@ -783,11 +783,11 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
         }
         
         content = content.trim();
-        
+
         // Clean up AI response artifacts
         content = content
           .replace(/^\s*["']|["']\s*$/g, '')  // Remove leading/trailing quotes
-          .replace(/^\s*[:;]+\s*/, '')        // Remove leading colons and semicolons
+          .replace(/^\s*[:;.!?]+\s*/, '')     // Remove leading punctuation
           .replace(/\*+/g, '')                // Remove asterisks (markdown bold/italic)
           .replace(/_+/g, '')                 // Remove underscores (markdown)
           .replace(/#+\s*/g, '')              // Remove hash symbols (markdown headers)
@@ -799,7 +799,7 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
       });
     } catch (error) {
       console.error('Error getting contextualization:', error);
-      return `📜 Practice with literature from ${author}'s "${title}"`;
+      return `A passage from ${author}'s "${title}"`;
     }
   }
 

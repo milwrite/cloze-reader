@@ -2,6 +2,7 @@
 import bookDataService from './bookDataService.js';
 import { AIService } from './aiService.js';
 import ChatService from './conversationManager.js';
+import { LeaderboardService } from './leaderboardService.js';
 
 const aiService = new AIService();
 
@@ -19,16 +20,10 @@ class ClozeGame {
     this.hints = [];
     this.chatService = new ChatService(aiService);
     this.lastResults = null; // Store results for answer revelation
-    this.roundResults = []; // Store results for both passages in current round
-    
-    // Two-passage system properties
-    this.currentBooks = []; // Array of two books per round
-    this.passages = []; // Array of two passages per round
-    this.currentPassageIndex = 0; // 0 for first passage, 1 for second
-    
-    // Level progression tracking
-    this.passagesPassedAtCurrentLevel = 0; // Track successful passages at current level (not rounds)
-    console.log('🎮 GAME ENGINE INITIALIZED - Starting at Level 1, Passages passed: 0');
+    this.leaderboardService = new LeaderboardService();
+    this.passagesPassedAtCurrentLevel = 0; // Track progress toward level advancement
+
+    console.log('🎮 GAME ENGINE INITIALIZED - Starting at Level 1, Round 1');
   }
 
   // --- User-visible framing helpers ---
@@ -42,16 +37,13 @@ class ClozeGame {
     return {
       round: this.currentRound,
       level: this.currentLevel,
-      passageNumber: this.currentPassageIndex + 1,
-      totalPassages: 2,
-      blanksPerPassage: this.getBlanksPerPassage(),
-      passagesPassedAtCurrentLevel: this.passagesPassedAtCurrentLevel
+      blanksPerPassage: this.getBlanksPerPassage()
     };
   }
 
   formatProgressText(snapshot = this.getProgressSnapshot()) {
     const blanksLabel = `${snapshot.blanksPerPassage} blank${snapshot.blanksPerPassage > 1 ? 's' : ''}`;
-    return `Level ${snapshot.level} • Passage ${snapshot.passageNumber}/${snapshot.totalPassages} • ${blanksLabel}`;
+    return `Level ${snapshot.level} • ${blanksLabel}`;
   }
 
   formatAdvancementText({ passed, correctCount, requiredCorrect, justAdvancedLevel }) {
@@ -59,11 +51,7 @@ class ClozeGame {
       if (justAdvancedLevel) {
         return `✓ Passed • Level up! Welcome to Level ${this.currentLevel}`;
       }
-      const needed = Math.max(0, 2 - this.passagesPassedAtCurrentLevel);
-      if (needed === 0) {
-        return `✓ Passed`;
-      }
-      return `✓ Passed • ${needed} more passage${needed > 1 ? 's' : ''} to reach Level ${this.currentLevel + 1}`;
+      return `✓ Passed • Advancing to next level!`;
     }
     return `Try again • Need ${requiredCorrect}/${this.blanks.length} correct (you got ${correctCount})`;
   }
@@ -80,54 +68,27 @@ class ClozeGame {
 
   async startNewRound() {
     try {
-      console.log(`🎲 STARTING NEW ROUND - Round: ${this.currentRound}, Level: ${this.currentLevel}, Progress: ${this.passagesPassedAtCurrentLevel}/2`);
-      // Get two books for this round based on current level criteria
-      const book1 = await bookDataService.getBookByLevelCriteria(this.currentLevel);
-      const book2 = await bookDataService.getBookByLevelCriteria(this.currentLevel);
-      
-      // Extract passages from both books
-      const passage1 = this.extractCoherentPassage(book1.text);
-      const passage2 = this.extractCoherentPassage(book2.text);
-      
-      // Store both books and passages
-      this.currentBooks = [book1, book2];
-      this.passages = [passage1.trim(), passage2.trim()];
-      this.currentPassageIndex = 0;
-      
-      // Calculate blanks per passage based on level
-      // Levels 1-5: 1 blank, 6-10: 2 blanks, 11+: 3 blanks
-      const blanksPerPassage = this.getBlanksPerPassage();
-      
-      // Process both passages in a single API call
+      console.log(`🎲 STARTING NEW ROUND - Round: ${this.currentRound}, Level: ${this.currentLevel}`);
+      // Get one book for this round based on current level criteria
+      const book = await bookDataService.getBookByLevelCriteria(this.currentLevel);
+
+      // Extract passage from book
+      const passage = this.extractCoherentPassage(book.text);
+
+      // Store book and passage
+      this.currentBook = book;
+      this.originalText = passage.trim();
+
+      // Create cloze text using AI
       try {
-        const batchResult = await aiService.processBothPassages(
-          passage1, book1, passage2, book2, blanksPerPassage, this.currentLevel
-        );
-        
-        // Store the preprocessed data for both passages
-        this.preprocessedData = batchResult;
-        
-        // Debug: Log what the AI returned
-        console.log(`Level ${this.currentLevel}: Requested ${blanksPerPassage} blanks per passage`);
-        console.log(`Passage 1 received ${batchResult.passage1.words.length} words:`, batchResult.passage1.words);
-        console.log(`Passage 2 received ${batchResult.passage2.words.length} words:`, batchResult.passage2.words);
-        
-        // Set up first passage using preprocessed data
-        this.currentBook = book1;
-        this.originalText = this.passages[0];
-        await this.createClozeTextFromPreprocessed(0);
-        await this.generateContextualization();
-        
-      } catch (error) {
-        console.warn('Batch processing failed, falling back to sequential:', error);
-        // Fallback to sequential processing
-        this.currentBook = book1;
-        this.originalText = this.passages[0];
         await this.createClozeText();
         await new Promise(resolve => setTimeout(resolve, 1000));
         await this.generateContextualization();
+      } catch (error) {
+        console.warn('AI processing failed:', error);
+        throw error;
       }
-      
+
       const snapshot = this.getProgressSnapshot();
       return {
         title: this.currentBook.title,
@@ -136,8 +97,6 @@ class ClozeGame {
         blanks: this.blanks,
         contextualization: this.contextualization,
         hints: this.hints,
-        passageNumber: 1,
-        totalPassages: 2,
         progressText: this.formatProgressText(snapshot)
       };
     } catch (error) {
@@ -351,159 +310,6 @@ class ClozeGame {
     return passage.trim();
   }
 
-  async createClozeTextFromPreprocessed(passageIndex) {
-    // Use preprocessed word selection from batch API call
-    const preprocessed = passageIndex === 0 ? this.preprocessedData.passage1 : this.preprocessedData.passage2;
-    let selectedWords = preprocessed.words;
-    
-    // Calculate expected number of blanks based on level
-    let expectedBlanks;
-    if (this.currentLevel <= 5) {
-      expectedBlanks = 1;
-    } else if (this.currentLevel <= 10) {
-      expectedBlanks = 2;
-    } else {
-      expectedBlanks = 3;
-    }
-    
-    // Only use fallback if AI provided no words at all
-    if (selectedWords.length === 0) {
-      console.warn(`AI provided no words, using manual fallback selection`);
-      const words = this.originalText.split(/\s+/);
-      const fallbackWords = this.selectWordsManually(words, expectedBlanks);
-      selectedWords = fallbackWords;
-      console.log(`Fallback words:`, selectedWords);
-    }
-    
-    // Limit selected words to expected number
-    if (selectedWords.length > expectedBlanks) {
-      console.log(`AI returned ${selectedWords.length} words but expected ${expectedBlanks}, limiting to ${expectedBlanks}`);
-      selectedWords = selectedWords.slice(0, expectedBlanks);
-    }
-    
-    // Split passage into words
-    const words = this.originalText.split(/(\s+)/);
-    const wordsOnly = words.filter(w => w.trim() !== '');
-    
-    // Find indices of selected words using flexible matching
-    const selectedIndices = [];
-    selectedWords.forEach((word, wordIdx) => {
-      console.log(`Searching for word ${wordIdx + 1}/${selectedWords.length}: "${word}"`);
-      
-      // First try exact match (cleaned)
-      let index = wordsOnly.findIndex((w, idx) => {
-        const cleanW = w.replace(/[^\w]/g, '').toLowerCase();
-        const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
-        return cleanW === cleanWord && !selectedIndices.includes(idx);
-      });
-      
-      if (index !== -1) {
-        console.log(`✓ Found exact match: "${wordsOnly[index]}" at position ${index}`);
-      } else {
-        // Fallback to includes match if exact fails
-        index = wordsOnly.findIndex((w, idx) => 
-          w.toLowerCase().includes(word.toLowerCase()) && !selectedIndices.includes(idx)
-        );
-        
-        if (index !== -1) {
-          console.log(`✓ Found includes match: "${wordsOnly[index]}" at position ${index}`);
-        } else {
-          // Enhanced fallback: try base word matching (remove common suffixes)
-          const baseWord = word.replace(/[^\w]/g, '').toLowerCase().replace(/(ed|ing|s|es|er|est)$/, '');
-          if (baseWord.length > 2) {
-            index = wordsOnly.findIndex((w, idx) => {
-              const cleanW = w.replace(/[^\w]/g, '').toLowerCase();
-              const baseW = cleanW.replace(/(ed|ing|s|es|er|est)$/, '');
-              return baseW === baseWord && !selectedIndices.includes(idx);
-            });
-            
-            if (index !== -1) {
-              console.log(`✓ Found base word match: "${wordsOnly[index]}" at position ${index}`);
-            }
-          }
-        }
-      }
-      
-      if (index !== -1) {
-        selectedIndices.push(index);
-      } else {
-        console.warn(`✗ Could not find word "${word}" in passage`);
-      }
-    });
-    
-    // Ensure we have at least the expected number of blanks
-    if (selectedIndices.length < expectedBlanks) {
-      console.warn(`Only found ${selectedIndices.length} words, need ${expectedBlanks}. Using fallback selection.`);
-      const fallbackWords = this.selectWordsManually(wordsOnly, expectedBlanks - selectedIndices.length);
-      
-      // Add fallback word indices
-      fallbackWords.forEach(fallbackWord => {
-        const cleanFallback = fallbackWord.toLowerCase().replace(/[^\w]/g, '');
-        const index = wordsOnly.findIndex((w, idx) => {
-          const cleanW = w.replace(/[^\w]/g, '').toLowerCase();
-          return cleanW === cleanFallback && !selectedIndices.includes(idx);
-        });
-        if (index !== -1) {
-          selectedIndices.push(index);
-        }
-      });
-    }
-    
-    // Create blanks
-    this.blanks = [];
-    this.hints = [];
-    const clozeWords = [...wordsOnly];
-    
-    console.log(`Creating ${selectedIndices.length} blanks from ${selectedWords.length} selected words`);
-    
-    selectedIndices.forEach((wordIndex, blankIndex) => {
-      const originalWord = wordsOnly[wordIndex];
-      const cleanWord = originalWord.replace(/[^\w]/g, '');
-      
-      this.blanks.push({
-        index: blankIndex,
-        originalWord: cleanWord,
-        wordIndex: wordIndex
-      });
-      
-      // Initialize chat context for this word
-      const wordContext = {
-        originalWord: cleanWord,
-        sentence: this.originalText,
-        passage: this.originalText,
-        bookTitle: this.currentBook.title,
-        author: this.currentBook.author,
-        year: this.currentBook.year,
-        wordPosition: wordIndex,
-        difficulty: this.calculateWordDifficulty(cleanWord, wordIndex, wordsOnly)
-      };
-      
-      this.chatService.initializeWordContext(`blank_${blankIndex}`, wordContext);
-      
-      // Generate structural hint
-      const hint = this.currentLevel <= 2
-        ? `${cleanWord.length} letters, starts with "${cleanWord[0]}", ends with "${cleanWord[cleanWord.length - 1]}"`
-        : `${cleanWord.length} letters, starts with "${cleanWord[0]}"`;
-      this.hints.push({ index: blankIndex, hint });
-      
-      // Replace with placeholder
-      clozeWords[wordIndex] = `___BLANK_${blankIndex}___`;
-    });
-    
-    // Reconstruct text with original spacing
-    let reconstructed = '';
-    let wordIndex = 0;
-    words.forEach(part => {
-      if (part.trim() === '') {
-        reconstructed += part;
-      } else {
-        reconstructed += clozeWords[wordIndex++];
-      }
-    });
-    
-    this.clozeText = reconstructed;
-    this.userAnswers = new Array(this.blanks.length).fill('');
-  }
 
   async createClozeText() {
     const words = this.originalText.split(' ');
@@ -761,7 +567,8 @@ class ClozeGame {
     try {
       this.contextualization = await aiService.generateContextualization(
         this.currentBook.title,
-        this.currentBook.author
+        this.currentBook.author,
+        this.originalText
       );
       return this.contextualization;
     } catch (error) {
@@ -809,34 +616,30 @@ class ClozeGame {
 
     const scorePercentage = Math.round((correctCount / this.blanks.length) * 100);
     this.score = scorePercentage;
-    
+
     // Calculate pass requirements based on number of blanks
     const totalBlanks = this.blanks.length;
     const requiredCorrect = this.calculateRequiredCorrect(totalBlanks);
     const passed = correctCount >= requiredCorrect;
-    
-    // Track successful passages for level advancement
+
+    // Track if we're advancing level
+    const justAdvancedLevel = passed;
+
+    // Advance level on pass
     if (passed) {
-      this.passagesPassedAtCurrentLevel++;
-      console.log(`✅ PASSAGE PASSED - Level: ${this.currentLevel}, Passages passed at current level: ${this.passagesPassedAtCurrentLevel}/2`);
-      
-      // Advance level after 2 successful passages (not rounds)
-      if (this.passagesPassedAtCurrentLevel >= 2) {
-        const previousLevel = this.currentLevel;
-        this.currentLevel++;
-        this.passagesPassedAtCurrentLevel = 0; // Reset counter for new level
-        console.log(`🎉 LEVEL ADVANCEMENT: ${previousLevel} → ${this.currentLevel} (counter reset to 0)`);
-      } else {
-        console.log(`📊 Progress: Need ${2 - this.passagesPassedAtCurrentLevel} more passage(s) to advance from level ${this.currentLevel}`);
-      }
+      const previousLevel = this.currentLevel;
+      this.currentLevel++;
+      console.log(`✅ ROUND PASSED - Level advancement: ${previousLevel} → ${this.currentLevel}`);
     } else {
-      console.log(`❌ PASSAGE FAILED - Level: ${this.currentLevel}, Passages passed remains: ${this.passagesPassedAtCurrentLevel}/2`);
+      console.log(`❌ ROUND FAILED - Staying at Level: ${this.currentLevel}`);
     }
 
-    // Track if we just advanced levels
-    const justAdvancedLevel = passed && this.passagesPassedAtCurrentLevel === 0 && this.currentLevel > 1;
-
     const snapshot = this.getProgressSnapshot();
+
+    // Update passage tracking
+    const stats = this.leaderboardService.getStats();
+    const totalPassagesPassed = passed ? (stats.totalPassagesPassed + 1) : stats.totalPassagesPassed;
+
     const resultsData = {
       correct: correctCount,
       total: this.blanks.length,
@@ -847,21 +650,18 @@ class ClozeGame {
       shouldRevealAnswers: !passed,
       requiredCorrect: requiredCorrect,
       currentLevel: this.currentLevel,
-      passagesPassedAtCurrentLevel: this.passagesPassedAtCurrentLevel,
       justAdvancedLevel: justAdvancedLevel,
       round: snapshot.round,
-      passageNumber: snapshot.passageNumber,
-      totalPassages: snapshot.totalPassages,
+      passagesPassed: totalPassagesPassed,
       progressText: this.formatProgressText(snapshot),
-      feedbackText: this.formatAdvancementText({ passed, correctCount, requiredCorrect, justAdvancedLevel }),
-      nextActionText: snapshot.passageNumber === snapshot.totalPassages ? 'Next round' : 'Next passage'
+      feedbackText: this.formatAdvancementText({ passed, correctCount, requiredCorrect, justAdvancedLevel })
     };
+
+    // Update leaderboard stats
+    this.leaderboardService.updateStats(resultsData);
 
     // Store results for potential answer revelation
     this.lastResults = resultsData;
-    
-    // Store results for round-level tracking
-    this.roundResults[this.currentPassageIndex] = resultsData;
 
     return resultsData;
   }
@@ -887,68 +687,19 @@ class ClozeGame {
     }));
   }
 
-  async nextPassage() {
-    try {
-      // Move to the second passage in the current round
-      if (this.currentPassageIndex === 0 && this.passages && this.passages.length > 1) {
-        this.currentPassageIndex = 1;
-        console.log(`📖 MOVING TO PASSAGE 2/2 in Round ${this.currentRound} - Level: ${this.currentLevel}, Progress: ${this.passagesPassedAtCurrentLevel}/2`);
-        this.currentBook = this.currentBooks[1];
-        this.originalText = this.passages[1];
-        
-        // Clear chat conversations for new passage
-        this.chatService.clearConversations();
-        
-        // Clear last results (but keep roundResults for level advancement)
-        this.lastResults = null;
-        
-        // Use preprocessed data if available
-        if (this.preprocessedData && this.preprocessedData.passage2) {
-          await this.createClozeTextFromPreprocessed(1);
-          await this.generateContextualization();
-        } else {
-          // Fallback to sequential processing
-          await this.createClozeText();
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          await this.generateContextualization();
-        }
-        
-        const snapshot = this.getProgressSnapshot();
-        return {
-          title: this.currentBook.title,
-          author: this.currentBook.author,
-          text: this.clozeText,
-          blanks: this.blanks,
-          contextualization: this.contextualization,
-          hints: this.hints,
-          passageNumber: 2,
-          totalPassages: 2,
-          progressText: this.formatProgressText(snapshot)
-        };
-      } else {
-        // If we're already on the second passage, move to next round
-        return this.nextRound();
-      }
-    } catch (error) {
-      console.error('Error loading next passage:', error);
-      throw error;
-    }
-  }
-
   nextRound() {
     // Always increment round counter
     this.currentRound++;
-    console.log(`🔄 NEW ROUND ${this.currentRound} - Level: ${this.currentLevel}, Passages passed at current level: ${this.passagesPassedAtCurrentLevel}/2`);
-    
-    // Level advancement is now handled in submitAnswers() based on individual passages
-    
+    console.log(`🔄 NEW ROUND ${this.currentRound} - Level: ${this.currentLevel}`);
+
+    // Level advancement is now handled in submitAnswers() based on pass/fail
+
     // Clear chat conversations for new round
     this.chatService.clearConversations();
-    
+
     // Clear results since we're moving to new round
     this.lastResults = null;
-    this.roundResults = [];
-    
+
     return this.startNewRound();
   }
 
@@ -1017,29 +768,62 @@ class ClozeGame {
   // Enhanced render method to include chat buttons
   renderClozeTextWithChat() {
     let html = this.clozeText;
-    
+
     this.blanks.forEach((blank, index) => {
       const chatButtonId = `chat-btn-${index}`;
       const inputHtml = `
         <span class="inline-flex items-center">
-          <input type="text" 
-            class="cloze-input" 
-            data-blank-index="${index}" 
+          <input type="text"
+            class="cloze-input"
+            data-blank-index="${index}"
             placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}"
             style="width: ${Math.max(50, blank.originalWord.length * 10)}px;">
-          <button id="${chatButtonId}" 
-            class="chat-button text-blue-500 hover:text-blue-700" 
+          <button id="${chatButtonId}"
+            class="chat-button text-blue-500 hover:text-blue-700"
             data-blank-index="${index}"
             title="Ask question about this word"
             style="font-size: 1.5rem; line-height: 1;">
             💬
           </button>
         </span>`;
-      
+
       html = html.replace(`___BLANK_${index}___`, inputHtml);
     });
 
     return html;
+  }
+
+  // Leaderboard integration methods
+  checkForHighScore() {
+    const stats = this.leaderboardService.getStats();
+    return this.leaderboardService.qualifiesForLeaderboard(
+      stats.highestLevel,
+      stats.roundAtHighestLevel,
+      stats.totalPassagesPassed
+    );
+  }
+
+  getHighScoreRank() {
+    const stats = this.leaderboardService.getStats();
+    return this.leaderboardService.getRankForScore(
+      stats.highestLevel,
+      stats.roundAtHighestLevel,
+      stats.totalPassagesPassed
+    );
+  }
+
+  addToLeaderboard(initials) {
+    const stats = this.leaderboardService.getStats();
+    return this.leaderboardService.addEntry(
+      initials,
+      stats.highestLevel,
+      stats.roundAtHighestLevel,
+      stats.totalPassagesPassed
+    );
+  }
+
+  getLeaderboardStats() {
+    return this.leaderboardService.getPlayerStats();
   }
 }
 
