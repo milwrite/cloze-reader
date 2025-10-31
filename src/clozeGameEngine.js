@@ -160,7 +160,6 @@ class ClozeGame {
       // Debug logging for caps detection
       if (capsCount > 5) {
         console.log(`High caps count detected: ${capsCount}/${totalWords} words (${Math.round((capsCount/totalWords) * 100)}%)`);
-        console.log(`Sample caps words:`, capsWords.slice(0, 10));
       }
       
       // Count excessive dashes (n-dashes, m-dashes, hyphens in sequence)
@@ -334,11 +333,11 @@ class ClozeGame {
         numberOfBlanks,
         this.currentLevel
       );
-      console.log('AI selected words:', significantWords);
+      console.log('AI word selection complete');
     } catch (error) {
       console.warn('AI word selection failed, using manual fallback:', error);
       significantWords = this.selectWordsManually(words, numberOfBlanks);
-      console.log('Manual selected words:', significantWords);
+      console.log('Manual word selection complete');
     }
     
     // Ensure we have valid words
@@ -390,8 +389,6 @@ class ClozeGame {
       }
     });
     
-    // Log the matching results
-    console.log(`Found ${selectedIndices.length} of ${significantWords.length} words in passage`);
     
     // If no words were matched, fall back to manual selection
     if (selectedIndices.length === 0) {
@@ -412,7 +409,6 @@ class ClozeGame {
         }
       });
       
-      console.log(`After manual fallback: ${selectedIndices.length} words found`);
     }
 
     // Sort indices for easier processing
@@ -426,7 +422,6 @@ class ClozeGame {
         .slice(0, numberOfBlanks);
       
       selectedIndices.push(...contentWords.map(item => item.idx));
-      console.log(`Emergency fallback selected ${selectedIndices.length} words`);
     }
 
     // Create blanks array and cloze text

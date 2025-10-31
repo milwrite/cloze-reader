@@ -372,7 +372,6 @@ Passage: "${passage}"`
             const validWords = words.filter(word => {
               // First check if the word contains at least one letter
               if (!/[a-zA-Z]/.test(word)) {
-                console.log(`❌ Rejecting non-alphabetic word: "${word}"`);
                 return false;
               }
 
@@ -380,13 +379,11 @@ Passage: "${passage}"`
 
               // If cleanWord is empty after removing non-letters, reject
               if (cleanWord.length === 0) {
-                console.log(`❌ Rejecting word with no letters: "${word}"`);
                 return false;
               }
 
               // Check if word exists as non-capitalized word after position 10 (matches game engine)
               if (!passageWordMap.has(cleanWord.toLowerCase())) {
-                console.log(`❌ Rejecting word not matchable in passage: "${word}" (capitalized or in first 10 words)`);
                 return false;
               }
 
@@ -401,10 +398,9 @@ Passage: "${passage}"`
             });
             
             if (validWords.length > 0) {
-              console.log(`✅ Level ${level} word validation: ${validWords.length}/${words.length} words passed`);
               return validWords.slice(0, count);
             } else {
-              console.warn(`❌ Level ${level}: No words met length requirements, rejecting all`);
+              console.warn(`No words met requirements for level ${level}`);
               throw new Error(`No valid words for level ${level}`);
             }
           }
@@ -436,7 +432,6 @@ Passage: "${passage}"`
             const validWords = words.filter(word => {
               // First check if the word contains at least one letter
               if (!/[a-zA-Z]/.test(word)) {
-                console.log(`❌ Rejecting non-alphabetic word: "${word}"`);
                 return false;
               }
 
@@ -444,13 +439,11 @@ Passage: "${passage}"`
 
               // If cleanWord is empty after removing non-letters, reject
               if (cleanWord.length === 0) {
-                console.log(`❌ Rejecting word with no letters: "${word}"`);
                 return false;
               }
 
               // Check if word exists as non-capitalized word after position 10 (matches game engine)
               if (!passageWordMap.has(cleanWord.toLowerCase())) {
-                console.log(`❌ Rejecting word not matchable in passage: "${word}" (capitalized or in first 10 words)`);
                 return false;
               }
 
@@ -672,7 +665,6 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
           return words.filter(word => {
             // First check if the word contains at least one letter
             if (!/[a-zA-Z]/.test(word)) {
-              console.log(`❌ Rejecting non-alphabetic word: "${word}"`);
               return false;
             }
 
@@ -680,19 +672,16 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
 
             // If cleanWord is empty after removing non-letters, reject
             if (cleanWord.length === 0) {
-              console.log(`❌ Rejecting word with no letters: "${word}"`);
               return false;
             }
 
             // Check if word exists as non-capitalized word after position 10 (matches game engine)
             if (!passageWordMap.has(cleanWord.toLowerCase())) {
-              console.log(`❌ Rejecting word not matchable in passage: "${word}" (capitalized or in first 10 words)`);
               return false;
             }
 
             // Check if word appears in all caps in the passage (like "VOLUME")
             if (passageText.includes(word.toUpperCase()) && word === word.toUpperCase()) {
-              console.log(`Skipping all-caps word: ${word}`);
               return false;
             }
 
@@ -707,14 +696,9 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
           });
         };
         
-        const originalP1Count = parsed.passage1.words.length;
-        const originalP2Count = parsed.passage2.words.length;
-        
         parsed.passage1.words = validateWords(parsed.passage1.words, passage1);
         parsed.passage2.words = validateWords(parsed.passage2.words, passage2);
-        
-        console.log(`✅ Level ${level} batch validation: P1 ${parsed.passage1.words.length}/${originalP1Count}, P2 ${parsed.passage2.words.length}/${originalP2Count} words passed`);
-        
+
         return parsed;
       } catch (e) {
         console.error('Failed to parse batch response:', e);
