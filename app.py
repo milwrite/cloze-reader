@@ -1,13 +1,53 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List, Optional
 import os
 from dotenv import load_dotenv
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
 
+# Import HF Leaderboard Service
+from hf_leaderboard import HFLeaderboardService
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = FastAPI()
+
+# Add CORS middleware for local development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize HF Leaderboard Service
+hf_token = os.getenv("HF_TOKEN") or os.getenv("HF_API_KEY")
+hf_leaderboard = HFLeaderboardService(
+    repo_id=os.getenv("HF_LEADERBOARD_REPO", "zmuhls/cloze-reader-leaderboard"),
+    token=hf_token
+)
+
+# Pydantic models for API
+class LeaderboardEntry(BaseModel):
+    initials: str
+    level: int
+    round: int
+    passagesPassed: int
+    date: str
+
+class LeaderboardResponse(BaseModel):
+    success: bool
+    leaderboard: List[LeaderboardEntry]
+    message: Optional[str] = None
 
 # Mount static files
 app.mount("/src", StaticFiles(directory="src"), name="src")
@@ -38,6 +78,89 @@ async def read_root():
     html_content = html_content.replace("</head>", env_script + "</head>")
     
     return HTMLResponse(content=html_content)
+
+
+# ===== LEADERBOARD API ENDPOINTS =====
+
+@app.get("/api/leaderboard", response_model=LeaderboardResponse)
+async def get_leaderboard():
+    """
+    Get current leaderboard data from HF Hub
+    """
+    try:
+        leaderboard = hf_leaderboard.get_leaderboard()
+        return {
+            "success": True,
+            "leaderboard": leaderboard,
+            "message": f"Retrieved {len(leaderboard)} entries"
+        }
+    except Exception as e:
+        logger.error(f"Error fetching leaderboard: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/leaderboard/add")
+async def add_leaderboard_entry(entry: LeaderboardEntry):
+    """
+    Add new entry to leaderboard
+    """
+    try:
+        success = hf_leaderboard.add_entry(entry.dict())
+        if success:
+            return {
+                "success": True,
+                "message": f"Added {entry.initials} to leaderboard"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to add entry")
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error adding entry: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/leaderboard/update")
+async def update_leaderboard(entries: List[LeaderboardEntry]):
+    """
+    Update entire leaderboard (replace all data)
+    """
+    try:
+        success = hf_leaderboard.update_leaderboard([e.dict() for e in entries])
+        if success:
+            return {
+                "success": True,
+                "message": "Leaderboard updated successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to update leaderboard")
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error updating leaderboard: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/leaderboard/clear")
+async def clear_leaderboard():
+    """
+    Clear all leaderboard data (admin only)
+    """
+    try:
+        success = hf_leaderboard.clear_leaderboard()
+        if success:
+            return {
+                "success": True,
+                "message": "Leaderboard cleared"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to clear leaderboard")
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error clearing leaderboard: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn

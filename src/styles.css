@@ -428,28 +428,39 @@
 
   /* Leaderboard button in footer */
   .leaderboard-footer-btn {
-    background: none;
-    border: none;
+    background-color: var(--aged-paper-dark);
+    color: var(--typewriter-ink);
+    border: 2px solid black;
+    border-radius: 0 8px 8px 0;
     padding: 8px 16px;
     cursor: pointer;
     font-size: 1.5rem;
     line-height: 1;
-    transition: transform 0.2s ease, filter 0.2s ease;
+    transition: all 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
+    flex: 0 0 auto;
+    min-width: 60px;
+    min-height: 44px;
+    box-shadow:
+      0 3px 0 rgba(0, 0, 0, 0.3),
+      0 4px 8px rgba(0, 0, 0, 0.1);
   }
 
   .leaderboard-footer-btn:hover {
-    transform: translateY(-50%) scale(1.2);
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+    box-shadow:
+      0 4px 0 rgba(0, 0, 0, 0.3),
+      0 6px 12px rgba(0, 0, 0, 0.15);
   }
 
   .leaderboard-footer-btn:active {
-    transform: translateY(-50%) scale(1.05);
+    transform: translateY(2px);
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
 
@@ -477,8 +488,9 @@
 
     .leaderboard-footer-btn {
       font-size: 1.25rem;
-      padding: 6px 12px;
-      right: 12px;
+      padding: 12px 10px;
+      min-width: 50px;
+      min-height: 48px;
     }
   }
 
@@ -502,8 +514,8 @@
 
     .leaderboard-footer-btn {
       font-size: 1.1rem;
-      padding: 4px 10px;
-      right: 8px;
+      padding: 12px 8px;
+      min-width: 48px;
     }
   }
 
@@ -735,34 +747,39 @@
     gap: 12px;
     padding: 14px 16px;
     background: var(--aged-paper-dark);
-    border: 2px solid rgba(0, 0, 0, 0.2);
+    border: 3px solid rgba(0, 0, 0, 0.4);
     border-radius: 6px;
     font-family: 'Courier New', monospace;
     transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   }
 
   /* Rank Colors */
   .leaderboard-entry.rank-gold {
-    background: linear-gradient(135deg, #fff7e6 0%, #ffeaa7 100%);
-    border-color: #d4af37;
-    border-width: 3px;
-    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+    background: linear-gradient(135deg, #fff7e6 0%, #ffd700 100%);
+    border-color: #b8860b;
+    border-width: 4px;
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
   .leaderboard-entry.rank-silver {
-    background: linear-gradient(135deg, #fff9f2 0%, #f5deb3 100%);
-    border-color: #c9a869;
-    border-width: 2px;
+    background: linear-gradient(135deg, #fff9f2 0%, #e6d7b8 100%);
+    border-color: #a0826d;
+    border-width: 3px;
+    box-shadow: 0 3px 8px rgba(160, 130, 109, 0.3);
   }
 
   .leaderboard-entry.rank-standard {
-    background: var(--aged-paper-dark);
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.3);
+    border-width: 2px;
   }
 
   .leaderboard-entry.player-entry {
-    background: linear-gradient(135deg, #fff9f0 0%, #ffecd1 100%);
-    border-color: #d4a574;
-    border-width: 3px;
+    background: linear-gradient(135deg, #fff9f0 0%, #ffd89b 100%);
+    border-color: #cc8800;
+    border-width: 4px;
+    box-shadow: 0 4px 12px rgba(204, 136, 0, 0.35);
   }
 
   .leaderboard-entry:hover {

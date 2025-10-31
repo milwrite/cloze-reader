@@ -1,8 +1,10 @@
 /**
  * Leaderboard Service
- * Manages high scores, player stats, and localStorage persistence
+ * Manages high scores, player stats, with HF Hub persistence and localStorage fallback
  * Following arcade conventions with 3-letter initials and top 10 tracking
  */
+
+import { HFLeaderboardAPI } from './hfLeaderboardAPI.js';
 
 export class LeaderboardService {
   constructor() {
@@ -14,9 +16,49 @@ export class LeaderboardService {
 
     this.maxEntries = 10;
 
+    // Initialize HF API client
+    this.hfAPI = new HFLeaderboardAPI();
+    this.useHF = false; // Will be set based on availability check
+
+    // Check HF availability and initialize
+    this.initializeAsync();
+  }
+
+  /**
+   * Async initialization to check HF availability
+   */
+  async initializeAsync() {
+    try {
+      this.useHF = await this.hfAPI.isAvailable();
+      console.log(`🔧 LEADERBOARD: Using ${this.useHF ? 'HF Hub backend' : 'localStorage only'}`);
+    } catch (error) {
+      console.warn('⚠️ LEADERBOARD: HF backend unavailable, using localStorage', error);
+      this.useHF = false;
+    }
+
     // Reset all data on initialization (fresh start each session)
     this.resetAll();
     this.initializeStorage();
+
+    // If HF is available, sync from HF to localStorage
+    if (this.useHF) {
+      await this.syncFromHF();
+    }
+  }
+
+  /**
+   * Sync leaderboard from HF Hub to localStorage
+   */
+  async syncFromHF() {
+    try {
+      const hfLeaderboard = await this.hfAPI.getLeaderboard();
+      if (hfLeaderboard && hfLeaderboard.length > 0) {
+        this.saveLeaderboard(hfLeaderboard);
+        console.log('📥 LEADERBOARD: Synced from HF Hub', { entries: hfLeaderboard.length });
+      }
+    } catch (error) {
+      console.error('❌ LEADERBOARD: Failed to sync from HF', error);
+    }
   }
 
   /**
@@ -223,7 +265,7 @@ export class LeaderboardService {
   /**
    * Add a new entry to the leaderboard
    */
-  addEntry(initials, level, round, passagesPassed) {
+  async addEntry(initials, level, round, passagesPassed) {
     const validInitials = this.validateInitials(initials);
     if (!validInitials) {
       console.error('Invalid initials:', initials);
@@ -246,7 +288,19 @@ export class LeaderboardService {
     const trimmed = sorted.slice(0, this.maxEntries);
     this.saveLeaderboard(trimmed);
 
-    return sorted.findIndex(entry => entry === newEntry) + 1; // Return rank
+    const rank = sorted.findIndex(entry => entry === newEntry) + 1;
+
+    // If HF is available, also save to HF Hub
+    if (this.useHF) {
+      try {
+        await this.hfAPI.addEntry(newEntry);
+        console.log('📤 LEADERBOARD: Saved to HF Hub', { initials: validInitials, level, rank });
+      } catch (error) {
+        console.error('❌ LEADERBOARD: Failed to save to HF, localStorage only', error);
+      }
+    }
+
+    return rank; // Return rank
   }
 
   /**
