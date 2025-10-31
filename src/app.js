@@ -50,17 +50,13 @@ class App {
 
     // Leaderboard button
     if (this.elements.leaderboardBtn) {
-      this.elements.leaderboardBtn.addEventListener('click', () => {
+      this.elements.leaderboardBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         this.leaderboardUI.show();
       });
     }
 
-    // Allow Enter key to submit when focused on an input
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && e.target.classList.contains('cloze-input')) {
-        this.handleSubmit();
-      }
-    });
+    // Note: Enter key handling is done per-input in setupInputListeners()
   }
 
   async startNewGame() {
@@ -170,7 +166,7 @@ class App {
     if (results.passed) {
       // Check if level was just advanced
       if (results.justAdvancedLevel) {
-        message += ` ✓ Level ${results.currentLevel} unlocked!`;
+        message += ` - Level ${results.currentLevel} unlocked!`;
 
         // Check for milestone notification (every 5 levels)
         if (results.currentLevel % 5 === 0) {
@@ -180,11 +176,11 @@ class App {
         // Check for high score
         this.checkForHighScore();
       } else {
-        message += ` ✓ Passed`;
+        message += ` - Passed!`;
       }
       this.elements.result.className = 'mt-4 text-center font-semibold text-green-600';
     } else {
-      message += ` - Try again (need ${results.requiredCorrect}/${results.total})`;
+      message += ` - Failed (need ${results.requiredCorrect} correct)`;
       this.elements.result.className = 'mt-4 text-center font-semibold text-red-600';
     }
 

@@ -30,7 +30,7 @@ export class LeaderboardUI {
     this.modal.innerHTML = `
       <div class="leaderboard-modal">
         <div class="leaderboard-header">
-          <h2 class="leaderboard-title">🏆 HIGH SCORES 🏆</h2>
+          <h2 class="leaderboard-title">High Scores</h2>
           <button class="leaderboard-close" aria-label="Close leaderboard">×</button>
         </div>
 
@@ -42,11 +42,11 @@ export class LeaderboardUI {
           ${playerStats.highestLevel > 1 ? `
             <div class="leaderboard-player-stats">
               <div class="player-best">
-                Your Best: <span class="highlight">Level ${playerStats.highestLevel} (Round ${playerStats.roundAtHighestLevel})</span>
+                Your Best: <span class="highlight">Level ${playerStats.highestLevel}</span>
               </div>
               <div class="player-stats-details">
                 <div>Passages: ${playerStats.totalPassagesPassed}/${playerStats.totalPassagesAttempted} (${playerStats.successRate}%)</div>
-                <div>Longest Streak: ${playerStats.longestStreak} • Perfect Rounds: ${playerStats.perfectRounds}</div>
+                <div>Longest Streak: ${playerStats.longestStreak}</div>
               </div>
             </div>
           ` : ''}
@@ -63,6 +63,13 @@ export class LeaderboardUI {
 
     // Add event listeners
     this.modal.querySelector('.leaderboard-close').addEventListener('click', () => this.hide());
+
+    // Prevent clicks inside modal content from closing
+    this.modal.querySelector('.leaderboard-modal').addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    // Close on backdrop click
     this.modal.addEventListener('click', (e) => {
       if (e.target === this.modal) {
         this.hide();
@@ -100,7 +107,7 @@ export class LeaderboardUI {
         <div class="leaderboard-entry ${rankClass} ${playerClass}">
           <span class="entry-rank">#${entry.rank}</span>
           <span class="entry-initials">${entry.initials}</span>
-          <span class="entry-score">Level ${entry.level} <span class="entry-round">(Round ${entry.round})</span></span>
+          <span class="entry-score">Level ${entry.level}</span>
         </div>
       `;
     }).join('');
@@ -162,9 +169,10 @@ export class LeaderboardUI {
     this.initialsModal.innerHTML = `
       <div class="initials-modal">
         <div class="initials-header">
-          <h2 class="initials-title">🎉 NEW HIGH SCORE! 🎉</h2>
+          <h2 class="initials-title">New High Score</h2>
+          <button class="leaderboard-close" aria-label="Close without saving">×</button>
           <div class="initials-achievement">
-            You reached <span class="highlight">Level ${level}</span>!
+            You reached <span class="highlight">Level ${level}</span>
             <br>
             <span class="rank-text">${this.getRankText(rank)}</span>
           </div>
@@ -188,11 +196,11 @@ export class LeaderboardUI {
           <div class="initials-instructions">
             <p>Use arrow keys ↑↓ to change letters</p>
             <p>Press Tab or ←→ to move between slots</p>
-            <p>Press Enter to confirm</p>
+            <p>Press Enter to confirm, ESC to cancel</p>
           </div>
 
           <button class="initials-submit typewriter-button">
-            SUBMIT
+            Submit
           </button>
         </div>
       </div>
@@ -214,10 +222,10 @@ export class LeaderboardUI {
    */
   getRankText(rank) {
     const ordinal = this.getOrdinal(rank);
-    if (rank === 1) return `🥇 ${ordinal} PLACE - TOP SCORE! 🥇`;
-    if (rank === 2) return `🥈 ${ordinal} PLACE 🥈`;
-    if (rank === 3) return `🥉 ${ordinal} PLACE 🥉`;
-    return `${ordinal} place on the leaderboard!`;
+    if (rank === 1) return `${ordinal} place - Top Score`;
+    if (rank === 2) return `${ordinal} place`;
+    if (rank === 3) return `${ordinal} place`;
+    return `${ordinal} place on the leaderboard`;
   }
 
   /**
@@ -280,6 +288,10 @@ export class LeaderboardUI {
         case 'Enter':
           e.preventDefault();
           this.submitInitials();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          this.hideInitialsEntry();
           break;
       }
     };
@@ -380,7 +392,7 @@ export class LeaderboardUI {
     successDiv.innerHTML = `
       <div class="leaderboard-modal success-message">
         <div class="success-content">
-          <h2>✓ SCORE SAVED!</h2>
+          <h2>Score Saved</h2>
           <p>Your initials have been added to the leaderboard</p>
         </div>
       </div>
@@ -409,7 +421,7 @@ export class LeaderboardUI {
     toast.className = 'milestone-toast';
     toast.innerHTML = `
       <div class="toast-content">
-        🎯 Milestone Reached: Level ${level}!
+        Milestone Reached: Level ${level}
       </div>
     `;
 
