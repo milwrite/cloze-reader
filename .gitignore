@@ -41,6 +41,9 @@ pids
 *.seed
 *.pid.lock
 
+# Leaderboard data (stored in dedicated HF Space)
+leaderboard.json
+
 # Optional npm cache directory
 .npm
 
