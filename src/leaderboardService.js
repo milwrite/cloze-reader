@@ -13,6 +13,9 @@ export class LeaderboardService {
     };
 
     this.maxEntries = 10;
+
+    // Reset all data on initialization (fresh start each session)
+    this.resetAll();
     this.initializeStorage();
   }
 
@@ -49,7 +52,6 @@ export class LeaderboardService {
       totalPassagesAttempted: 0,
       longestStreak: 0,
       currentStreak: 0,
-      perfectRounds: 0,
       totalCorrectWords: 0,
       uniqueWordsCorrect: new Set(),
       gamesPlayed: 0,
@@ -253,6 +255,12 @@ export class LeaderboardService {
   updateStats(data) {
     const stats = this.getStats() || this.createEmptyStats();
 
+    console.log('📊 LEADERBOARD: Updating stats', {
+      before: { attempted: stats.totalPassagesAttempted, passed: stats.totalPassagesPassed, level: stats.highestLevel },
+      passResult: data.passed,
+      currentLevel: data.currentLevel
+    });
+
     stats.totalPassagesAttempted++;
 
     if (data.passed) {
@@ -282,12 +290,11 @@ export class LeaderboardService {
       });
     }
 
-    // Track perfect rounds (if both passages in round were 100%)
-    if (data.percentage === 100 && data.passagesPassed % 2 === 0) {
-      stats.perfectRounds++;
-    }
-
     stats.lastPlayed = new Date().toISOString();
+
+    console.log('📊 LEADERBOARD: Stats updated', {
+      after: { attempted: stats.totalPassagesAttempted, passed: stats.totalPassagesPassed, level: stats.highestLevel }
+    });
 
     this.saveStats(stats);
     return stats;
@@ -321,9 +328,10 @@ export class LeaderboardService {
   }
 
   /**
-   * Reset all leaderboard data (for testing or user request)
+   * Reset all leaderboard data (fresh start each session)
    */
   resetAll() {
+    console.log('🔄 LEADERBOARD: Starting fresh session (stats reset on page load)');
     this.saveLeaderboard([]);
     this.savePlayerProfile({
       initials: null,
@@ -352,7 +360,6 @@ export class LeaderboardService {
         : 0,
       longestStreak: stats.longestStreak,
       currentStreak: stats.currentStreak,
-      perfectRounds: stats.perfectRounds,
       totalCorrectWords: stats.totalCorrectWords,
       uniqueWords: stats.uniqueWordsCorrect.size,
       gamesPlayed: stats.gamesPlayed,
