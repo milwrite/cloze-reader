@@ -25,7 +25,7 @@ But now the loop has closed in an unexpected way. BERT and its descendants—inc
 
 ## What This Game Explores
 
-Cloze Reader uses open-weight Gemma-3 models to transform Project Gutenberg literature into dynamically generated cloze exercises. The 12B parameter model scans passages and selects vocabulary to remove. The 27B model generates contextual hints and provides conversational guidance. Every passage is fresh, every blank algorithmically chosen, every hint synthesized in real time.
+Cloze Reader uses Google's open-weight Gemma-3-27b model to transform Project Gutenberg literature into dynamically generated cloze exercises. The model scans passages, selects vocabulary to remove, generates contextual hints, and provides conversational guidance. Every passage is fresh, every blank algorithmically chosen, every hint synthesized in real time.
 
 This isn't just automated test generation. It's an investigation into what happens when the twin histories of educational assessment and machine learning collapse into each other. Consider:
 
@@ -57,13 +57,13 @@ The experience raises more questions than it answers. Is this pedagogy or patter
 
 ## How It Works
 
-**Dual-Model Architecture:** The system uses two Gemma-3 models with distinct roles. The 12B parameter model analyzes passages and selects words to mask based on patterns learned during its training. The 27B model generates contextual hints and powers the chat interface. This separation mirrors the distinction between assessment design and pedagogical guidance—though both are algorithmic.
+**Single-Model Architecture:** The system uses Google's Gemma-3-27b model for all operations—analyzing passages, selecting words to mask, generating contextual hints, and powering the chat interface. The model handles both assessment design and pedagogical guidance through the same algorithmic system.
 
 **Progressive Levels:** The game implements a level system (1-5 with 1 blank, 6-10 with 2 blanks, 11+ with 3 blanks) that scaffolds difficulty through word length constraints, historical period selection, and hint disclosure. Early levels use 1900s texts and show first+last letters; advanced levels draw from any era and provide only first letters. Each round presents two passages from different books, requiring consistent performance across rounds before advancing.
 
 **Serendipitous Selection:** Passages stream directly from Hugging Face's Project Gutenberg dataset. The model selects words based on its training rather than curricular logic—sometimes choosing obvious vocabulary, sometimes obscure terms, sometimes generating exercises that are trivially easy or frustratingly hard. This unpredictability is a feature: it reveals how algorithmic assessment differs from human-designed pedagogy.
 
-**Chat as Scaffold:** Click the 💬 icon beside any blank to engage the 27B model in conversation. It attempts to guide you through Socratic questioning, semantic clues, and contextual hints—replicating what a tutor might do, constrained by what a language model trained on text prediction can actually accomplish.
+**Chat as Scaffold:** Click the 💬 icon beside any blank to engage the model in conversation. It attempts to guide you through Socratic questioning, semantic clues, and contextual hints—replicating what a tutor might do, constrained by what a language model trained on text prediction can actually accomplish.
 
 The system filters out dictionaries, technical documentation, and poetry—ensuring narrative prose where blanks are theoretically inferable from context, even if the model's choices sometimes suggest otherwise.
 
@@ -71,7 +71,7 @@ The system filters out dictionaries, technical documentation, and poetry—ensur
 
 **Vanilla JavaScript, No Build Step:** The application runs entirely in the browser using ES6 modules—no webpack, no bundler, no compilation. This architectural choice mirrors the project's conceptual interests: keeping the machinery visible and modifiable rather than obscured behind layers of tooling. A minimal FastAPI backend serves static files and injects API keys; everything else happens client-side.
 
-**Open-Weight Models:** Uses Google's Gemma-3 models (12B and 27B parameters) via OpenRouter, or alternatively connects to local LLM servers (LM Studio, etc.) on port 1234. The choice of open-weight models is deliberate: these systems can be downloaded, inspected, run locally, modified. When assessment becomes algorithmic, transparency about the algorithm matters. You can examine exactly which model is generating your exercises, run the same models yourself, experiment with alternatives.
+**Open-Weight Models:** Uses Google's Gemma-3-27b model (27 billion parameters) via OpenRouter, or alternatively connects to local LLM servers (LM Studio, etc.) on port 1234 with smaller models like Gemma-3-12b. The choice of open-weight models is deliberate: these systems can be downloaded, inspected, run locally, modified. When assessment becomes algorithmic, transparency about the algorithm matters. You can examine exactly which model is generating your exercises, run the same models yourself, experiment with alternatives.
 
 **Streaming from Public Archives:** Book data streams directly from Hugging Face's mirror of Project Gutenberg's corpus—public domain texts, open dataset infrastructure, no proprietary content libraries. The entire pipeline from literature to exercises relies on openly accessible resources, making the system reproducible and auditable.
 
