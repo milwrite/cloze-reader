@@ -12,6 +12,7 @@ export class LeaderboardUI {
     this.currentSlot = 0;
     this.initials = ['A', 'A', 'A'];
     this.onInitialsSubmit = null;
+    this.canSubmitInitials = false; // Prevent accidental immediate submission
   }
 
   /**
@@ -151,6 +152,7 @@ export class LeaderboardUI {
 
     // Reset initials state
     this.currentSlot = 0;
+    this.canSubmitInitials = false; // Disable submission until user has had time to interact
 
     // Get existing player initials if available
     const profile = this.service.getPlayerProfile();
@@ -212,8 +214,16 @@ export class LeaderboardUI {
       this.initialsModal.classList.add('visible');
     });
 
-    // Add event listeners
-    this.setupInitialsEventListeners();
+    // Add event listeners with a delay to prevent Enter key from passage submission
+    // from immediately triggering the modal's submit handler
+    setTimeout(() => {
+      this.setupInitialsEventListeners();
+      // Enable submission after a longer delay to ensure user has time to interact
+      setTimeout(() => {
+        this.canSubmitInitials = true;
+        console.log('🔓 Initials submission enabled - user can now submit');
+      }, 300);
+    }, 100);
   }
 
   /**
@@ -340,6 +350,12 @@ export class LeaderboardUI {
    * Submit initials and save to leaderboard
    */
   submitInitials() {
+    // Prevent accidental immediate submission
+    if (!this.canSubmitInitials) {
+      console.log('⏸️ Initials submission blocked - too soon after modal opened');
+      return;
+    }
+
     const initialsString = this.initials.join('');
 
     // Save to player profile

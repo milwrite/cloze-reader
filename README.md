@@ -39,13 +39,15 @@ The cloze procedure, introduced by Wilson Taylor in 1953, measures reading compr
 
 ## Running with Docker
 
-    # Build the image
-    docker build -t cloze-reader .
+```bash
+# Build the image
+docker build -t cloze-reader .
 
-    # Run the container
-    docker run -p 7860:7860 cloze-reader
+# Run the container
+docker run -p 7860:7860 cloze-reader
 
-    # Access at http://localhost:7860
+# Access at http://localhost:7860
+```
 
 **Prerequisites:** Docker installed, port 7860 available.
 
@@ -53,18 +55,20 @@ The cloze procedure, introduced by Wilson Taylor in 1953, measures reading compr
 
 Run with a local LLM server instead of OpenRouter:
 
-    # Start local LLM server on port 1234 (e.g., LM Studio with Gemma-3-27b)
-    # Run development server
-    make dev  # or python3 local-server.py 8000
+```bash
+# Start local LLM server on port 1234 (e.g., LM Studio with Gemma-3-27b)
+# Run development server
+make dev  # or python3 local-server.py 8000
 
-    # Access at http://localhost:8000/index.html?local=true
+# Access at http://localhost:8000/index.html?local=true
+```
 
 **Features:**
 - No API key required
 - Offline operation
 - Automatic response cleaning for local LLM output
 - Compatible with LM Studio and OpenAI-compatible servers
-- Testing available at http://localhost:8000/test-local-llm.html?local=true
+- Testing available at `http://localhost:8000/test-local-llm.html?local=true`
 
 ## Architecture
 
