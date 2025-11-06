@@ -16,6 +16,7 @@ class App {
       stickyControls: document.getElementById('sticky-controls'),
       bookInfo: document.getElementById('book-info'),
       roundInfo: document.getElementById('round-info'),
+      streakInfo: document.getElementById('streak-info'),
       contextualization: document.getElementById('contextualization'),
       passageContent: document.getElementById('passage-content'),
       hintsSection: document.getElementById('hints-section'),
@@ -81,6 +82,9 @@ class App {
     const levelInfo = `Level ${this.game.currentLevel} • ${blanksCount} blank${blanksCount > 1 ? 's' : ''}`;
 
     this.elements.roundInfo.innerHTML = levelInfo;
+
+    // Update streak display
+    this.updateStreakDisplay();
 
     // Show contextualization from AI agent
     this.elements.contextualization.innerHTML = `
@@ -192,6 +196,21 @@ class App {
     // Show next button and hide submit button
     this.elements.submitBtn.style.display = 'none';
     this.elements.nextBtn.classList.remove('hidden');
+
+    // Update streak display after processing results
+    this.updateStreakDisplay();
+  }
+
+  updateStreakDisplay() {
+    const stats = this.game.leaderboardService.getPlayerStats();
+    const currentStreak = stats.currentStreak;
+    
+    if (currentStreak > 0) {
+      this.elements.streakInfo.innerHTML = `🔥 ${currentStreak} streak`;
+      this.elements.streakInfo.classList.remove('hidden');
+    } else {
+      this.elements.streakInfo.classList.add('hidden');
+    }
   }
 
   highlightAnswers(results) {

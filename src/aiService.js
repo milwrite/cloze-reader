@@ -242,7 +242,7 @@ class OpenRouterService {
               content: 'Select words for a cloze exercise. Return ONLY a JSON array of words, nothing else.'
             }, {
               role: 'user',
-              content: `Select ${count} ${level <= 2 ? 'easy' : level <= 4 ? 'medium' : 'challenging'} words (${wordLengthConstraint}) from this passage. Choose meaningful nouns, verbs, or adjectives. Avoid capitalized words and proper nouns.
+              content: `Select ${count} ${level <= 2 ? 'easy' : level <= 4 ? 'medium' : 'challenging'} words (${wordLengthConstraint}) from this passage. Choose meaningful nouns, verbs, or adjectives. Avoid capitalized words and proper nouns. NEVER select concatenated words like "fromthe", "tothe", "andthe", "hewas", "shewas" - these should be two separate words.
 
 Passage: "${passage}"`
             }],
@@ -379,6 +379,12 @@ Passage: "${passage}"`
 
               // If cleanWord is empty after removing non-letters, reject
               if (cleanWord.length === 0) {
+                return false;
+              }
+
+              // Reject obvious concatenated words like "fromthe", "tothe", etc.
+              if (/^(from|to|and)(the|a)$/i.test(cleanWord)) {
+                console.log(`🚫 Rejected concatenated word: "${word}"`);
                 return false;
               }
 
@@ -524,7 +530,7 @@ Passage: "${passage}"`
             content: 'Process passages for cloze exercises. Return ONLY a JSON object.'
           }, {
             role: 'user',
-            content: `Select ${blanksPerPassage} ${level <= 2 ? 'easy' : level <= 4 ? 'medium' : 'challenging'} words (${wordLengthConstraint}) from each passage.
+            content: `Select ${blanksPerPassage} ${level <= 2 ? 'easy' : level <= 4 ? 'medium' : 'challenging'} words (${wordLengthConstraint}) from each passage. NEVER select concatenated words like "fromthe", "tothe", "andthe", "hewas", "shewas" - these should be two separate words.
 
 Passage 1 ("${book1.title}" by ${book1.author}):
 ${passage1}

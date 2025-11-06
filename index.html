@@ -28,7 +28,10 @@
                 <div class="paper-content">
                     <div class="flex justify-between items-center mb-4">
                         <div id="book-info" class="biblio-info"></div>
-                        <div id="round-info" class="round-badge px-3 py-1 rounded-full text-sm"></div>
+                        <div class="flex gap-2 items-center">
+                            <div id="streak-info" class="round-badge px-3 py-1 rounded-full text-sm hidden"></div>
+                            <div id="round-info" class="round-badge px-3 py-1 rounded-full text-sm"></div>
+                        </div>
                     </div>
                     <div id="contextualization" class="context-box mb-4 p-3 rounded-lg"></div>
                     <div id="passage-content" class="prose max-w-none mb-6"></div>
@@ -59,7 +62,7 @@
                 Show Hints
             </button>
             <div class="controls-divider"></div>
-            <button id="leaderboard-btn" class="leaderboard-footer-btn" title="View leaderboard">
+            <button type="button" id="leaderboard-btn" class="leaderboard-footer-btn" title="View leaderboard">
                 🏅
             </button>
         </div>
