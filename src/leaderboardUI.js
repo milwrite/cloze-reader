@@ -182,6 +182,18 @@ export class LeaderboardUI {
         <div class="initials-content">
           <p class="initials-prompt">Enter or update your initials:</p>
 
+          <!-- Text Input Method -->
+          <div class="text-input-section">
+            <input type="text" id="initials-text-input" class="initials-text-input" maxlength="3" value="${this.initials.join('')}" placeholder="ABC">
+            <p class="input-help">Type your 3-letter initials directly</p>
+          </div>
+
+          <!-- Divider -->
+          <div class="input-divider">
+            <span>or use arcade controls</span>
+          </div>
+
+          <!-- Arcade Style Method -->
           <div class="initials-slots">
             ${this.initials.map((letter, index) => `
               <div class="initial-slot ${index === 0 ? 'active' : ''}" data-slot="${index}">
@@ -218,6 +230,12 @@ export class LeaderboardUI {
     // from immediately triggering the modal's submit handler
     setTimeout(() => {
       this.setupInitialsEventListeners();
+      // Focus the text input for easier typing
+      const textInput = this.initialsModal.querySelector('#initials-text-input');
+      if (textInput) {
+        textInput.focus();
+        textInput.select(); // Select all text for easy overwriting
+      }
       // Enable submission after a longer delay to ensure user has time to interact
       setTimeout(() => {
         this.canSubmitInitials = true;
@@ -250,6 +268,16 @@ export class LeaderboardUI {
    * Setup event listeners for initials entry
    */
   setupInitialsEventListeners() {
+    // Text input field
+    const textInput = this.initialsModal.querySelector('#initials-text-input');
+    textInput.addEventListener('input', (e) => {
+      const value = e.target.value.toUpperCase().slice(0, 3);
+      e.target.value = value;
+      
+      // Update arcade slots to match text input
+      this.updateInitialsFromText(value);
+    });
+
     // Arrow buttons
     this.initialsModal.querySelectorAll('.arrow-up, .arrow-down').forEach(button => {
       button.addEventListener('click', (e) => {
@@ -276,6 +304,22 @@ export class LeaderboardUI {
 
     // Keyboard controls
     this.initialsKeyHandler = (e) => {
+      // If focus is on text input, handle differently
+      if (e.target.id === 'initials-text-input') {
+        switch(e.key) {
+          case 'Enter':
+            e.preventDefault();
+            this.submitInitials();
+            break;
+          case 'Escape':
+            e.preventDefault();
+            this.hideInitialsEntry();
+            break;
+        }
+        return;
+      }
+
+      // Arcade controls when not focused on text input
       switch(e.key) {
         case 'ArrowUp':
           e.preventDefault();
@@ -325,6 +369,7 @@ export class LeaderboardUI {
 
     this.initials[slot] = String.fromCharCode(newChar);
     this.updateInitialsDisplay();
+    this.updateTextFromInitials();
   }
 
   /**
@@ -335,6 +380,26 @@ export class LeaderboardUI {
     this.initialsModal.querySelectorAll('.initial-slot').forEach((el, index) => {
       el.classList.toggle('active', index === slot);
     });
+  }
+
+  /**
+   * Update arcade slots from text input
+   */
+  updateInitialsFromText(text) {
+    // Pad with 'A' if less than 3 characters
+    const paddedText = text.padEnd(3, 'A');
+    this.initials = paddedText.split('');
+    this.updateInitialsDisplay();
+  }
+
+  /**
+   * Update text input from arcade slots
+   */
+  updateTextFromInitials() {
+    const textInput = this.initialsModal.querySelector('#initials-text-input');
+    if (textInput) {
+      textInput.value = this.initials.join('');
+    }
   }
 
   /**

@@ -446,6 +446,9 @@
     box-shadow:
       0 3px 0 rgba(0, 0, 0, 0.3),
       0 4px 8px rgba(0, 0, 0, 0.1);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    user-select: none;
   }
 
   .leaderboard-footer-btn:hover {
@@ -982,6 +985,67 @@
   }
 
   /* Initials Instructions */
+  /* Text Input Section */
+  .text-input-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .initials-text-input {
+    width: 120px;
+    height: 64px;
+    font-size: 32px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 8px;
+    background: #ffffff;
+    border: 3px solid #000000;
+    border-radius: 8px;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.5);
+    transition: all 0.2s ease;
+    margin-bottom: 8px;
+  }
+
+  .initials-text-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3), 0 4px 0 rgba(0, 0, 0, 0.5);
+  }
+
+  .input-help {
+    font-size: 12px;
+    color: #666;
+    margin: 0;
+    font-weight: 400;
+  }
+
+  /* Divider */
+  .input-divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .input-divider::before,
+  .input-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #ddd;
+  }
+
+  .input-divider span {
+    padding: 0 16px;
+  }
+
   .initials-instructions {
     margin-bottom: 24px;
     color: #000000;
@@ -1089,6 +1153,21 @@
 
     .initials-slots {
       gap: 12px;
+    }
+
+    .initials-text-input {
+      width: 100px;
+      height: 56px;
+      font-size: 28px;
+      letter-spacing: 6px;
+    }
+
+    .input-divider {
+      font-size: 12px;
+    }
+
+    .input-help {
+      font-size: 11px;
     }
   }
 
