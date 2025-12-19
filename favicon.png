@@ -1,0 +1,23 @@
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="48" height="48" fill="#d4c5b0" stroke="#2c2826" stroke-width="2"/>
+  
+  <!-- Decorative border -->
+  <rect x="2" y="2" width="44" height="44" fill="none" stroke="#2c2826" stroke-width="1"/>
+  <rect x="3" y="3" width="42" height="42" fill="none" stroke="#2c2826" stroke-width="0.5" stroke-dasharray="1,1"/>
+  
+  <!-- Quill pen -->
+  <path d="M8 12 L12 8 L15 11 L11 15 Z" fill="#2c2826"/>
+  <path d="M12 8 L14 6 L16 8 L14 10 Z" fill="#2c2826"/>
+  <rect x="10" y="14" width="2" height="8" fill="#2c2826"/>
+  
+  <!-- Text lines with blanks -->
+  <rect x="18" y="10" width="26" height="2" fill="#2c2826"/>
+  <rect x="18" y="16" width="12" height="2" fill="#2c2826"/>
+  <rect x="32" y="16" width="6" height="2" fill="none" stroke="#2c2826" stroke-width="1"/>
+  <rect x="18" y="22" width="8" height="2" fill="#2c2826"/>
+  <rect x="28" y="22" width="8" height="2" fill="none" stroke="#2c2826" stroke-width="1"/>
+  <rect x="38" y="22" width="6" height="2" fill="#2c2826"/>
+  <rect x="18" y="28" width="20" height="2" fill="#2c2826"/>
+  <rect x="18" y="34" width="14" height="2" fill="#2c2826"/>
+</svg>
