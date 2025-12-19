@@ -88,6 +88,14 @@ async def get_favicon_svg():
     # If missing, fall back to PNG icon
     return await get_favicon_png()
 
+@app.get("/icon.svg")
+async def get_icon_svg():
+    """Serve the SVG icon at /icon.svg if present, else fallback to PNG."""
+    candidate = "icon.svg"
+    if os.path.exists(candidate):
+        return FileResponse(candidate, media_type="image/svg+xml")
+    return await get_icon()
+
 @app.get("/apple-touch-icon.png")
 async def get_apple_touch_icon():
     """Serve Apple touch icon, fallback to main icon."""
