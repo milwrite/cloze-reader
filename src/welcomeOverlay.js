@@ -33,7 +33,7 @@ class WelcomeOverlay {
 
     modal.innerHTML = `
       <div style="display: flex; justify-content: center; margin-bottom: 12px;">
-        <img src="https://raw.githubusercontent.com/zmuhls/cloze-reader/main/icon.png" 
+        <img src="/icon.png" 
              alt="Cloze Reader" 
              style="width: 48px; height: 48px; border-radius: 6px;">
       </div>

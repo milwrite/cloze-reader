@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -60,8 +60,77 @@ app.mount("/src", StaticFiles(directory="src"), name="src")
 
 @app.get("/icon.png")
 async def get_icon():
-    # Redirect to GitHub-hosted icon
+    """Serve the app icon locally if available, else fallback to GitHub."""
+    local_icon = "icon.png"
+    if os.path.exists(local_icon):
+        return FileResponse(local_icon, media_type="image/png")
+    # Fallback to GitHub-hosted icon
     return RedirectResponse(url="https://raw.githubusercontent.com/zmuhls/cloze-reader/main/icon.png")
+
+@app.get("/favicon.png")
+async def get_favicon_png():
+    """Serve favicon as PNG by pointing to the canonical PNG icon."""
+    return await get_icon()
+
+@app.get("/favicon.ico")
+async def get_favicon_ico():
+    """Serve an ICO route that points to our PNG so browsers can find it."""
+    # Many browsers request /favicon.ico explicitly; return PNG is acceptable
+    return await get_favicon_png()
+
+@app.get("/favicon.svg")
+async def get_favicon_svg():
+    """Serve SVG favicon for browsers that support it."""
+    # Prefer `icon.svg` if available
+    for candidate in ["favicon.svg", "icon.svg"]:
+        if os.path.exists(candidate):
+            return FileResponse(candidate, media_type="image/svg+xml")
+    # If missing, fall back to PNG icon
+    return await get_favicon_png()
+
+@app.get("/apple-touch-icon.png")
+async def get_apple_touch_icon():
+    """Serve Apple touch icon, fallback to main icon."""
+    candidate = "apple-touch-icon.png"
+    if os.path.exists(candidate):
+        return FileResponse(candidate, media_type="image/png")
+    return await get_icon()
+
+@app.get("/site.webmanifest")
+async def site_manifest():
+    """Serve the web app manifest if present, else a minimal generated one."""
+    manifest_path = "site.webmanifest"
+    if os.path.exists(manifest_path):
+        return FileResponse(manifest_path, media_type="application/manifest+json")
+    # Minimal default manifest
+    content = {
+        "name": "Cloze Reader",
+        "short_name": "Cloze",
+        "icons": [
+            {"src": "/icon-192.png", "type": "image/png", "sizes": "192x192"},
+            {"src": "/icon-512.png", "type": "image/png", "sizes": "512x512"}
+        ],
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "theme_color": "#2c2826"
+    }
+    import json
+    return HTMLResponse(content=json.dumps(content), media_type="application/manifest+json")
+
+@app.get("/icon-192.png")
+async def get_icon_192():
+    path = "icon-192.png"
+    if os.path.exists(path):
+        return FileResponse(path, media_type="image/png")
+    return await get_icon()
+
+@app.get("/icon-512.png")
+async def get_icon_512():
+    path = "icon-512.png"
+    if os.path.exists(path):
+        return FileResponse(path, media_type="image/png")
+    return await get_icon()
 
 @app.get("/")
 async def read_root():
