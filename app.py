@@ -128,8 +128,23 @@ class PassageAnalytics(BaseModel):
     passed: bool
     timestamp: Optional[str] = None
 
-# Mount static files
+# Mount static files. /assets is the canonical path (moved off /src so the
+# Cloudflare edge cache entries for the old URLs stopped serving stale module
+# code after a deploy); /src stays for anything still linking the old path.
+app.mount("/assets", StaticFiles(directory="src"), name="assets")
 app.mount("/src", StaticFiles(directory="src"), name="src")
+
+
+@app.middleware("http")
+async def no_stale_assets(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    # ES-module imports resolve to bare asset URLs that ?v= busting can't
+    # reach, and Cloudflare caches .js/.css for 4h by default — force edge
+    # and browser revalidation so deploys take effect immediately.
+    if path == "/" or path.startswith(("/assets/", "/src/")) or path.endswith(".html"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 
 @app.get("/icon.png")
 async def get_icon():

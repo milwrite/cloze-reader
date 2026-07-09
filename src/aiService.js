@@ -17,12 +17,14 @@ class OpenRouterService {
     this._setMode(forced === true);
     this._modeReady = forced === null ? this._detectLocalServer() : Promise.resolve();
 
-    console.log('🤖 AI Service initialized', {
+    // Log once the probe has settled, so the console reflects the mode the
+    // game will actually use rather than the pre-detection default.
+    this._modeReady.then(() => console.log('🤖 AI Service initialized', {
       mode: this.isLocalMode ? 'Local LLM' : 'Backend Proxy',
       url: this.apiUrl,
       primaryModel: this.primaryModel,
       hintModel: this.hintModel
-    });
+    }));
   }
 
   _setMode(isLocal, endpoint = LOCAL_ENDPOINTS[0]) {
