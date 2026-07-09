@@ -67,7 +67,7 @@ class WelcomeOverlay {
     // keep the AI line in sync with the mode the game actually ends up using.
     this._onModeChange = () => {
       const span = modal.querySelector('#welcome-ai-mode');
-      if (span) span.textContent = this.aiModeText();
+      if (span) span.innerHTML = this.aiModeText();
     };
     window.addEventListener('cloze-ai-mode', this._onModeChange);
 
@@ -86,8 +86,8 @@ class WelcomeOverlay {
   // Describes whichever stack the AI service detected (set by aiService.js).
   aiModeText() {
     return window.__clozeAIMode === 'local'
-      ? "Powered by cloze-reader, a fine-tuned Gemma-4-E4B model."
-      : "Powered by Google's Gemma-3-27B model via OpenRouter.";
+      ? 'Powered by <a href="https://huggingface.co/milwright/cloze-reader-gemma-4-e4b-lora" target="_blank" rel="noopener" style="text-decoration: underline;">milwright/cloze-reader-gemma-4-e4b-lora</a>, a fine-tuned Gemma-4-E4B adapter.'
+      : 'Powered by <a href="https://huggingface.co/google/gemma-3-27b-it" target="_blank" rel="noopener" style="text-decoration: underline;">google/gemma-3-27b-it</a> via OpenRouter.';
   }
 
   hide() {
