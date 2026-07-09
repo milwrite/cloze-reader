@@ -86,8 +86,8 @@ class WelcomeOverlay {
   // Describes whichever stack the AI service detected (set by aiService.js).
   aiModeText() {
     return window.__clozeAIMode === 'local'
-      ? "Powered by cloze-reader, a fine-tuned Gemma-4-E4B adapter served from the local vLLM model server on this machine."
-      : "Powered by Google's Gemma-3-27B via OpenRouter. When the local fine-tuned model server is running, the game switches to it automatically.";
+      ? "Powered by cloze-reader, a fine-tuned Gemma-4-E4B model."
+      : "Powered by Google's Gemma-3-27B model via OpenRouter.";
   }
 
   hide() {

@@ -1,8 +1,12 @@
 // Local mode: the inference-arcade vLLM server (Gemma-4-E4B base + the
 // cloze-reader LoRA adapter, OpenAI-compatible API). Proxy mode: the backend
-// routes to Gemma-3-27B via OpenRouter.
-const LOCAL_API_URL = 'http://localhost:1234/v1/chat/completions';
-const LOCAL_MODELS_URL = 'http://localhost:1234/v1/models';
+// routes to Gemma-3-27B via OpenRouter. The shim endpoint is preferred: it
+// answers the private-network preflights that browsers send when an HTTPS
+// page calls localhost, which vLLM itself rejects.
+const LOCAL_ENDPOINTS = [
+  'http://localhost:11435', // inference-arcade shim (browser-safe CORS/PNA headers)
+  'http://localhost:1234',  // direct vLLM (or any OpenAI-compatible server)
+];
 const LOCAL_MODEL_ID = 'cloze-reader';
 
 class OpenRouterService {
@@ -21,9 +25,9 @@ class OpenRouterService {
     });
   }
 
-  _setMode(isLocal) {
+  _setMode(isLocal, endpoint = LOCAL_ENDPOINTS[0]) {
     this.isLocalMode = isLocal;
-    this.apiUrl = isLocal ? LOCAL_API_URL : '/api/ai/chat';
+    this.apiUrl = isLocal ? `${endpoint}/v1/chat/completions` : '/api/ai/chat';
     this.hintModel = isLocal ? LOCAL_MODEL_ID : 'google/gemma-3-27b-it';
     this.primaryModel = isLocal ? LOCAL_MODEL_ID : 'google/gemma-3-27b-it';
     this.model = this.primaryModel; // Default model for backward compatibility
@@ -33,22 +37,46 @@ class OpenRouterService {
     }
   }
 
-  // Switch to local mode only if the server is up AND serving the fine-tuned
+  // Switch to local mode only if a server is up AND serving the fine-tuned
   // adapter — a foreign server on :1234 (e.g. LM Studio with another model)
   // would otherwise swallow requests for a model id it doesn't have.
   async _detectLocalServer() {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 1500);
-      const response = await fetch(LOCAL_MODELS_URL, { signal: controller.signal });
-      clearTimeout(timer);
-      const data = await response.json();
-      if (data?.data?.some(m => m.id === LOCAL_MODEL_ID)) {
-        this._setMode(true);
-        console.log(`🤖 Local model server detected — switching to ${LOCAL_MODEL_ID} at ${this.apiUrl}`);
+    for (const endpoint of LOCAL_ENDPOINTS) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 1500);
+        const response = await fetch(`${endpoint}/v1/models`, { signal: controller.signal });
+        clearTimeout(timer);
+        const data = await response.json();
+        if (data?.data?.some(m => m.id === LOCAL_MODEL_ID)) {
+          this._setMode(true, endpoint);
+          console.log(`🤖 Local model server detected — switching to ${LOCAL_MODEL_ID} at ${this.apiUrl}`);
+          return;
+        }
+      } catch {
+        // Endpoint not reachable; try the next one.
       }
-    } catch {
-      // No local server reachable; stay on the backend proxy.
+    }
+    // No local server found; stay on the backend proxy.
+  }
+
+  // All chat traffic funnels through here. If a local-mode request fails at
+  // the network layer (server stopped, blocked preflight), fall back to the
+  // backend proxy for the rest of the session and retry once.
+  async _chatRequest(payload, options = {}) {
+    const post = () => fetch(this.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, model: this.model }),
+      ...options,
+    });
+    try {
+      return await post();
+    } catch (error) {
+      if (!this.isLocalMode) throw error;
+      console.warn('🤖 Local model request failed — falling back to the backend proxy.', error);
+      this._setMode(false);
+      return post();
     }
   }
 
@@ -140,15 +168,7 @@ class OpenRouterService {
   async generateContextualHint(prompt) {
     await this._modeReady;
     try {
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: this.hintModel,  // Use Gemma-3-27b for hints
+      const response = await this._chatRequest({
           messages: [{
             role: 'system',
             content: 'You are a helpful assistant that provides hints for word puzzles. Never reveal the answer word directly.'
@@ -160,7 +180,6 @@ class OpenRouterService {
           temperature: 0.7,
           // Try to disable reasoning mode for hints
           response_format: { type: "text" }
-        })
       });
 
       if (!response.ok) {
@@ -252,15 +271,7 @@ class OpenRouterService {
 
     try {
       return await this.retryRequest(async () => {
-        const headers = {
-          'Content-Type': 'application/json'
-        };
-
-        const response = await fetch(this.apiUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            model: this.primaryModel,  // Use Gemma-3-12b for word selection
+        const response = await this._chatRequest({
             messages: [{
               role: 'system',
               content: 'Select words for a cloze exercise. Return ONLY a JSON array of words, nothing else.'
@@ -284,7 +295,6 @@ Passage: "${passage}"`
             temperature: 0.5,
             // Try to disable reasoning mode for word selection
             response_format: { type: "text" }
-          })
         });
 
         if (!response.ok) {
@@ -430,16 +440,7 @@ Passage: "${passage}"`
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
       
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers,
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: this.primaryModel,  // Use Gemma-3-12b for batch processing
+      const response = await this._chatRequest({
           messages: [{
             role: 'system',
             content: 'Process passages for cloze exercises. Return ONLY a JSON object.'
@@ -465,8 +466,7 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
           max_tokens: 800,
           temperature: 0.5,
           response_format: { type: "text" }
-        })
-      });
+      }, { signal: controller.signal });
 
       // Clear timeout on successful response
       clearTimeout(timeoutId);
@@ -625,15 +625,7 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
     await this._modeReady;
     try {
       return await this.retryRequest(async () => {
-        const headers = {
-          'Content-Type': 'application/json'
-        };
-
-        const response = await fetch(this.apiUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            model: this.primaryModel,  // Use Gemma-3-27b for contextualization
+        const response = await this._chatRequest({
             messages: [{
               role: 'system',
               content: 'Provide a single contextual insight about the passage: historical context, literary technique, thematic observation, or relevant fact. Be specific and direct. Maximum 25 words. Do not use dashes or em-dashes. Output ONLY the insight itself with no preamble, acknowledgments, or meta-commentary.'
@@ -644,7 +636,6 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
             max_tokens: 150,
             temperature: 0.7,
             response_format: { type: "text" }
-          })
         });
 
         if (!response.ok) {
