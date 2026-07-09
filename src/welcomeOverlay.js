@@ -52,7 +52,7 @@ class WelcomeOverlay {
         </p>
 
         <p style="margin-bottom: 0;">
-          <strong>AI assistance:</strong> Powered by Google's Gemma-3-27b model via OpenRouter for word selection, hints, and contextualization.
+          <strong>AI assistance:</strong> <span id="welcome-ai-mode">${this.aiModeText()}</span>
         </p>
       </div>
 
@@ -62,6 +62,14 @@ class WelcomeOverlay {
     `;
 
     overlay.appendChild(modal);
+
+    // The local-server probe usually resolves after the overlay renders, so
+    // keep the AI line in sync with the mode the game actually ends up using.
+    this._onModeChange = () => {
+      const span = modal.querySelector('#welcome-ai-mode');
+      if (span) span.textContent = this.aiModeText();
+    };
+    window.addEventListener('cloze-ai-mode', this._onModeChange);
 
     // Add click handler
     const startBtn = modal.querySelector('#welcome-start-btn');
@@ -75,9 +83,21 @@ class WelcomeOverlay {
     return overlay;
   }
 
+  // Describes whichever stack the AI service detected (set by aiService.js).
+  aiModeText() {
+    return window.__clozeAIMode === 'local'
+      ? "Powered by cloze-reader, a fine-tuned Gemma-4-E4B adapter served from the local vLLM model server on this machine."
+      : "Powered by Google's Gemma-3-27B via OpenRouter. When the local fine-tuned model server is running, the game switches to it automatically.";
+  }
+
   hide() {
     const overlay = document.querySelector('.welcome-overlay');
     if (!overlay) return;
+
+    if (this._onModeChange) {
+      window.removeEventListener('cloze-ai-mode', this._onModeChange);
+      this._onModeChange = null;
+    }
 
     overlay.style.opacity = '0';
     setTimeout(() => {

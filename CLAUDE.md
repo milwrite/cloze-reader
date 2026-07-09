@@ -55,7 +55,7 @@ This is a **vanilla JavaScript modular application** with a FastAPI backend serv
 - `bookDataService.js` streams from Hugging Face Datasets API (`manu/project_gutenberg`) with local fallbacks
 - `aiService.js` handles AI configuration:
   - **Gemma-3-27b** (`google/gemma-3-27b-it`) for all operations: word selection, hint generation, contextualization, and chat
-  - Local mode uses smaller **Gemma-3-12b** model on port 1234
+  - Local mode uses the fine-tuned **cloze-reader** adapter (Gemma-4-E4B LoRA) served by the inference-arcade vLLM host on port 1234
 - `chatInterface.js` provides modal-based contextual hints for individual blanks
 - `conversationManager.js` maintains AI conversation state per blank across rounds
 - `app.js` manages sticky control panel with mobile-friendly bottom navigation
@@ -88,8 +88,8 @@ This is a **vanilla JavaScript modular application** with a FastAPI backend serv
 - FastAPI server (`app.py`) injects API keys securely into browser via meta tags
 
 **Local LLM Integration:**
-- Supports local LLM servers on port 1234 (e.g., LM Studio)
-- Activated via URL parameter: `?local=true`
+- **Local mode is the default when available**: at startup the app probes `http://localhost:1234/v1/models` and switches to local mode if the `cloze-reader` model id is served (the inference-arcade vLLM host: Gemma-4-E4B base + cloze-reader LoRA)
+- `?local=true` forces local mode, `?local=false` forces the OpenRouter proxy
 - No API key required for local mode
 - Automatic response cleaning handles output artifacts
 - Compatible with OpenAI-compatible local servers

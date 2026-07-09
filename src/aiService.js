@@ -1,14 +1,17 @@
+// Local mode: the inference-arcade vLLM server (Gemma-4-E4B base + the
+// cloze-reader LoRA adapter, OpenAI-compatible API). Proxy mode: the backend
+// routes to Gemma-3-27B via OpenRouter.
+const LOCAL_API_URL = 'http://localhost:1234/v1/chat/completions';
+const LOCAL_MODELS_URL = 'http://localhost:1234/v1/models';
+const LOCAL_MODEL_ID = 'cloze-reader';
+
 class OpenRouterService {
   constructor() {
-    // Check for local LLM mode
-    this.isLocalMode = this.checkLocalMode();
-    // Local mode calls LLM directly; production routes through backend proxy
-    this.apiUrl = this.isLocalMode ? 'http://localhost:1234/v1/chat/completions' : '/api/ai/chat';
-
-    // Single model configuration: Gemma-3-27b for all operations
-    this.hintModel = this.isLocalMode ? 'gemma-3-12b' : 'google/gemma-3-27b-it';
-    this.primaryModel = this.isLocalMode ? 'gemma-3-12b' : 'google/gemma-3-27b-it';
-    this.model = this.primaryModel; // Default model for backward compatibility
+    // ?local=true forces local, ?local=false forces the proxy; with neither,
+    // probe the local server and prefer it whenever the adapter is being served.
+    const forced = this.checkForcedMode();
+    this._setMode(forced === true);
+    this._modeReady = forced === null ? this._detectLocalServer() : Promise.resolve();
 
     console.log('🤖 AI Service initialized', {
       mode: this.isLocalMode ? 'Local LLM' : 'Backend Proxy',
@@ -16,6 +19,37 @@ class OpenRouterService {
       primaryModel: this.primaryModel,
       hintModel: this.hintModel
     });
+  }
+
+  _setMode(isLocal) {
+    this.isLocalMode = isLocal;
+    this.apiUrl = isLocal ? LOCAL_API_URL : '/api/ai/chat';
+    this.hintModel = isLocal ? LOCAL_MODEL_ID : 'google/gemma-3-27b-it';
+    this.primaryModel = isLocal ? LOCAL_MODEL_ID : 'google/gemma-3-27b-it';
+    this.model = this.primaryModel; // Default model for backward compatibility
+    if (typeof window !== 'undefined') {
+      window.__clozeAIMode = isLocal ? 'local' : 'proxy';
+      window.dispatchEvent(new CustomEvent('cloze-ai-mode', { detail: { local: isLocal } }));
+    }
+  }
+
+  // Switch to local mode only if the server is up AND serving the fine-tuned
+  // adapter — a foreign server on :1234 (e.g. LM Studio with another model)
+  // would otherwise swallow requests for a model id it doesn't have.
+  async _detectLocalServer() {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 1500);
+      const response = await fetch(LOCAL_MODELS_URL, { signal: controller.signal });
+      clearTimeout(timer);
+      const data = await response.json();
+      if (data?.data?.some(m => m.id === LOCAL_MODEL_ID)) {
+        this._setMode(true);
+        console.log(`🤖 Local model server detected — switching to ${LOCAL_MODEL_ID} at ${this.apiUrl}`);
+      }
+    } catch {
+      // No local server reachable; stay on the backend proxy.
+    }
   }
 
   // Helper: Extract content from API response (handles reasoning mode variants)
@@ -71,12 +105,13 @@ class OpenRouterService {
       .trim();
   }
 
-  checkLocalMode() {
+  checkForcedMode() {
     if (typeof window !== 'undefined' && window.location) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('local') === 'true';
+      const local = new URLSearchParams(window.location.search).get('local');
+      if (local === 'true') return true;
+      if (local === 'false') return false;
     }
-    return false;
+    return null;
   }
 
   getApiKey() {
@@ -103,6 +138,7 @@ class OpenRouterService {
   }
 
   async generateContextualHint(prompt) {
+    await this._modeReady;
     try {
       const headers = {
         'Content-Type': 'application/json'
@@ -200,6 +236,7 @@ class OpenRouterService {
 
 
   async selectSignificantWords(passage, count, level = 1) {
+    await this._modeReady;
     // Define level-based constraints (relaxed length to ensure playability)
     let wordLengthConstraint, difficultyGuidance;
     if (level <= 2) {
@@ -374,6 +411,7 @@ Passage: "${passage}"`
   }
 
   async processBothPassages(passage1, book1, passage2, book2, blanksPerPassage, level = 1) {
+    await this._modeReady;
     // Define level-based constraints (relaxed length to ensure playability)
     let wordLengthConstraint, difficultyGuidance;
     if (level <= 2) {
@@ -584,6 +622,7 @@ Return JSON: {"passage1": {"words": [${blanksPerPassage} words], "context": "one
   }
 
   async generateContextualization(title, author, passage) {
+    await this._modeReady;
     try {
       return await this.retryRequest(async () => {
         const headers = {
