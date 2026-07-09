@@ -189,40 +189,40 @@
 .welcome-modal {
   background: white;
   border-radius: 12px;
-  padding: 24px;
+  padding: 36px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  max-height: 80vh;
+  max-height: 85vh;
   overflow-y: auto;
 }
 
 .welcome-title {
-  margin: 0 0 16px 0;
+  margin: 0 0 20px 0;
   color: #1f2937;
-  font-size: 22px;
+  font-size: 30px;
   font-weight: 600;
 }
 
 .welcome-content {
   text-align: left;
   color: #4b5563;
-  line-height: 1.4;
-  margin-bottom: 20px;
-  font-size: 14px;
+  line-height: 1.55;
+  margin-bottom: 24px;
+  font-size: 17px;
 }
 
 .welcome-content p {
-  margin: 0 0 12px 0;
+  margin: 0 0 14px 0;
 }
 
 .welcome-overlay .typewriter-button {
   background: #1f2937;
   color: white;
   border: 2px solid #374151;
-  padding: 8px 14px;
+  padding: 10px 20px;
   font-weight: 600;
-  font-size: 14px;
-  min-width: 100px;
-  min-height: 36px;
+  font-size: 17px;
+  min-width: 120px;
+  min-height: 44px;
   transition: all 0.2s ease;
 }
 

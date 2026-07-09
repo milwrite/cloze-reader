@@ -26,7 +26,7 @@ class WelcomeOverlay {
     const modal = document.createElement('div');
     modal.className = 'welcome-modal';
     modal.style.cssText = `
-      max-width: 500px;
+      max-width: 660px;
       margin: 20px;
       text-align: center;
     `;
@@ -35,7 +35,7 @@ class WelcomeOverlay {
       <div style="display: flex; justify-content: center; margin-bottom: 12px;">
         <img src="https://media.githubusercontent.com/media/milwrite/cloze-reader/main/icon.png"
              alt=""
-             style="width: 48px; height: 48px; border-radius: 6px;"
+             style="width: 60px; height: 60px; border-radius: 8px;"
              onerror="this.style.display='none'">
       </div>
       <h1 class="welcome-title">
