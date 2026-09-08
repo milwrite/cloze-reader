@@ -188,41 +188,41 @@
 
 .welcome-modal {
   background: white;
-  border-radius: 12px;
-  padding: 36px;
+  border-radius: 14px;
+  padding: 2.5rem 2rem;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   max-height: 85vh;
   overflow-y: auto;
 }
 
 .welcome-title {
-  margin: 0 0 20px 0;
+  margin: 0 0 1.2rem 0;
   color: #1f2937;
-  font-size: 30px;
-  font-weight: 600;
+  font-size: 1.7rem;
+  font-weight: 700;
 }
 
 .welcome-content {
   text-align: left;
   color: #4b5563;
-  line-height: 1.55;
-  margin-bottom: 24px;
-  font-size: 17px;
+  line-height: 1.65;
+  margin-bottom: 1.8rem;
+  font-size: 1.05rem;
 }
 
 .welcome-content p {
-  margin: 0 0 14px 0;
+  margin: 0 0 1rem 0;
 }
 
 .welcome-overlay .typewriter-button {
   background: #1f2937;
   color: white;
   border: 2px solid #374151;
-  padding: 10px 20px;
+  padding: 0.75rem 1.5rem;
   font-weight: 600;
-  font-size: 17px;
-  min-width: 120px;
-  min-height: 44px;
+  font-size: 1.1rem;
+  min-width: 140px;
+  min-height: 48px;
   transition: all 0.2s ease;
 }
 
@@ -230,6 +230,22 @@
   background: #374151;
   border-color: #4b5563;
   transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .welcome-modal {
+    padding: 1.8rem 1.4rem;
+    margin: 16px;
+    border-radius: 12px;
+  }
+  .welcome-title { font-size: 1.4rem; }
+  .welcome-content { font-size: 1rem; line-height: 1.6; }
+  .welcome-overlay .typewriter-button {
+    font-size: 1rem;
+    padding: 0.7rem 1.2rem;
+    min-height: 44px;
+    width: 100%;
+  }
 }
 .cloze-input.correct {
   background-color: #dcfce7 !important;
@@ -370,7 +386,7 @@
     border: 2px solid black;
     border-radius: 6px;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 15px;
     cursor: pointer;
     transition: all 0.15s ease;
     box-shadow: 
@@ -414,8 +430,8 @@
 
   .prose {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    font-size: 1.125rem;
-    line-height: 1.7;
+    font-size: 1.25rem;
+    line-height: 1.75;
     color: var(--typewriter-ink);
     overflow-wrap: break-word;
   }
@@ -473,42 +489,34 @@
 
   /* Leaderboard button in footer */
   .leaderboard-footer-btn {
-    background-color: var(--aged-paper-dark);
+    background: transparent;
     color: var(--typewriter-ink);
-    border: 2px solid black;
-    border-radius: 0 8px 8px 0;
-    padding: 8px 16px;
+    border: none;
+    border-radius: 0;
+    padding: 8px 14px;
     cursor: pointer;
     font-size: 1.5rem;
     line-height: 1;
-    transition: all 0.15s ease;
+    transition: transform 0.3s ease, opacity 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    min-width: 60px;
+    min-width: 50px;
     min-height: 44px;
-    box-shadow:
-      0 3px 0 rgba(0, 0, 0, 0.3),
-      0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
     touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    -webkit-tap-highlight-color: transparent;
     user-select: none;
+    opacity: 0.6;
   }
 
   .leaderboard-footer-btn:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-    transform: translateY(-1px);
-    box-shadow:
-      0 4px 0 rgba(0, 0, 0, 0.3),
-      0 6px 12px rgba(0, 0, 0, 0.15);
+    opacity: 1;
   }
 
   .leaderboard-footer-btn:active {
-    transform: translateY(2px);
-    box-shadow:
-      0 1px 0 rgba(0, 0, 0, 0.3),
-      0 2px 4px rgba(0, 0, 0, 0.1);
+    opacity: 0.8;
   }
 
 
@@ -521,17 +529,17 @@
 
   @media (max-width: 640px) {
     .prose {
-      font-size: 1rem;
+      font-size: 0.95rem;
     }
 
     .typewriter-text {
-      font-size: 1.75rem;
+      font-size: 1.6rem;
     }
 
     .typewriter-button {
       min-width: 100px;
       min-height: 38px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
 
     .leaderboard-footer-btn {
@@ -544,26 +552,76 @@
 
   @media (max-width: 480px) {
     .prose {
-      font-size: 0.95rem;
+      font-size: 0.72rem;
+      line-height: 1.45;
+    }
+
+    .prose p {
+      margin-bottom: 0.5rem;
     }
 
     .typewriter-text {
-      font-size: 1.5rem;
+      font-size: 1.1rem;
+    }
+
+    .typewriter-subtitle {
+      display: none;
+    }
+
+    .context-box {
+      font-size: 0.72rem;
+      padding: 5px 7px !important;
+      line-height: 1.35;
+    }
+
+    .biblio-info {
+      font-size: 0.7rem;
+    }
+
+    .round-badge {
+      font-size: 0.65rem;
+      padding: 2px 5px !important;
+    }
+
+    .paper-sheet {
+      padding: 10px !important;
     }
 
     .cloze-input {
       min-width: 2.5ch;
     }
 
+    header {
+      margin-bottom: 0.25rem !important;
+    }
+
     header img {
-      width: 2rem;
-      height: 2rem;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    header .gap-3 {
+      gap: 0.5rem;
+    }
+
+    #app {
+      padding-top: 0.5rem;
+      padding-bottom: 0.25rem;
+    }
+
+    .space-y-6 > * + * {
+      margin-top: 0.5rem;
+    }
+
+    .mb-4 {
+      margin-bottom: 0.5rem;
     }
 
     .leaderboard-footer-btn {
-      font-size: 1.1rem;
-      padding: 12px 8px;
-      min-width: 48px;
+      font-size: 1.25rem;
+      padding: 12px 10px;
+      min-width: 50px;
+      min-height: 48px;
     }
   }
 
@@ -593,6 +651,65 @@
     outline: none;
     border-color: rgba(0, 0, 0, 0.3);
     box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Large desktop scaling */
+  @media (min-width: 1200px) {
+    .prose {
+      font-size: 1.35rem;
+      line-height: 1.8;
+    }
+    .typewriter-text {
+      font-size: 3rem;
+    }
+    .typewriter-subtitle {
+      font-size: 1.2rem;
+    }
+    .biblio-info {
+      font-size: 1.1rem;
+    }
+    .context-box {
+      font-size: 1.15rem;
+      line-height: 1.7;
+    }
+    .round-badge {
+      font-size: 1.05rem;
+      padding: 6px 14px;
+    }
+    .typewriter-button {
+      font-size: 17px;
+      min-height: 44px;
+      padding: 10px 20px;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .prose {
+      font-size: 1.5rem;
+      line-height: 1.9;
+    }
+    .typewriter-text {
+      font-size: 3.5rem;
+    }
+    .typewriter-subtitle {
+      font-size: 1.35rem;
+    }
+    .biblio-info {
+      font-size: 1.2rem;
+    }
+    .context-box {
+      font-size: 1.25rem;
+      line-height: 1.75;
+    }
+    .round-badge {
+      font-size: 1.2rem;
+      padding: 8px 16px;
+    }
+    .typewriter-button {
+      font-size: 18px;
+      min-height: 48px;
+      padding: 12px 24px;
+    }
   }
 
   /* Sticky Control Panel */
@@ -640,15 +757,31 @@
 
   @media (min-width: 1024px) {
     .sticky-controls .typewriter-button {
-      min-height: 40px;
-      font-size: 14px;
+      min-height: 48px;
+      font-size: 17px;
+      max-width: 240px;
     }
   }
 
   @media (min-width: 1280px) {
     .sticky-controls .typewriter-button {
-      min-height: 36px;
-      font-size: 13px;
+      min-height: 52px;
+      font-size: 18px;
+      max-width: 260px;
+    }
+    .sticky-controls .controls-inner {
+      max-width: 1100px;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .sticky-controls .typewriter-button {
+      min-height: 56px;
+      font-size: 20px;
+      max-width: 300px;
+    }
+    .sticky-controls .controls-inner {
+      max-width: 1300px;
     }
   }
 
@@ -760,6 +893,13 @@
     align-items: center;
   }
 
+  .leaderboard-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
   .leaderboard-title {
     font-family: 'Special Elite', 'Courier New', monospace;
     font-size: 24px;
@@ -772,9 +912,9 @@
   .leaderboard-live-indicator {
     color: #4ade80;
     font-size: 12px;
-    margin-left: 8px;
-    opacity: 0.8;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
   }
 
   .leaderboard-live-indicator.pulse {
@@ -783,8 +923,8 @@
 
   @keyframes live-pulse {
     0% {
-      transform: scale(1);
-      opacity: 0.8;
+      transform: scale(0.8);
+      opacity: 0;
     }
     50% {
       transform: scale(1.5);
@@ -792,7 +932,7 @@
     }
     100% {
       transform: scale(1);
-      opacity: 0.8;
+      opacity: 0;
     }
   }
 
@@ -1295,6 +1435,14 @@
   }
 }
 
+/* Push content down on wide viewports */
+@media (min-width: 1024px) {
+  #app { padding-top: 4rem; }
+}
+@media (min-width: 1440px) {
+  #app { padding-top: 6rem; }
+}
+
 /* Custom utility classes */
 @layer utilities {
   .ink-ribbon-lines {
@@ -1307,3 +1455,109 @@
     );
   }
 }
+
+/* ── About toggle — left side of footer, matches leaderboard btn style ── */
+.about-toggle-btn {
+  background: transparent;
+  color: var(--typewriter-ink);
+  border: none;
+  border-radius: 0;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform 0.3s ease, opacity 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 50px;
+  min-height: 44px;
+  box-shadow: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  opacity: 0.6;
+}
+.about-toggle-btn:hover {
+  opacity: 1;
+}
+.about-toggle-btn:active {
+  opacity: 0.8;
+}
+.about-toggle-btn.flipped {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 640px) {
+  .about-toggle-btn {
+    font-size: 1.25rem;
+    padding: 12px 10px;
+    min-width: 50px;
+    min-height: 48px;
+  }
+}
+
+/* ── About section (hidden below viewport until toggled) ── */
+.about-title {
+  font-family: 'Special Elite', 'Georgia', serif;
+  font-size: 1.4em;
+  font-weight: bold;
+  margin-bottom: 0.1em;
+  color: #2c2826;
+}
+.about-subtitle {
+  font-size: 0.85em;
+  color: #999;
+  margin-bottom: 2em;
+}
+.about-section {
+  background: #fefdfb;
+  border-top: 1px solid #e5e0db;
+  padding-bottom: 6rem;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.5s ease, opacity 0.4s ease;
+}
+.about-section.revealed {
+  max-height: 3000px;
+  opacity: 1;
+}
+.about-body p {
+  font-family: 'Georgia', serif;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: #2c2826;
+  margin-bottom: 1.3em;
+}
+.about-body p:first-child { margin-top: 0; }
+.about-body a { color: #6b9edd; text-decoration: none; }
+.about-body a:hover { text-decoration: underline; }
+.about-refs-heading {
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #2c2826;
+  margin-top: 2.5em;
+  margin-bottom: 0.6em;
+}
+.about-refs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.about-refs li {
+  font-family: 'Georgia', serif;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #555;
+  margin-bottom: 0.5em;
+  padding-left: 1.5em;
+  text-indent: -1.5em;
+}
+
+@media (max-width: 768px) {
+  .about-body p { font-size: 0.9rem; }
+}
+
+.suite-account{position:absolute;top:16px;right:22px;z-index:40;display:flex;align-items:center;gap:12px;font:12px/1.4 system-ui,sans-serif;color:#57534e}.suite-account a{color:inherit;text-decoration:none}.suite-account a:hover{text-decoration:underline}.suite-account [role=status]:empty{display:none}@media(max-width:600px){.suite-account{top:10px;right:16px;font-size:11px}}

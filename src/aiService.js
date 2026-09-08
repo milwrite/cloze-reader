@@ -13,7 +13,7 @@ class OpenRouterService {
   constructor() {
     // ?local=true forces local, ?local=false forces the proxy; with neither,
     // probe the local server and prefer it whenever the adapter is being served.
-    const forced = this.checkForcedMode();
+    const forced = location.hostname.endsWith('.ailab-452.workers.dev') ? false : this.checkForcedMode();
     this._setMode(forced === true);
     this._modeReady = forced === null ? this._detectLocalServer() : Promise.resolve();
 

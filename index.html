@@ -14,7 +14,7 @@
     <link rel="manifest" href="./site.webmanifest">
 </head>
 <body class="min-h-screen">
-    <div id="app" class="container mx-auto px-4 py-8 max-w-4xl">
+    <div id="app" class="container mx-auto px-4 py-8 max-w-5xl">
         <header class="text-center mb-8">
             <div class="flex items-center justify-center mb-4 gap-3">
                 <img src="https://media.githubusercontent.com/media/milwrite/cloze-reader/main/icon.png" alt="Cloze Reader" class="w-12 h-12">
@@ -52,9 +52,43 @@
         </main>
     </div>
     
+    <!-- About section — starts hidden below the viewport -->
+    <section id="about-section" class="about-section">
+      <div class="container mx-auto px-4 py-12 max-w-2xl">
+        <h2 class="about-title">Cloze Reader</h2>
+        <p class="about-subtitle">About this Project</p>
+        <div class="about-body">
+
+          <p>In 1953, Wilson Taylor (1953) cut words from a passage at regular intervals, asked readers to reconstruct them from context, and named the result a cloze test. Decades later, Devlin et al. (2019) masked tokens the same way and trained a neural network to predict them from surrounding context. Taylor measured reading comprehension; Devlin induced vector representations. Harris (1954) and Firth (1957) had already established the shared premise, namely, that words derive meaning from the company they keep, and both procedures operationalized it. Cloze Reader hands the fill-in-the-blank task back to human readers at a moment when machines perform it at scale.</p>
+
+          <p>Each round pulls a passage from Project Gutenberg and blanks out one or more words, chosen by an AI model rather than at fixed intervals. Read the surrounding context and infer what belongs in the gap. An embedded chat panel offers preset prompts about part of speech, sentence role, word category, and synonymy without revealing the answer. Advancing through levels stacks more blanks per passage and steepens the vocabulary from common to challenging. Scores and streaks accumulate across rounds, and a leaderboard captures the highest levels reached. Non-zero temperature decoding governs word selection, so the same passage can yield different blanks on different runs.</p>
+
+          <p>Passages stream from the Hugging Face Datasets API into a Cloudflare Workers backend built with Hono. Word selection, hint generation, and passage contextualization each fire as separate calls to Gemma-3-27B (Gemma Team 2025), an open-weight model from Google, routed through OpenRouter. Each call runs in isolation, with no shared context between tasks, so word selection stays independent of hint generation. Gutenberg texts anchor the source archive as canonical pretraining data, present in The Pile (Gao et al. 2020) and its successors, already absorbed into parameter weights and stripped from their historically situated literary forms. Cloze Reader restores these texts to the surface and asks human readers to engage them slowly, one blank at a time. Source code at <a href="https://github.com/zmuhls/cloze-reader">github.com/zmuhls/cloze-reader</a>.</p>
+
+          <h3 class="about-refs-heading">Works Cited</h3>
+          <ul class="about-refs">
+            <li>Devlin, J. et al. (2019). BERT: Pre-training of deep bidirectional transformers for language understanding. <em>Proceedings of NAACL-HLT 2019</em>.</li>
+            <li>Firth, J.R. (1957). A synopsis of linguistic theory, 1930–1955. <em>Studies in Linguistic Analysis</em>.</li>
+            <li>Gao, L. et al. (2020). The Pile: An 800GB dataset of diverse text for language modeling. <em>arXiv:2101.00027</em>.</li>
+            <li>Gemma Team (2025). Gemma 3 Technical Report. <em>arXiv:2503.19786</em>.</li>
+            <li>Harris, Z.S. (1954). Distributional structure. <em>Word</em>, 10(2–3), 146–162.</li>
+            <li>manu (2024). project_gutenberg. <em>Hugging Face Datasets</em>. Available at: <a href="https://huggingface.co/datasets/manu/project_gutenberg">huggingface.co/datasets/manu/project_gutenberg</a>.</li>
+
+            <li>Project Gutenberg (2026). <em>Project Gutenberg</em>. Available at: <a href="https://www.gutenberg.org/">gutenberg.org</a>.</li>
+            <li>Taylor, W.L. (1953). "Cloze procedure": A new tool for measuring readability. <em>Journalism Quarterly</em>, 30(4), 415–433.</li>
+          </ul>
+
+        </div>
+      </div>
+    </section>
+
     <!-- Sticky Control Panel -->
     <div id="sticky-controls" class="sticky-controls hidden">
         <div class="controls-inner">
+            <button type="button" id="scroll-toggle" class="about-toggle-btn" aria-label="About this project">
+                ℹ
+            </button>
+            <div class="controls-divider"></div>
             <button type="button" id="submit-btn" class="typewriter-button">
                 Submit
             </button>
@@ -75,7 +109,37 @@
         </div>
     </div>
     
-    <script src="./assets/app.js?v=20260709" type="module"></script>
+    <script src="./assets/app.js" type="module"></script>
+    <script>
+      // Toggle between game view and about section
+      document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('scroll-toggle');
+        const about = document.getElementById('about-section');
+        if (!btn || !about) return;
+
+        let showing = false;
+
+        btn.addEventListener('click', () => {
+          if (showing) {
+            // Hide about, scroll to top, unflip
+            about.classList.remove('revealed');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            btn.classList.remove('flipped');
+            showing = false;
+          } else {
+            // Reveal about, scroll to it, flip
+            about.classList.add('revealed');
+            btn.classList.add('flipped');
+            about.addEventListener('transitionend', function onEnd(e) {
+              if (e.propertyName !== 'max-height') return;
+              about.removeEventListener('transitionend', onEnd);
+              about.scrollIntoView({ behavior: 'smooth' });
+            });
+            showing = true;
+          }
+        });
+      });
+    </script>
     <script type="module">
         // Load test runner and ranking interface only in test mode
         const urlParams = new URLSearchParams(window.location.search);

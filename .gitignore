@@ -82,3 +82,6 @@ test-*.html
 Screenshot*.png
 *-screenshot.png
 error-screenshot.png
+
+/dist/
+/.wrangler/

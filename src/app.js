@@ -1,5 +1,6 @@
 // Main application entry point
 import ClozeGame from './clozeGameEngine.js';
+import AccountWork from './accountWork.js';
 import ChatUI from './chatInterface.js';
 import WelcomeOverlay from './welcomeOverlay.js';
 import { LeaderboardUI } from './leaderboardUI.js';
@@ -36,15 +37,18 @@ class App {
 
     this.currentResults = null;
     this.isRetrying = false; // Track if we're in retry mode
+    this.accountWork = new AccountWork(this);
     this.setupEventListeners();
   }
 
   async initialize() {
     try {
       this.showLoading(true);
+      if(await this.accountWork.initialize())return;
       await this.game.initialize();
       await this.startNewGame();
       this.showLoading(false);
+      this.accountWork.changed();
     } catch (error) {
       console.error('Failed to initialize app:', error);
       this.showError('Failed to load the game. Please refresh and try again.');
@@ -55,11 +59,11 @@ class App {
     if (this.elements.skipBtn) {
       this.elements.skipBtn.addEventListener('click', () => {
         // Ensure any unexpected async errors are surfaced but don’t crash UI
-        Promise.resolve(this.handleSkip()).catch(err => console.error('handleSkip (event) ERROR:', err));
+        Promise.resolve(this.handleSkip()).then(()=>this.accountWork.changed()).catch(err => console.error('handleSkip (event) ERROR:', err));
       });
     } else {
     }
-    this.elements.submitBtn.addEventListener('click', () => this.handleSubmit());
+    this.elements.submitBtn.addEventListener('click', () => {this.handleSubmit();this.accountWork.changed();});
     this.elements.nextBtn.addEventListener('click', () => this.handleNext());
     this.elements.hintBtn.addEventListener('click', () => this.toggleHints());
 
@@ -145,6 +149,7 @@ class App {
         // Remove any previous styling
         input.classList.remove('correct', 'incorrect');
         this.updateSubmitButton();
+        this.accountWork.changed();
       });
       
       input.addEventListener('keydown', (e) => {
@@ -156,7 +161,7 @@ class App {
           if (nextInput) {
             nextInput.focus();
           } else {
-            this.handleSubmit();
+            this.handleSubmit();this.accountWork.changed();
           }
         }
       });
@@ -417,6 +422,7 @@ class App {
   }
 
   async handleNext() {
+    if(!await this.accountWork.newRound())return;
     try {
       // Show loading immediately with specific message
       this.showLoading(true, 'Loading passages...');
@@ -439,6 +445,7 @@ class App {
       this.displayRound(roundData);
       this.resetUI();
       this.showLoading(false);
+      this.accountWork.changed();
     } catch (error) {
       console.error('Error loading next round:', error);
       this.showError('Could not load next round. Please try again.');
@@ -579,9 +586,12 @@ class App {
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   const app = new App();
+  window.clozeApp=app;
+  const ask=app.game.chatService.askQuestion.bind(app.game.chatService);
+  app.game.chatService.askQuestion=async(...args)=>{const value=await ask(...args);app.accountWork.changed();return value;};
   
   // Show welcome overlay immediately before any loading
-  app.welcomeOverlay.show();
+  if(!new URLSearchParams(location.search).has('work'))app.welcomeOverlay.show();
   
   app.initialize();
   
