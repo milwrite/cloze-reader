@@ -37,7 +37,7 @@ class OpenRouterService {
       window.__clozeAIMode = isLocal ? 'local' : this.hostedModel ? 'workers-ai' : 'proxy';
       window.__clozeAIModel = this.model;
       const attribution=document.getElementById('runtime-model');
-      if(attribution)attribution.textContent=this.hostedModel ? this.hostedModel+' on Cloudflare Workers AI through CUNY AI Lab' : isLocal ? 'the local cloze-reader adapter' : this.model+' through OpenRouter';
+      if(attribution)attribution.textContent=this.hostedModel ? this.hostedModel+' on Cloudflare Workers AI through CUNY AI Lab' : isLocal ? 'the local cloze-reader adapter' : location.hostname.endsWith('.ailab-452.workers.dev') ? 'the configured CUNY AI Lab model' : this.model+' through OpenRouter';
       window.dispatchEvent(new CustomEvent('cloze-ai-mode', { detail: { local: isLocal } }));
     }
   }
