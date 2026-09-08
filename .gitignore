@@ -75,7 +75,6 @@ IMPLEMENTATION_*.md
 
 # Development and testing files
 favicon.ico
-package-lock.json
 test-*.html
 
 # Temporary files and screenshots

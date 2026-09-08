@@ -7,7 +7,7 @@ export interface SuiteEnv {
   WORKSPACE:{fetch(request:Request):Promise<Response>};
   GATEWAY:{fetch(request:Request):Promise<Response>};
   REQUEST_LIMIT:{limit(input:{key:string}):Promise<{success:boolean}>};
-  PUBLIC_ORIGIN:string;APP_ID:string;RELEASE:string;LEGACY_ORIGIN:string;
+  PUBLIC_ORIGIN:string;APP_ID:string;RELEASE:string;LEGACY_ORIGIN:string;CLOZE_MODEL:string;
 }
 const TOOLS='https://tools.ailab.gc.cuny.edu';
 const secure={'cache-control':'no-store','referrer-policy':'no-referrer','x-content-type-options':'nosniff'};
@@ -59,6 +59,7 @@ export async function suite(request:Request,env:SuiteEnv,app:(request:Request,id
   const result=token&&requiresIdentity?await env.IDENTITY.identities(token):null;
   const identity=result?.ok?result:null;
   if(result&&!result.ok&&result.status!==401)return json({error:{message:'CUNY access is temporarily unavailable.'}},result.status);
+  if(path==='/api/config')return json({model:env.CLOZE_MODEL,provider:'workers-ai',requiresLogin:true});
   if(path==='/api/session')return json({authenticated:Boolean(identity)});
   if(path==='/api/auth/me')return identity?json({userId:1,username:'CUNY'}):json({error:'CUNY Login required'},401);
   if(path.startsWith('/my-work')||url.searchParams.has('work')){
@@ -70,6 +71,8 @@ export async function suite(request:Request,env:SuiteEnv,app:(request:Request,id
    if(request.method!=='POST')return json({error:'Method not allowed'},405);
    if(!(await env.REQUEST_LIMIT.limit({key:'ai:'+request.headers.get('cf-connecting-ip')})).success)return json({error:'Try again shortly'},429);
    const body=await boundedBody(request);
+   if(!identity)return json({error:{message:'CUNY Login required'}},401);
+   body.model=env.CLOZE_MODEL;
    if(!Array.isArray(body.messages)||body.messages.length>300)return json({error:'Invalid model request'},400);
    // The existing runtime remains available to guests; signed-in generation uses CUNY access.
    const target=identity?TOOLS+'/v1/chat/completions':env.LEGACY_ORIGIN+'/api/ai/chat';

@@ -45,6 +45,9 @@ class App {
     try {
       this.showLoading(true);
       if(await this.accountWork.initialize())return;
+      if(location.hostname.endsWith('.ailab-452.workers.dev')&&!this.accountWork.authenticated){
+        location.replace('/auth/start?next=/');return;
+      }
       await this.game.initialize();
       await this.startNewGame();
       this.showLoading(false);
@@ -591,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
   app.game.chatService.askQuestion=async(...args)=>{const value=await ask(...args);app.accountWork.changed();return value;};
   
   // Show welcome overlay immediately before any loading
-  if(!new URLSearchParams(location.search).has('work'))app.welcomeOverlay.show();
+  // Start directly in the exercise. Instructions remain available in About this project.
   
   app.initialize();
   

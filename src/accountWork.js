@@ -7,6 +7,7 @@ export function snapshot(app){
  for(const field of fields)record.game[field]=game[field];
  record.game.currentBook=game.currentBook?{title:game.currentBook.title,author:game.currentBook.author,year:game.currentBook.year||null}:null;
  record.game.lockedBlanks=game.lockedBlanks;
+ record.chatUI={messageHistory:app.chatUI?.messageHistory||new Map()};
  for(const key of ['conversations','wordContexts','blankQuestions','currentLevel'])record.chat[key]=game.chatService[key];
  return {schemaVersion:1,contributions:[],text:game.originalText||'',reading:'',settings:{},record:encode(record)};
 }
@@ -24,6 +25,7 @@ export async function restore(app,content){
  app.elements.nextBtn.classList.toggle('hidden',!record.ui?.nextVisible);
  app.elements.submitBtn.style.display=record.ui?.submitVisible===false?'none':'inline-block';
  app.elements.submitBtn.textContent=record.ui?.submitText||'Submit';
+ if(app.chatUI)app.chatUI.messageHistory=record.chatUI?.messageHistory instanceof Map?record.chatUI.messageHistory:new Map();
  app.updateSubmitButton();app.showLoading(false);
 }
 export default class AccountWork {

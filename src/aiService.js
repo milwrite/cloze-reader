@@ -1,6 +1,6 @@
 // Local mode: the inference-arcade vLLM server (Gemma-4-E4B base + the
 // cloze-reader LoRA adapter, OpenAI-compatible API). Proxy mode: the backend
-// routes to Gemma-3-27B via OpenRouter. The shim endpoint is preferred: it
+// uses the model configured by the hosted Worker. The shim endpoint is preferred: it
 // answers the private-network preflights that browsers send when an HTTPS
 // page calls localhost, which vLLM itself rejects.
 const LOCAL_ENDPOINTS = [
@@ -15,7 +15,7 @@ class OpenRouterService {
     // probe the local server and prefer it whenever the adapter is being served.
     const forced = location.hostname.endsWith('.ailab-452.workers.dev') ? false : this.checkForcedMode();
     this._setMode(forced === true);
-    this._modeReady = forced === null ? this._detectLocalServer() : Promise.resolve();
+    this._modeReady = location.hostname.endsWith('.ailab-452.workers.dev') ? this._loadHostedConfig() : forced === null ? this._detectLocalServer() : Promise.resolve();
 
     // Log once the probe has settled, so the console reflects the mode the
     // game will actually use rather than the pre-detection default.
@@ -30,13 +30,24 @@ class OpenRouterService {
   _setMode(isLocal, endpoint = LOCAL_ENDPOINTS[0]) {
     this.isLocalMode = isLocal;
     this.apiUrl = isLocal ? `${endpoint}/v1/chat/completions` : '/api/ai/chat';
-    this.hintModel = isLocal ? LOCAL_MODEL_ID : 'google/gemma-3-27b-it';
-    this.primaryModel = isLocal ? LOCAL_MODEL_ID : 'google/gemma-3-27b-it';
+    this.hintModel = isLocal ? LOCAL_MODEL_ID : (this.hostedModel || 'google/gemma-3-27b-it');
+    this.primaryModel = isLocal ? LOCAL_MODEL_ID : (this.hostedModel || 'google/gemma-3-27b-it');
     this.model = this.primaryModel; // Default model for backward compatibility
     if (typeof window !== 'undefined') {
-      window.__clozeAIMode = isLocal ? 'local' : 'proxy';
+      window.__clozeAIMode = isLocal ? 'local' : this.hostedModel ? 'workers-ai' : 'proxy';
+      window.__clozeAIModel = this.model;
+      const attribution=document.getElementById('runtime-model');
+      if(attribution)attribution.textContent=this.hostedModel ? this.hostedModel+' on Cloudflare Workers AI through CUNY AI Lab' : isLocal ? 'the local cloze-reader adapter' : this.model+' through OpenRouter';
       window.dispatchEvent(new CustomEvent('cloze-ai-mode', { detail: { local: isLocal } }));
     }
+  }
+
+  async _loadHostedConfig() {
+    const response=await fetch('/api/config');
+    if(!response.ok)throw new Error('Model configuration is unavailable.');
+    const config=await response.json();
+    if(typeof config.model!=='string'||!config.model.startsWith('@cf/'))throw new Error('Workers AI model is unavailable.');
+    this.hostedModel=config.model;this._setMode(false);
   }
 
   // Switch to local mode only if a server is up AND serving the fine-tuned
@@ -69,7 +80,7 @@ class OpenRouterService {
     const post = () => fetch(this.apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, model: this.model }),
+      body: JSON.stringify({ ...payload, model: this.model, ...(this.hostedModel?{chat_template_kwargs:{enable_thinking:false}}:{}) }),
       ...options,
     });
     try {

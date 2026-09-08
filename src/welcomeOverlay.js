@@ -6,7 +6,7 @@ class WelcomeOverlay {
   }
 
   show() {
-    // Always show overlay regardless of previous views
+    if(this.hasBeenShown||this.isVisible)return;
     
     this.isVisible = true;
     const overlay = this.createOverlay();
@@ -85,6 +85,7 @@ class WelcomeOverlay {
 
   // Describes whichever stack the AI service detected (set by aiService.js).
   aiModeText() {
+    if(window.__clozeAIMode==='workers-ai')return 'Cloudflare Workers AI through CUNY AI Lab.';
     return window.__clozeAIMode === 'local'
       ? 'Powered by <a href="https://huggingface.co/milwright/cloze-reader-gemma-4-e4b-lora" target="_blank" rel="noopener" style="text-decoration: underline;">milwright/cloze-reader-gemma-4-e4b-lora</a>, a fine-tuned Gemma-4-E4B adapter.'
       : 'Powered by <a href="https://huggingface.co/google/gemma-3-27b-it" target="_blank" rel="noopener" style="text-decoration: underline;">google/gemma-3-27b-it</a> via OpenRouter.';
