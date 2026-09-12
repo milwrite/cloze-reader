@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloze Reader</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
     <link href="./assets/styles.css" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
@@ -88,7 +87,6 @@
             <button type="button" id="scroll-toggle" class="about-toggle-btn" aria-label="About this project">
                 ℹ
             </button>
-            <div class="controls-divider"></div>
             <button type="button" id="submit-btn" class="typewriter-button">
                 Submit
             </button>
@@ -98,11 +96,9 @@
             <button type="button" id="next-btn" class="typewriter-button hidden">
                 Next Passage
             </button>
-            <div class="controls-divider"></div>
-            <button type="button" id="hint-btn" class="typewriter-button">
+            <button type="button" id="hint-btn" aria-controls="hints-section" aria-expanded="false" class="typewriter-button">
                 Show Hints
             </button>
-            <div class="controls-divider"></div>
             <button type="button" id="leaderboard-btn" class="leaderboard-footer-btn" title="View leaderboard">
                 🏅
             </button>

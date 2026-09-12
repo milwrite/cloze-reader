@@ -5,7 +5,7 @@ export interface SuiteEnv {
   IDENTITY:{begin(challenge:string,state:string):Promise<{url:string}>;redeem(code:string,verifier:string):Promise<{ok:boolean;token?:string;expiresAt?:number;status?:number}>;identities(token:string):Promise<Identity|{ok:false;status:number}>;revoke(token:string):Promise<unknown>};
   WORK_ACCOUNTS:{register():Promise<unknown>;fetch(request:Request):Promise<Response>};
   WORKSPACE:{fetch(request:Request):Promise<Response>};
-  GATEWAY:{fetch(request:Request):Promise<Response>};
+  AI:{run(model:string,input:Record<string,unknown>):Promise<any>};
   REQUEST_LIMIT:{limit(input:{key:string}):Promise<{success:boolean}>};
   PUBLIC_ORIGIN:string;APP_ID:string;RELEASE:string;LEGACY_ORIGIN:string;CLOZE_MODEL:string;
 }
@@ -55,11 +55,11 @@ export async function suite(request:Request,env:SuiteEnv,app:(request:Request,id
    if(token)await env.IDENTITY.revoke(token);return redirect('/',[cookie(sessionName,'',0)]);
   }
   if(path==='/health'){await env.WORK_ACCOUNTS.register();return json({ok:true,app:env.APP_ID,release:env.RELEASE,accounts:'cail-work-accounts'});}
-  const requiresIdentity=path.startsWith('/api/')||path.startsWith('/my-work')||url.searchParams.has('work');
+  const requiresIdentity=path==='/api/session'||path==='/api/auth/me'||path.startsWith('/api/work/')||path.startsWith('/my-work')||url.searchParams.has('work');
   const result=token&&requiresIdentity?await env.IDENTITY.identities(token):null;
   const identity=result?.ok?result:null;
   if(result&&!result.ok&&result.status!==401)return json({error:{message:'CUNY access is temporarily unavailable.'}},result.status);
-  if(path==='/api/config')return json({model:env.CLOZE_MODEL,provider:'workers-ai',requiresLogin:true});
+  if(path==='/api/config')return json({model:env.CLOZE_MODEL,provider:'workers-ai',requiresLogin:false});
   if(path==='/api/session')return json({authenticated:Boolean(identity)});
   if(path==='/api/auth/me')return identity?json({userId:1,username:'CUNY'}):json({error:'CUNY Login required'},401);
   if(path.startsWith('/my-work')||url.searchParams.has('work')){
@@ -70,17 +70,22 @@ export async function suite(request:Request,env:SuiteEnv,app:(request:Request,id
   if(path==='/api/ai/chat'){
    if(request.method!=='POST')return json({error:'Method not allowed'},405);
    if(!(await env.REQUEST_LIMIT.limit({key:'ai:'+request.headers.get('cf-connecting-ip')})).success)return json({error:'Try again shortly'},429);
-   const body=await boundedBody(request);
-   if(!identity)return json({error:{message:'CUNY Login required'}},401);
-   body.model=env.CLOZE_MODEL;
-   if(!Array.isArray(body.messages)||body.messages.length>300)return json({error:'Invalid model request'},400);
-   // The existing runtime remains available to guests; signed-in generation uses CUNY access.
-   const target=identity?TOOLS+'/v1/chat/completions':env.LEGACY_ORIGIN+'/api/ai/chat';
-   const headers=new Headers({'content-type':'application/json'});
-   if(identity)headers.set('authorization','Bearer '+identity.gatewayJwt);
-   const upstream=new Request(target,{method:'POST',headers,body:JSON.stringify(body),signal:request.signal});
-   const response=identity?await env.GATEWAY.fetch(upstream):await fetch(upstream);
-   return new Response(response.body,{status:response.status,headers:{...secure,'content-type':response.headers.get('content-type')||'application/json'}});
+   let body;
+   try { body=await boundedBody(request); }
+   catch { return json({error:{message:'Invalid JSON request'}},400); }
+   if(!body || !Array.isArray(body.messages) || body.messages.length===0 || body.messages.length>300 || body.messages.some((m:any)=>!m || !['system','user','assistant'].includes(m.role) || typeof m.content!=='string'))
+    return json({error:{message:'Invalid model request'}},400);
+   if(body.stream===true)return json({error:{message:'Use a complete response for this exercise.'}},400);
+   const maxTokens=body.max_tokens??800,temperature=body.temperature??0.7;
+   if(!Number.isInteger(maxTokens)||maxTokens<1||maxTokens>2048||typeof temperature!=='number'||!Number.isFinite(temperature)||temperature<0||temperature>2)
+    return json({error:{message:'Invalid generation settings'}},400);
+   const result=await env.AI.run(env.CLOZE_MODEL,{
+    messages:body.messages,max_tokens:maxTokens,temperature,stream:false,
+    chat_template_kwargs:{enable_thinking:false}
+   });
+   const content=result?.choices?.[0]?.message?.content??result?.response;
+   if(typeof content!=='string'||!content.trim())return json({error:{message:'The model returned an empty response.'}},502);
+   return json({model:env.CLOZE_MODEL,choices:[{index:0,message:{role:'assistant',content},finish_reason:result?.choices?.[0]?.finish_reason??'stop'}],...(result?.usage?{usage:result.usage}:{})});
   }
   return await app(request,identity);
  }catch{return json({error:{message:'The service is temporarily unavailable. Please retry.'}},503);}

@@ -623,8 +623,8 @@ class ClozeGame {
       const inputHtml = `<input type="text" 
         class="cloze-input" 
         data-blank-index="${index}" 
-        placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}"
-        style="width: ${Math.max(50, blank.originalWord.length * 10)}px;">`;
+        aria-label="Missing word ${index + 1}" autocomplete="off" spellcheck="false"
+        style="width: ${Math.max(4, blank.originalWord.length + 1)}ch;">`;
       
       html = html.replace(`___BLANK_${index}___`, inputHtml);
     });
@@ -912,18 +912,17 @@ class ClozeGame {
     this.blanks.forEach((blank, index) => {
       const chatButtonId = `chat-btn-${index}`;
       const inputHtml = `
-        <span class="inline-flex items-center">
+        <span class="cloze-blank">
           <input type="text"
             class="cloze-input"
             data-blank-index="${index}"
-            placeholder="${'_'.repeat(Math.max(3, blank.originalWord.length))}"
-            style="width: ${Math.max(50, blank.originalWord.length * 10)}px;">
+            aria-label="Missing word ${index + 1}" autocomplete="off" spellcheck="false"
+            style="width: ${Math.max(4, blank.originalWord.length + 1)}ch;">
           <button id="${chatButtonId}"
-            class="chat-button text-blue-500 hover:text-blue-700"
+            class="chat-button" type="button" aria-label="Ask question about this word"
             data-blank-index="${index}"
-            title="Ask question about this word"
-            style="font-size: 1.5rem; line-height: 1;">
-            💬
+            title="Ask question about this word">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-3 3V11.5a9 9 0 0 1 18 0Z"/><path d="M7 11h.01M11 11h.01M15 11h.01" stroke-width="3" stroke-linecap="round"/></svg>
           </button>
         </span>`;
 

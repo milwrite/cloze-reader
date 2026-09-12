@@ -42,10 +42,6 @@
         "resumePath": "/",
         "workerRoutes": true
       }
-    },
-    {
-      "binding": "GATEWAY",
-      "service": "cail-model-api"
     }
   ],
   "ratelimits": [
@@ -74,5 +70,8 @@
       "database_name": "cloze-reader-db",
       "database_id": "9703849b-cfe7-401e-896f-edaba8a70f33"
     }
-  ]
+  ],
+  "ai": {
+    "binding": "AI"
+  }
 }
