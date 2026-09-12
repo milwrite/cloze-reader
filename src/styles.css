@@ -1951,6 +1951,12 @@ body {
   outline: 2px solid #625b54;
   outline-offset: 2px;
 }
+@media (max-width: 768px) {
+  /* Keep inherited passage typography while preventing automatic focus zoom. */
+  input:not([type=checkbox]):not([type=range]), select, textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}
 @media(max-width:400px) {
   .suite-account {
     padding: 8px 16px;

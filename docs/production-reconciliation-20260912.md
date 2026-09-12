@@ -22,3 +22,7 @@ The serving configuration uses the `AI` binding directly; a gateway API key is n
 Validation: TypeScript check, all 18 tests, frontend build, and Wrangler dry run pass. This reconciliation does not require republishing an identical Worker or changing its live release label. It records the exact production source in Git so later changes have a verifiable baseline.
 
 The root README's older Hugging Face/Python deployment sections describe legacy hosting. `wrangler.jsonc` and `worker/` define the current Cloudflare runtime.
+
+## Mobile follow-up
+
+Browser QA after recovery found that the production blank field inherits text smaller than 16px at phone width. A separate follow-up adds a 16px minimum for text inputs, selects, and textareas on narrow screens, while retaining larger inherited text. This CSS-only follow-up is intentionally newer than the recovered frontend. The Worker module still builds to the same bytes. Chromium verifies the computed input size and layout; a physical iPhone keyboard check remains outstanding.
