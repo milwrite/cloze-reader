@@ -84,13 +84,26 @@ class OpenRouterService {
       ...options,
     });
     try {
-      return await post();
+      const response = await post();
+      return await this._checkChatResponse(response);
     } catch (error) {
-      if (!this.isLocalMode) throw error;
+      if (!this.isLocalMode || error.status || error.name === 'AbortError') throw error;
       console.warn('🤖 Local model request failed — falling back to the backend proxy.', error);
       this._setMode(false);
-      return post();
+      return this._checkChatResponse(await post());
     }
+  }
+
+  async _checkChatResponse(response) {
+    if (response.ok) return response;
+    let detail;
+    try { detail = await response.json(); } catch { /* Use the HTTP status below. */ }
+    const message = typeof detail?.error === 'string' ? detail.error : detail?.error?.message;
+    const error = new Error(message || `API request failed: ${response.status}`);
+    error.status = response.status;
+    error.code = detail?.error?.code;
+    error.retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
+    throw error;
   }
 
   // Helper: Extract content from API response (handles reasoning mode variants)
@@ -168,7 +181,7 @@ class OpenRouterService {
       try {
         return await requestFn();
       } catch (error) {
-        if (attempt === maxRetries) {
+        if (attempt === maxRetries || error.retryable === false || error.name === 'AbortError') {
           throw error; // Final attempt failed, throw the error
         }
         // Wait before retrying, with exponential backoff

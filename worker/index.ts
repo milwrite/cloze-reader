@@ -1,4 +1,4 @@
-import {suite,json,type SuiteEnv} from './suite';
+import {suite,json,type SuiteEnv} from './suite.ts';
 interface Env extends SuiteEnv {LEGACY_DB:{prepare(sql:string):{all():Promise<{results:any[]}>}}}
 export default {fetch(request:Request,env:Env){return suite(request,env,async(req)=>{
  const url=new URL(req.url),path=url.pathname;

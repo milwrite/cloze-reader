@@ -45,9 +45,6 @@ class App {
     try {
       this.showLoading(true);
       if(await this.accountWork.initialize())return;
-      if(location.hostname.endsWith('.ailab-452.workers.dev')&&!this.accountWork.authenticated){
-        location.replace('/auth/start?next=/');return;
-      }
       await this.game.initialize();
       await this.startNewGame();
       this.showLoading(false);
@@ -512,6 +509,8 @@ class App {
     const isHidden = this.elements.hintsSection.style.display === 'none';
     this.elements.hintsSection.style.display = isHidden ? 'block' : 'none';
     this.elements.hintBtn.textContent = isHidden ? 'Hide Hints' : 'Show Hints';
+    this.elements.hintBtn.setAttribute('aria-expanded', String(isHidden));
+    if (isHidden) this.elements.hintsSection.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 
   resetUI() {
@@ -528,6 +527,7 @@ class App {
     this.elements.nextBtn.classList.add('hidden');
     this.elements.hintsSection.style.display = 'none';
     this.elements.hintBtn.textContent = 'Show Hints';
+    this.elements.hintBtn.setAttribute('aria-expanded', 'false');
     this.currentResults = null;
     this.currentHints = [];
     this.isRetrying = false; // Reset retry state

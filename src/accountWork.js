@@ -34,8 +34,11 @@ export default class AccountWork {
  async initialize(){
   const nav=document.createElement('nav');nav.className='suite-account';nav.setAttribute('aria-label','CUNY account');
   this.link=document.createElement('a');this.link.textContent='CUNY Login';this.link.href='/auth/start?next=/';
-  this.status=document.createElement('span');this.status.setAttribute('role','status');this.status.setAttribute('aria-live','polite');nav.append(this.status,this.link);document.body.append(nav);
-  const response=await fetch('/api/session');if(!response.ok)throw new Error('CUNY account service is unavailable.');this.authenticated=(await response.json()).authenticated;
+  this.status=document.createElement('span');this.status.setAttribute('role','status');this.status.setAttribute('aria-live','polite');nav.append(this.status,this.link);document.body.prepend(nav);
+  try {
+   const response=await fetch('/api/session');
+   this.authenticated=response.ok && (await response.json()).authenticated===true;
+  } catch { this.authenticated=false; }
   if(this.authenticated){this.link.textContent='My work';this.link.href='/my-work/';}
   this.link.onclick=async e=>{e.preventDefault();if(await this.save())location.assign(this.link.href);};
   window.addEventListener('beforeunload',event=>{if(this.authenticated&&this.ready&&this.app.game.originalText&&JSON.stringify(snapshot(this.app))!==this.previous){event.preventDefault();event.returnValue='';}});
