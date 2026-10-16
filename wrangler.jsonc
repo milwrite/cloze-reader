@@ -13,6 +13,7 @@
     "run_worker_first": true
   },
   "services": [
+    {"binding":"GATEWAY","service":"cail-model-api"},
     {
       "binding": "IDENTITY",
       "service": "cail-doorway",

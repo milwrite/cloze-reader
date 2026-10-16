@@ -1,6 +1,8 @@
 // CUNY session handoff and app-scoped storage. Identity tokens stay in private RPC.
 export type Identity = {ok:true;appJwt:string;gatewayJwt:string;workspaceJwt:string|null};
 export interface SuiteEnv {
+  CAIL_GATEWAY_KEY?:string;
+  GATEWAY?:{fetch(request:Request):Promise<Response>};
   ASSETS:{fetch(request:Request):Promise<Response>};
   IDENTITY:{begin(challenge:string,state:string):Promise<{url:string}>;redeem(code:string,verifier:string):Promise<{ok:boolean;token?:string;expiresAt?:number;status?:number}>;identities(token:string):Promise<Identity|{ok:false;status:number}>;revoke(token:string):Promise<unknown>};
   WORK_ACCOUNTS:{register():Promise<unknown>;fetch(request:Request):Promise<Response>};
@@ -79,10 +81,21 @@ export async function suite(request:Request,env:SuiteEnv,app:(request:Request,id
    const maxTokens=body.max_tokens??800,temperature=body.temperature??0.7;
    if(!Number.isInteger(maxTokens)||maxTokens<1||maxTokens>2048||typeof temperature!=='number'||!Number.isFinite(temperature)||temperature<0||temperature>2)
     return json({error:{message:'Invalid generation settings'}},400);
-   const result=await env.AI.run(env.CLOZE_MODEL,{
+   const inputs={
     messages:body.messages,max_tokens:maxTokens,temperature,stream:false,
     chat_template_kwargs:{enable_thinking:false}
-   });
+   };
+   let result;
+   if(env.CAIL_GATEWAY_KEY){
+    if(!env.GATEWAY)return json({error:{message:'Generation is not configured.'}},503);
+    const upstream=await env.GATEWAY.fetch(new Request(TOOLS+'/v1/chat/completions',{
+     method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+env.CAIL_GATEWAY_KEY},
+     body:JSON.stringify({...inputs,model:env.CLOZE_MODEL.split('/').pop()}),
+     signal:AbortSignal.any([request.signal,AbortSignal.timeout(55000)])
+    }));
+    if(!upstream.ok)return json({error:{message:'Generation is temporarily unavailable. Please retry.'}},upstream.status);
+    result=await upstream.json() as any;
+   }else result=await env.AI.run(env.CLOZE_MODEL,inputs);
    const content=result?.choices?.[0]?.message?.content??result?.response;
    if(typeof content!=='string'||!content.trim())return json({error:{message:'The model returned an empty response.'}},502);
    return json({model:env.CLOZE_MODEL,choices:[{index:0,message:{role:'assistant',content},finish_reason:result?.choices?.[0]?.finish_reason??'stop'}],...(result?.usage?{usage:result.usage}:{})});
