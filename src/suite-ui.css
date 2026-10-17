@@ -1,0 +1,16 @@
+@font-face{font-family:"Barlow Condensed";src:url("./fonts/barlow-condensed-600.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Barlow Condensed";src:url("./fonts/barlow-condensed-700.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Barlow";src:url("./fonts/barlow-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Barlow";src:url("./fonts/barlow-500.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:"Barlow";src:url("./fonts/barlow-600.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Barlow";src:url("./fonts/barlow-700.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+:root{--suite-font:"Barlow",Arial,sans-serif;--suite-display:"Barlow Condensed","Arial Narrow",sans-serif;--suite-small:.9375rem;--suite-control:1rem;--suite-target:44px}
+body{font-family:var(--suite-font);line-height:1.6}
+button,input,select,textarea,summary{font-family:var(--suite-font);font-size:var(--suite-control);line-height:1.45}
+button,select,summary,[role=button],.suite-account a{min-height:var(--suite-target)}
+input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{font-size:max(16px,1rem)}
+button,summary{white-space:normal;overflow-wrap:anywhere}
+:where(a,button,input,select,textarea,summary):focus-visible{outline:3px solid currentColor;outline-offset:3px}
+.suite-account{font:500 var(--suite-small)/1.5 var(--suite-font)}
+.suite-account a{display:inline-flex;align-items:center;padding:8px;min-height:44px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}

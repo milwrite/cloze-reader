@@ -1,0 +1,24 @@
+/* Reading and controls share the arcade's Barlow scale. */
+body,.typewriter-text,.typewriter-subtitle,.typewriter-button,.paper-content,.paper-sheet,.biblio-info,.round-badge,.context-box,.hints-box,.result-text,.loading-text,.about-title,.about-subtitle,.about-body,.chat-modal,.chat-modal *,.cloze-input,#passage-content,.leaderboard-modal,.leaderboard-modal *{font-family:var(--suite-font);letter-spacing:normal}
+h1.typewriter-text,.about-title{font-family:var(--suite-display);font-weight:600}
+.typewriter-button,.chat-button,button,input,select,textarea{font-size:1rem;line-height:1.45}
+#passage-content{font-size:1.125rem;line-height:1.8}.context-box,.hints-box,.biblio-info,.result-text{font-size:1rem;line-height:1.6}
+.typewriter-subtitle,.round-badge,.about-body,.chat-message,.question-dropdown,.chat-modal-header{font-size:1rem;line-height:1.6}
+.typewriter-button,.chat-button,.leaderboard-footer-btn,.about-toggle-btn,#chat-close{min-height:44px;min-width:44px}
+.cloze-input{font-size:1.125rem;min-height:44px;line-height:1.5}.cloze-blank{align-items:center;gap:4px}
+.cloze-blank .chat-button{width:44px;height:44px;min-width:44px;min-height:44px}
+.suite-account{font-family:var(--suite-font);font-size:.9375rem;line-height:1.5;gap:8px}
+.suite-account a,.suite-account label{display:inline-flex;align-items:center;min-height:44px;padding:8px}
+.suite-account a:focus-visible,.suite-account label:focus-within{outline:2px solid #53413b;outline-offset:2px}
+.about-body{max-width:65ch}.about-body p{font-size:1.0625rem;line-height:1.7}.typewriter-subtitle,.biblio-info,.round-badge{color:#514c47}
+.chat-modal-content{width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow-y:auto}
+.sticky-controls .controls-inner{display:flex;align-items:center;flex-wrap:wrap;max-width:720px;gap:8px}
+.sticky-controls .typewriter-button{flex:1 1 120px;min-width:0}.sticky-controls .about-toggle-btn,.sticky-controls .leaderboard-footer-btn{flex:0 0 44px;width:44px;min-width:44px}
+@media(max-width:600px){
+ #app{padding-inline:16px;padding-top:12px}#game-area{padding:20px 16px}
+ #game-area .paper-content>.flex:first-child{align-items:flex-start;gap:12px;flex-wrap:wrap}
+ #passage-content{font-size:1.0625rem;line-height:1.85}.paper-content{min-width:0}
+ .sticky-controls{padding:10px 12px max(10px,env(safe-area-inset-bottom))}
+ .sticky-controls .typewriter-button{flex-basis:calc(50% - 32px);font-size:1rem}
+ .sticky-controls .controls-inner{justify-content:center}.chat-modal{padding:12px}.chat-modal-content{max-height:calc(100dvh - 24px)}
+}
