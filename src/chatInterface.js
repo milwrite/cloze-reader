@@ -16,14 +16,14 @@ class ChatUI {
   setupChatModal() {
     // Create modal HTML
     const modalHTML = `
-      <div id="chat-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] flex flex-col">
+      <div id="chat-modal" role="dialog" aria-modal="true" aria-labelledby="chat-title" class="chat-modal fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="chat-modal-content bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] flex flex-col">
           <!-- Header -->
           <div class="flex items-center justify-between p-4 border-b">
             <h3 id="chat-title" class="text-lg font-semibold text-gray-900">
               Chat about Word #1
             </h3>
-            <button id="chat-close" class="text-gray-400 hover:text-gray-600">
+            <button id="chat-close" aria-label="Close word help" class="text-gray-400 hover:text-gray-600">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -47,7 +47,7 @@ class ChatUI {
           <!-- Question dropdown area -->
           <div class="p-4 border-t">
             <!-- Dropdown for all devices -->
-            <select id="question-dropdown" class="w-full p-2 border rounded mb-4">
+            <select id="question-dropdown" aria-label="Hint question" class="w-full p-2 border rounded mb-4">
               <option value="">Select a question...</option>
             </select>
           </div>
@@ -74,12 +74,19 @@ class ChatUI {
     
     // ESC key to close
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen) this.closeChat();
+      if (!this.isOpen) return;
+      if (e.key === 'Escape') { e.preventDefault(); this.closeChat(); }
+      if (e.key !== 'Tab') return;
+      const controls=[...this.chatModal.querySelectorAll('button:not(:disabled), select:not(:disabled), [href], input:not(:disabled), textarea:not(:disabled), [tabindex="0"]')].filter(el=>el.getClientRects().length);
+      const first=controls[0],last=controls.at(-1);
+      if(e.shiftKey && document.activeElement===first){e.preventDefault();last?.focus();}
+      else if(!e.shiftKey && document.activeElement===last){e.preventDefault();first?.focus();}
     });
   }
 
   // Open chat for specific blank
   async openChat(blankIndex) {
+    this.returnFocus = document.activeElement;
     this.activeChatBlank = blankIndex;
     this.isOpen = true;
     
@@ -95,6 +102,7 @@ class ChatUI {
     
     // Show modal
     this.chatModal.classList.remove('hidden');
+    document.getElementById('chat-close').focus({preventScroll:true});
   }
 
   // Close chat modal
@@ -102,6 +110,7 @@ class ChatUI {
     this.isOpen = false;
     this.chatModal.classList.add('hidden');
     this.activeChatBlank = null;
+    this.returnFocus?.focus({preventScroll:true});
   }
 
   // Clear messages and show intro
