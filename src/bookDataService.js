@@ -558,6 +558,8 @@ class HuggingFaceDatasetService {
   }
 
   async getBookByLevelCriteria(level) {
+    // Reopened exercises restore their passage without initializing the library.
+    if (!this.isLoaded) await this.loadDataset();
     return await this.getRandomBook();
   }
 
