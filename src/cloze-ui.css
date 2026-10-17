@@ -1,48 +1,73 @@
-/* One responsive reading scale, after the legacy utility stylesheet. */
-body,.typewriter-text,.typewriter-subtitle,.typewriter-button,.paper-content,.paper-sheet,.biblio-info,.round-badge,.context-box,.hints-box,.result-text,.loading-text,.about-title,.about-subtitle,.about-body,.chat-modal,.chat-modal *,.cloze-input,#passage-content,.leaderboard-modal,.leaderboard-modal *{font-family:var(--suite-font);letter-spacing:normal}
-h1.typewriter-text,.about-title{font-family:var(--suite-display);font-weight:600}
-.typewriter-button,.chat-button,button,input,select,textarea{font-size:1.0625rem;line-height:1.45}
-.typewriter-button,.chat-button,.leaderboard-footer-btn,.about-toggle-btn,#chat-close{min-height:44px;min-width:44px}
-body{font-size:1.125rem}
-#app{width:min(1540px,calc(100% - clamp(24px,5vw,80px)));max-width:none;padding:96px 0 120px}
-.app-header{margin-bottom:clamp(24px,4vh,48px)}
-.app-heading{gap:16px;margin-bottom:12px}
-.app-heading img{width:56px;height:56px;object-fit:contain}
-h1.typewriter-text{font-size:clamp(2.75rem,3vw + 1rem,4rem);line-height:1.1}
-.typewriter-subtitle{font-size:clamp(1.125rem,1rem + .3vw,1.375rem);line-height:1.55;color:#514c47}
-#loading{min-height:40vh;display:grid;place-items:center}
-#loading.hidden{display:none}
-.loading-text{font-size:1.25rem;line-height:1.6}
-#game-area{padding:clamp(20px,3.2vw,48px);border-radius:8px;min-width:0}
-.paper-content{min-width:0}
-.paper-content>.flex:first-child{gap:16px;flex-wrap:wrap}
-#passage-content{font-size:clamp(1.25rem,1.1rem + .35vw,1.5rem);line-height:1.85;text-align:left}
-#passage-content p{text-align:left}
-.context-box,.hints-box,.biblio-info,.result-text,.round-badge{font-size:1.125rem;line-height:1.65}
-.hints-box .text-sm,.hints-box .text-sm *{font-size:inherit}
-.biblio-info,.round-badge{color:#514c47}
-.context-box,.hints-box{padding:16px 20px}
-.round-badge{white-space:normal}
-#passage-content .cloze-blank{align-items:center;vertical-align:baseline;gap:6px;max-width:100%;font:inherit;line-height:1.4}
-#passage-content .cloze-input{font:inherit!important;min-height:44px;height:2em;max-width:min(26ch,calc(100vw - 132px));padding:0 4px;margin:0;border:0;border-bottom:2px solid #77716b;border-radius:0;background:transparent;box-shadow:none;transition:none}
-#passage-content .cloze-input:focus{background:#f5f1e8;border-bottom-color:#53413b;outline:none;box-shadow:0 2px 0 #53413b}
-#passage-content .cloze-input:focus-visible{outline:2px solid #53413b;outline-offset:3px}
-#passage-content .cloze-input.correct{border-bottom-color:#16824d}
-#passage-content .cloze-input.incorrect{border-bottom-color:#ba3939}
-#passage-content .cloze-blank .chat-button{width:44px;height:44px;min-width:44px;min-height:44px;border-color:#8a8177;border-radius:6px;background:#f5f1e8;color:#534b44}
-#passage-content .cloze-blank .chat-button svg{width:20px;height:20px}
-.about-body p{font-size:1.125rem;line-height:1.75}
-.chat-modal-content{width:min(680px,calc(100vw - 32px));max-width:none;margin:0;max-height:calc(100dvh - 32px);overflow-y:auto}
-.chat-modal :is(.text-sm,.text-xs,select){font-size:1.0625rem;line-height:1.6}
-.chat-modal h3{font-size:1.375rem}
-.sticky-controls .controls-inner{display:flex;align-items:center;flex-wrap:wrap;width:min(900px,100%);max-width:none;gap:10px}
-.sticky-controls .typewriter-button{flex:1 1 140px;min-width:0;height:auto;min-height:48px;padding:10px 16px;font-size:1.125rem;line-height:1.4;white-space:normal}
-.sticky-controls .about-toggle-btn,.sticky-controls .leaderboard-footer-btn{flex:0 0 48px;width:48px;min-width:48px;min-height:48px}
-@media(max-width:600px){
- #app{padding-top:96px;padding-bottom:150px}.app-heading{gap:12px}.app-heading img{width:48px;height:48px}
- #game-area{padding:20px 16px}.paper-content>.flex:first-child{align-items:flex-start;gap:12px}
- .context-box,.hints-box{padding:12px 14px}
- .sticky-controls{padding:10px 12px max(10px,env(safe-area-inset-bottom))}
- .sticky-controls .typewriter-button{flex-basis:calc(50% - 38px);font-size:1.0625rem;padding:10px}
- .sticky-controls .controls-inner{justify-content:center;gap:8px}.chat-modal{padding:16px}
+/* Reading, dialogs and actions share the arcade's type and control scale. */
+:root { --control-text:#514c47; --control-border:#9a9186; --control-hover:#98404f; --control-hover-fill:#a448560a; }
+body,.typewriter-text,.typewriter-subtitle,.typewriter-button,.paper-content,.paper-sheet,.biblio-info,.round-badge,.context-box,.hints-box,.result-text,.loading-text,.about-title,.about-subtitle,.about-body,.chat-modal,.chat-modal *,.cloze-input,#passage-content,.leaderboard-modal,.leaderboard-modal * { font-family:var(--suite-font); letter-spacing:normal; }
+h1.typewriter-text,.about-title { font-family:var(--suite-display); font-weight:600; }
+body { font-size:1.125rem; }
+button,input,select,textarea { font-size:var(--suite-control-size); line-height:1.5; }
+.typewriter-button,.chat-button,.leaderboard-footer-btn,.about-toggle-btn,#chat-close { min-height:var(--suite-control-height); min-width:44px; border-radius:var(--suite-control-radius); box-shadow:none; }
+#app { width:min(1540px,calc(100% - clamp(24px,5vw,80px))); max-width:none; padding:96px 0 104px; }
+.app-header { margin-bottom:clamp(24px,4vh,40px); }
+.app-heading { gap:16px; margin-bottom:12px; }
+.app-heading img { width:56px; height:56px; object-fit:contain; }
+h1.typewriter-text { font-size:clamp(2.25rem,6vw,4rem); line-height:1.1; }
+.typewriter-subtitle { display:block; font-size:clamp(1.125rem,1rem + .3vw,1.375rem); line-height:1.55; color:#514c47; }
+#loading { min-height:40vh; display:grid; place-items:center; }
+#loading.hidden { display:none; }
+.loading-text { font-size:1.25rem; line-height:1.6; }
+#game-area { padding:clamp(20px,3.2vw,48px); border-radius:2px; min-width:0; box-shadow:0 2px 12px #514c4708; }
+.paper-content { min-width:0; max-width:78ch; margin-inline:auto; }
+.paper-content > .flex:first-child { gap:16px; flex-wrap:wrap; }
+#passage-content { font-size:clamp(1.25rem,1.1rem + .35vw,1.5rem); line-height:1.85; text-align:left; }
+#passage-content p { text-align:left; }
+.context-box,.hints-box,.biblio-info,.result-text,.round-badge { font-size:1.125rem; line-height:1.65; }
+.hints-box .text-sm,.hints-box .text-sm * { font-size:inherit; }
+.biblio-info,.round-badge { color:#514c47; }
+.context-box,.hints-box { padding:16px 20px; border-radius:2px; }
+.round-badge { white-space:normal; border:0; border-radius:2px; background:#514c4708; padding:4px 8px; font-size:1rem; font-weight:500; }
+#passage-content .cloze-blank { align-items:center; vertical-align:baseline; gap:6px; max-width:100%; font:inherit; line-height:1.4; }
+#passage-content .cloze-input { font:inherit!important; min-height:44px; height:2em; max-width:min(26ch,calc(100vw - 132px)); padding:0 4px; margin:0; border:0; border-bottom:2px solid #77716b; border-radius:0; background:transparent; box-shadow:none; transition:none; }
+#passage-content .cloze-input:focus { background:#f5f1e8; border-bottom-color:#53413b; outline:none; box-shadow:0 2px 0 #53413b; }
+#passage-content .cloze-input:focus-visible { outline:2px solid #53413b; outline-offset:3px; }
+#passage-content .cloze-input.correct { border-bottom-color:#16824d; }
+#passage-content .cloze-input.incorrect { border-bottom-color:#ba3939; }
+#passage-content .cloze-blank .chat-button { width:44px; height:44px; min-width:44px; min-height:44px; padding:10px; border:1px solid #9a9186; border-radius:2px; background:transparent; color:#534b44; transform:none; box-shadow:none; }
+#passage-content .cloze-blank .chat-button:hover { border-color:#98404f; background:#a448560a; transform:none; }
+#passage-content .cloze-blank .chat-button svg { width:20px; height:20px; }
+.about-body p { font-size:1.125rem; line-height:1.75; }
+
+/* Keep the word-help layer above the fixed footer, with one scrolling body. */
+#chat-modal { z-index:1100; padding:12px; }
+.chat-modal-content { display:flex; flex-direction:column; width:min(680px,100%); max-width:none; margin:0; max-height:calc(100dvh - 24px); overflow:hidden; border:1px solid #9a9186; border-radius:2px; box-shadow:0 16px 48px #0003; }
+.chat-modal-content > :not(#chat-messages) { flex-shrink:0; }
+#chat-messages { min-height:0; max-height:none; overflow-y:auto; overscroll-behavior:contain; }
+.chat-modal :is(.text-sm,.text-xs,select) { font-size:1.0625rem; line-height:1.6; }
+.chat-modal h3 { font-size:1.375rem; }
+#chat-close { display:inline-flex; align-items:center; justify-content:center; padding:8px; color:#514c47; background:transparent; border:1px solid transparent; }
+#chat-close:hover { border-color:#9a9186; }
+#question-dropdown { min-height:46px; margin-bottom:0; border:1px solid #9a9186; border-radius:2px; background:#fffdf8; color:#514c47; }
+#suggestion-buttons button { min-height:44px; padding:8px 12px; border:1px solid #9a9186; border-radius:2px; background:transparent; color:#514c47; font:500 1rem/1.5 var(--suite-font); box-shadow:none; transform:none; }
+
+/* One compact row, including the two auxiliary actions, even at phone widths. */
+.sticky-controls { padding:12px max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)); border-top:1px solid #d8d1c8; background:#fcfaf5; box-shadow:none; backdrop-filter:none; }
+.sticky-controls .controls-inner { display:flex; align-items:center; flex-wrap:nowrap; width:min(760px,100%); max-width:none; gap:10px; }
+.sticky-controls .typewriter-button { flex:1 1 0; min-width:0; height:auto; min-height:var(--suite-control-height); padding:var(--suite-control-padding); font-size:var(--suite-control-size); font-weight:500; line-height:1.5; white-space:normal; }
+.sticky-controls :is(.typewriter-button,.about-toggle-btn,.leaderboard-footer-btn) { border:1px solid #9a9186; border-radius:2px; color:#514c47; background:transparent; box-shadow:none; transform:none; }
+.sticky-controls :is(.typewriter-button,.about-toggle-btn,.leaderboard-footer-btn):hover { border-color:#98404f; color:#98404f; background:#a448560a; box-shadow:none; transform:none; }
+.sticky-controls .about-toggle-btn,.sticky-controls .leaderboard-footer-btn { display:inline-flex; align-items:center; justify-content:center; flex:0 0 var(--suite-control-height); width:var(--suite-control-height); height:var(--suite-control-height); min-width:44px; padding:8px; font-size:1.125rem; }
+.sticky-controls .leaderboard-footer-btn svg { width:20px; height:20px; }
+.sticky-controls button:disabled { opacity:.55; cursor:not-allowed; }
+@media(max-width:600px) {
+  .app-heading { gap:12px; }
+  .app-heading img { width:44px; height:44px; }
+  #game-area { padding:20px 12px; }
+  .paper-content > .flex:first-child { align-items:flex-start; gap:10px; }
+  .context-box,.hints-box { padding:12px; }
+  .sticky-controls .controls-inner { gap:6px; }
+  .sticky-controls .typewriter-button { padding:8px 6px; }
+  .chat-modal-content > .p-4 { padding:12px; }
+}
+@media(max-height:480px) {
+  #chat-modal { padding:8px; }
+  .chat-modal-content { max-height:calc(100dvh - 16px); }
+  .chat-modal-content > .p-4 { padding:8px 12px; }
 }
