@@ -33,6 +33,9 @@ export default class AccountWork {
  async api(path,method='GET',body){const response=await fetch('/api/work'+path,{method,headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw new Error(data.error?.message||'Your exercise could not be saved.');return data;}
  async initialize(){
   const nav=document.createElement('nav');nav.className='suite-account';nav.setAttribute('aria-label','CUNY account');
+  const games=document.createElement('a');games.href='https://cail-games.ailab-452.workers.dev/';games.textContent='Games';
+  games.onclick=async e=>{e.preventDefault();if(await this.save())location.assign(games.href);};
+  nav.append(games);
   this.link=document.createElement('a');this.link.textContent='CUNY Login';this.link.href='/auth/start?next=/';
   this.status=document.createElement('span');this.status.setAttribute('role','status');this.status.setAttribute('aria-live','polite');nav.append(this.status,this.link);document.body.prepend(nav);
   try {
