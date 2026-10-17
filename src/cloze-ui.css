@@ -44,7 +44,8 @@ h1.typewriter-text { font-size:clamp(2.25rem,6vw,4rem); line-height:1.1; }
 .chat-modal h3 { font-size:1.375rem; }
 #chat-close { display:inline-flex; align-items:center; justify-content:center; padding:8px; color:#514c47; background:transparent; border:1px solid transparent; }
 #chat-close:hover { border-color:#9a9186; }
-#question-dropdown { min-height:46px; margin-bottom:0; border:1px solid #9a9186; border-radius:2px; background:#fffdf8; color:#514c47; }
+#question-dropdown { font:500 1.0625rem/1.5 var(--suite-font); transition:border-color .15s ease; min-height:46px; margin-bottom:0; border:1px solid #9a9186; border-radius:2px; background:#fffdf8; color:#514c47; }
+#question-dropdown:focus-visible { outline:2px solid #98404f; outline-offset:3px; box-shadow:none; }
 #suggestion-buttons button { min-height:44px; padding:8px 12px; border:1px solid #9a9186; border-radius:2px; background:transparent; color:#514c47; font:500 1rem/1.5 var(--suite-font); box-shadow:none; transform:none; }
 
 /* One compact row, including the two auxiliary actions, even at phone widths. */
@@ -55,6 +56,7 @@ h1.typewriter-text { font-size:clamp(2.25rem,6vw,4rem); line-height:1.1; }
 .sticky-controls :is(.typewriter-button,.about-toggle-btn,.leaderboard-footer-btn):hover { border-color:#98404f; color:#98404f; background:#a448560a; box-shadow:none; transform:none; }
 .sticky-controls .about-toggle-btn,.sticky-controls .leaderboard-footer-btn { display:inline-flex; align-items:center; justify-content:center; flex:0 0 var(--suite-control-height); width:var(--suite-control-height); height:var(--suite-control-height); min-width:44px; padding:8px; font-size:1.125rem; }
 .sticky-controls .leaderboard-footer-btn svg { width:20px; height:20px; }
+.sticky-controls .hidden,.sticky-controls [hidden] { display:none; }
 .sticky-controls button:disabled { opacity:.55; cursor:not-allowed; }
 @media(max-width:600px) {
   .app-heading { gap:12px; }
