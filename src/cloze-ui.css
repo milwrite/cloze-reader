@@ -4,7 +4,7 @@ h1.typewriter-text,.about-title{font-family:var(--suite-display);font-weight:600
 .typewriter-button,.chat-button,button,input,select,textarea{font-size:1.0625rem;line-height:1.45}
 .typewriter-button,.chat-button,.leaderboard-footer-btn,.about-toggle-btn,#chat-close{min-height:44px;min-width:44px}
 body{font-size:1.125rem}
-#app{width:min(1540px,calc(100% - clamp(24px,5vw,80px)));max-width:none;padding:20px 0 120px}
+#app{width:min(1540px,calc(100% - clamp(24px,5vw,80px)));max-width:none;padding:96px 0 120px}
 .app-header{margin-bottom:clamp(24px,4vh,48px)}
 .app-heading{gap:16px;margin-bottom:12px}
 .app-heading img{width:56px;height:56px;object-fit:contain}
@@ -31,12 +31,6 @@ h1.typewriter-text{font-size:clamp(2.75rem,3vw + 1rem,4rem);line-height:1.1}
 #passage-content .cloze-input.incorrect{border-bottom-color:#ba3939}
 #passage-content .cloze-blank .chat-button{width:44px;height:44px;min-width:44px;min-height:44px;border-color:#8a8177;border-radius:6px;background:#f5f1e8;color:#534b44}
 #passage-content .cloze-blank .chat-button svg{width:20px;height:20px}
-.suite-account{width:min(1540px,calc(100% - clamp(24px,5vw,80px)));margin-inline:auto;padding:16px 0 8px;font:500 1.0625rem/1.5 var(--suite-font);gap:10px;color:#514c47}
-.suite-account a,.suite-account .account-import{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 16px;border:1px solid #8a8177;border-radius:6px;background:#fefcf7;color:#35312e;font:inherit;cursor:pointer;text-decoration:none}
-.suite-account a:hover,.suite-account .account-import:hover{background:#ece5da;text-decoration:none}
-.suite-account :is(a,button):focus-visible{outline:2px solid #53413b;outline-offset:3px}
-.suite-account [role=status]{font-size:1rem;order:-1;margin-right:auto}
-.suite-account .account-import{font-size:1rem}
 .about-body p{font-size:1.125rem;line-height:1.75}
 .chat-modal-content{width:min(680px,calc(100vw - 32px));max-width:none;margin:0;max-height:calc(100dvh - 32px);overflow-y:auto}
 .chat-modal :is(.text-sm,.text-xs,select){font-size:1.0625rem;line-height:1.6}
@@ -45,10 +39,8 @@ h1.typewriter-text{font-size:clamp(2.75rem,3vw + 1rem,4rem);line-height:1.1}
 .sticky-controls .typewriter-button{flex:1 1 140px;min-width:0;height:auto;min-height:48px;padding:10px 16px;font-size:1.125rem;line-height:1.4;white-space:normal}
 .sticky-controls .about-toggle-btn,.sticky-controls .leaderboard-footer-btn{flex:0 0 48px;width:48px;min-width:48px;min-height:48px}
 @media(max-width:600px){
- #app{padding-top:16px;padding-bottom:150px}.app-heading{gap:12px}.app-heading img{width:48px;height:48px}
+ #app{padding-top:96px;padding-bottom:150px}.app-heading{gap:12px}.app-heading img{width:48px;height:48px}
  #game-area{padding:20px 16px}.paper-content>.flex:first-child{align-items:flex-start;gap:12px}
- .suite-account{padding-top:12px;gap:8px}.suite-account a,.suite-account .account-import{padding:9px 12px}
- .suite-account [role=status]{flex-basis:100%;text-align:right}
  .context-box,.hints-box{padding:12px 14px}
  .sticky-controls{padding:10px 12px max(10px,env(safe-area-inset-bottom))}
  .sticky-controls .typewriter-button{flex-basis:calc(50% - 38px);font-size:1.0625rem;padding:10px}

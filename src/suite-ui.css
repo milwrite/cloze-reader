@@ -11,6 +11,4 @@ button,select,summary,[role=button],.suite-account a{min-height:var(--suite-targ
 input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{font-size:max(16px,1rem)}
 button,summary{white-space:normal;overflow-wrap:anywhere}
 :where(a,button,input,select,textarea,summary):focus-visible{outline:3px solid currentColor;outline-offset:3px}
-.suite-account{font:500 var(--suite-small)/1.5 var(--suite-font)}
-.suite-account a{display:inline-flex;align-items:center;padding:8px;min-height:44px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
