@@ -7,6 +7,7 @@ class ChatUI {
     this.activeChatBlank = null;
     this.chatModal = null;
     this.isOpen = false;
+    this.historyVersion = 0;
     this.messageHistory = new Map(); // blankId -> array of messages for persistent history
     this.analytics = analyticsService;
     this.setupChatModal();
@@ -165,6 +166,7 @@ class ChatUI {
 
   // Clear all chat history (called when round ends)
   clearChatHistory() {
+    this.historyVersion++;
     this.messageHistory.clear();
   }
 
@@ -191,60 +193,50 @@ class ChatUI {
     });
     
     // Add change listener to dropdown
-    dropdown.addEventListener('change', (e) => {
+    dropdown.onchange = (e) => {
       if (e.target.value) {
         this.askQuestion(e.target.value);
         e.target.value = ''; // Reset dropdown
       }
-    });
+    };
   }
 
   // Ask a specific question
   async askQuestion(questionType) {
     if (this.activeChatBlank === null) return;
-    
-    // Get current user input for the blank
+
+    // A reply belongs to the requested word, even after closing or switching dialogs.
+    const blankIndex = this.activeChatBlank;
+    const historyVersion = this.historyVersion;
+    const isCurrent = () => this.isOpen && this.activeChatBlank === blankIndex;
     const currentInput = this.getCurrentBlankInput();
-    
-    // Get the actual question text from the button that was clicked
-    const questions = this.game.getSuggestedQuestionsForBlank(this.activeChatBlank);
+    const questions = this.game.getSuggestedQuestionsForBlank(blankIndex);
     const selectedQuestion = questions.find(q => q.type === questionType);
     const questionText = selectedQuestion ? selectedQuestion.text : this.getQuestionText(questionType);
-    
-    // Show question and loading
-    this.addMessageToChat('You', questionText, true);
+
+    this.addMessageToChat('You', questionText, true, blankIndex);
     this.showTypingIndicator();
-    
+
     try {
-      // Send to chat service with question type
-      const response = await this.game.askQuestionAboutBlank(
-        this.activeChatBlank,
-        questionType,
-        currentInput
-      );
-      
-      this.hideTypingIndicator();
-      
+      const response = await this.game.askQuestionAboutBlank(blankIndex, questionType, currentInput);
+      if (historyVersion !== this.historyVersion) return;
+      if (isCurrent()) this.hideTypingIndicator();
+
       if (response.success) {
-        // Make sure we're displaying the response string, not the object
         const responseText = typeof response.response === 'string'
           ? response.response
           : response.response.response || 'Sorry, I had trouble with that question.';
-        this.addMessageToChat('Cluemaster', responseText, false);
-
-        // Track hint usage in analytics
-        this.analytics.recordHint(this.activeChatBlank, questionType);
-
-        // Refresh question buttons to show the used question as disabled
-        this.loadQuestionButtons();
+        this.addMessageToChat('Cluemaster', responseText, false, blankIndex);
+        this.analytics.recordHint(blankIndex, questionType);
+        if (isCurrent()) this.loadQuestionButtons();
       } else {
-        this.addMessageToChat('Cluemaster', response.message || 'Sorry, I had trouble with that question.', false);
+        this.addMessageToChat('Cluemaster', response.message || 'Sorry, I had trouble with that question.', false, blankIndex);
       }
-      
     } catch (error) {
-      this.hideTypingIndicator();
+      if (historyVersion !== this.historyVersion) return;
+      if (isCurrent()) this.hideTypingIndicator();
       console.error('Chat error:', error);
-      this.addMessageToChat('Cluemaster', 'Sorry, I encountered an error. Please try again.', false);
+      this.addMessageToChat('Cluemaster', 'Sorry, I encountered an error. Please try again.', false, blankIndex);
     }
   }
 
@@ -266,10 +258,10 @@ class ChatUI {
   }
 
   // Add message to chat display and store in history
-  addMessageToChat(sender, content, isUser) {
+  addMessageToChat(sender, content, isUser, blankIndex = this.activeChatBlank) {
     // Store message in history for current blank
-    if (this.activeChatBlank !== null) {
-      const blankId = `blank_${this.activeChatBlank}`;
+    if (blankIndex !== null) {
+      const blankId = `blank_${blankIndex}`;
       if (!this.messageHistory.has(blankId)) {
         this.messageHistory.set(blankId, []);
       }
@@ -286,7 +278,9 @@ class ChatUI {
     }
     
     // Display the message
-    this.displayMessage(sender === 'Tutor' ? 'Cluemaster' : sender, content, isUser);
+    if (this.isOpen && this.activeChatBlank === blankIndex) {
+      this.displayMessage(sender === 'Tutor' ? 'Cluemaster' : sender, content, isUser);
+    }
   }
 
   // Show typing indicator
