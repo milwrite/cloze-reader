@@ -29,7 +29,7 @@ for (const scenario of scenarios) {
       const calls:any[]=[];
       const env={
         PUBLIC_ORIGIN:origin,APP_ID:'cloze',RELEASE:'reconciliation',
-        CLOZE_MODEL:'@cf/google/gemma-4-26b-a4b-it',
+        CLOZE_MODEL:'@cf/deepseek-ai/deepseek-v4-flash-0731',
         REQUEST_LIMIT:{limit:async()=>({success:!scenario.limited})},
         IDENTITY:{identities:async()=>{throw new Error('Identity unavailable');}},
         WORK_ACCOUNTS:{register:async()=>({})},
@@ -52,7 +52,7 @@ for (const scenario of scenarios) {
     if(scenario.name==='valid guest generation uses Workers AI') {
       assert.equal(restored.status,200);
       assert.equal(restored.calls.length,1);
-      assert.equal(restored.calls[0].model,'@cf/google/gemma-4-26b-a4b-it');
+      assert.equal(restored.calls[0].model,'@cf/deepseek-ai/deepseek-v4-flash-0731');
       assert.equal(restored.calls[0].input.chat_template_kwargs.enable_thinking,false);
     }
   });

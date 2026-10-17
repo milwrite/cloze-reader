@@ -60,7 +60,7 @@
     "APP_ID": "cloze",
     "RELEASE": "dev",
     "LEGACY_ORIGIN": "https://reader.inference-arcade.com",
-    "CLOZE_MODEL": "@cf/google/gemma-4-26b-a4b-it"
+    "CLOZE_MODEL": "@cf/deepseek-ai/deepseek-v4-flash-0731"
   },
   "observability": {
     "enabled": true

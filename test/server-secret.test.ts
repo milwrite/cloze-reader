@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import worker from '../worker/index.ts';
 const origin='https://cloze.ailab-452.workers.dev';
 test('server key funds generation without entering configuration or saved-work identity',async()=>{
- const env:any={PUBLIC_ORIGIN:origin,APP_ID:'cloze',CLOZE_MODEL:'@cf/google/gemma-4-26b-a4b-it',CAIL_GATEWAY_KEY:'server-only-fixture',
+ const env:any={PUBLIC_ORIGIN:origin,APP_ID:'cloze',CLOZE_MODEL:'@cf/deepseek-ai/deepseek-v4-flash-0731',CAIL_GATEWAY_KEY:'server-only-fixture',
   REQUEST_LIMIT:{limit:async()=>({success:true})},
   AI:{run:async()=>{throw new Error('must use gateway');}},
   IDENTITY:{identities:async()=>({ok:true,appJwt:'owner-app',gatewayJwt:'user-inference',workspaceJwt:null})},
   WORK_ACCOUNTS:{fetch:async(r:Request)=>{assert.equal(r.headers.get('x-cail-identity-jwt'),'owner-app');assert.equal(r.headers.get('authorization'),null);return Response.json({saved:true});}},
   GATEWAY:{fetch:async(r:Request)=>{
    assert.equal(r.headers.get('authorization'),'Bearer server-only-fixture');
-   const body:any=await r.json();assert.equal(body.model,'gemma-4-26b-a4b-it');assert.equal(body.chat_template_kwargs.enable_thinking,false);
+   const body:any=await r.json();assert.equal(body.model,'deepseek-v4-flash-0731');assert.equal(body.chat_template_kwargs.enable_thinking,false);
    assert.ok(r.signal instanceof AbortSignal);
    return Response.json({choices:[{message:{content:'A useful hint.'}}],usage:{completion_tokens:5}});
   }}

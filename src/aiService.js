@@ -1,5 +1,5 @@
-// Local mode: the inference-arcade vLLM server (Gemma-4-E4B base + the
-// cloze-reader LoRA adapter, OpenAI-compatible API). Proxy mode: the backend
+// Local mode: an explicitly configured cloze-reader adapter on a compatible
+// inference server. Proxy mode: the backend
 // uses the model configured by the hosted Worker. The shim endpoint is preferred: it
 // answers the private-network preflights that browsers send when an HTTPS
 // page calls localhost, which vLLM itself rejects.
@@ -30,8 +30,8 @@ class OpenRouterService {
   _setMode(isLocal, endpoint = LOCAL_ENDPOINTS[0]) {
     this.isLocalMode = isLocal;
     this.apiUrl = isLocal ? `${endpoint}/v1/chat/completions` : '/api/ai/chat';
-    this.hintModel = isLocal ? LOCAL_MODEL_ID : (this.hostedModel || 'google/gemma-3-27b-it');
-    this.primaryModel = isLocal ? LOCAL_MODEL_ID : (this.hostedModel || 'google/gemma-3-27b-it');
+    this.hintModel = isLocal ? LOCAL_MODEL_ID : (this.hostedModel || '@cf/deepseek-ai/deepseek-v4-flash-0731');
+    this.primaryModel = isLocal ? LOCAL_MODEL_ID : (this.hostedModel || '@cf/deepseek-ai/deepseek-v4-flash-0731');
     this.model = this.primaryModel; // Default model for backward compatibility
     if (typeof window !== 'undefined') {
       window.__clozeAIMode = isLocal ? 'local' : this.hostedModel ? 'workers-ai' : 'proxy';
