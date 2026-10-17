@@ -47,7 +47,7 @@ export default class AccountWork {
   window.addEventListener('beforeunload',event=>{if(this.authenticated&&this.ready&&this.app.game.originalText&&JSON.stringify(snapshot(this.app))!==this.previous){event.preventDefault();event.returnValue='';}});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')void this.save();});
   if(this.authenticated){
-   const label=document.createElement('label');label.textContent='Import';label.style.cursor='pointer';const file=document.createElement('input');file.type='file';file.accept='.json';file.hidden=true;label.append(file);nav.append(label);
+   const button=document.createElement('button');button.type='button';button.className='account-import';button.textContent='Import';button.setAttribute('aria-label','Import a saved exercise');const file=document.createElement('input');file.type='file';file.accept='.json';file.hidden=true;button.onclick=()=>file.click();nav.append(button,file);
    file.onchange=async()=>{const selected=file.files[0];if(!selected)return;if(selected.size>192000){this.status.textContent='The exercise file is too large.';return;}try{const data=JSON.parse(await selected.text());const content=data.content||data;if(!content.record?.game)throw new Error('Choose a Cloze exercise export.');if(!await this.save())return;await restore(this.app,content);this.id=crypto.randomUUID();this.revision=0;this.previous='';await this.save();}catch(error){this.status.textContent=error.message;}finally{file.value='';}};
   }
   const id=new URLSearchParams(location.search).get('work');
