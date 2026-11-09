@@ -24,15 +24,20 @@ h1.typewriter-text { font-size:clamp(2.25rem,6vw,4rem); line-height:1.1; }
 .biblio-info,.round-badge { color:#514c47; }
 .context-box,.hints-box { padding:16px 20px; border-radius:2px; }
 .round-badge { white-space:normal; border:0; border-radius:2px; background:#514c4708; padding:4px 8px; font-size:1rem; font-weight:500; }
-#passage-content .cloze-blank { align-items:center; vertical-align:baseline; gap:6px; max-width:100%; font:inherit; line-height:1.4; }
-#passage-content .cloze-input { font:inherit!important; min-height:44px; height:2em; max-width:min(26ch,calc(100vw - 132px)); padding:0 4px; margin:0; border:0; border-bottom:2px solid #77716b; border-radius:0; background:transparent; box-shadow:none; transition:none; }
-#passage-content .cloze-input:focus { background:#f5f1e8; border-bottom-color:#53413b; outline:none; box-shadow:0 2px 0 #53413b; }
-#passage-content .cloze-input:focus-visible { outline:2px solid #53413b; outline-offset:3px; }
-#passage-content .cloze-input.correct { border-bottom-color:#16824d; }
-#passage-content .cloze-input.incorrect { border-bottom-color:#ba3939; }
-#passage-content .cloze-blank .chat-button { width:44px; height:44px; min-width:44px; min-height:44px; padding:10px; border:1px solid #9a9186; border-radius:2px; background:transparent; color:#534b44; transform:none; box-shadow:none; }
+/* The blank keeps its 44px touch height, but that height no longer spreads the lines of the passage. */
+#passage-content .cloze-blank { align-items:center; vertical-align:baseline; gap:4px; max-width:100%; margin-block:-7px; font:inherit; line-height:1.4; }
+#passage-content .cloze-input { font:inherit!important; min-height:44px; height:2em; max-width:min(26ch,calc(100vw - 132px)); padding:0 4px; margin:0; border:0; border-radius:0; background:linear-gradient(var(--blank-line,#77716b),var(--blank-line,#77716b)) no-repeat left calc(50% + .78em)/100% 2px transparent; box-shadow:none; transition:none; }
+/* The rule is drawn just under the words, where a written blank would be, not at the foot of the touch area. */
+#passage-content .cloze-input:focus { --blank-line:#53413b; background-color:#f5f1e8; outline:none; box-shadow:none; }
+#passage-content .cloze-input:focus-visible { outline:2px solid #53413b; outline-offset:-7px; }
+#passage-content .cloze-input.correct { --blank-line:#16824d; }
+#passage-content .cloze-input.incorrect { --blank-line:#ba3939; }
+/* The hint button sits on the text line at the size of a word. Its 44px touch target is an
+   invisible halo, so the visible box no longer towers over the blank or pushes the lines apart. */
+#passage-content .cloze-blank .chat-button { position:relative; align-self:center; width:30px; height:30px; min-width:30px; min-height:30px; padding:5px; border:1px solid #9a9186; border-radius:2px; background:transparent; color:#534b44; transform:none; box-shadow:none; }
+#passage-content .cloze-blank .chat-button::after { content:""; position:absolute; inset:-7px; }
 #passage-content .cloze-blank .chat-button:hover { border-color:#98404f; background:#a448560a; transform:none; }
-#passage-content .cloze-blank .chat-button svg { width:20px; height:20px; }
+#passage-content .cloze-blank .chat-button svg { width:18px; height:18px; }
 .about-body p { font-size:1.125rem; line-height:1.75; }
 
 /* Keep the word-help layer above the fixed footer, with one scrolling body. */
