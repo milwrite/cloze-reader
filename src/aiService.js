@@ -30,8 +30,8 @@ class OpenRouterService {
   _setMode(isLocal, endpoint = LOCAL_ENDPOINTS[0]) {
     this.isLocalMode = isLocal;
     this.apiUrl = isLocal ? `${endpoint}/v1/chat/completions` : '/api/ai/chat';
-    this.hintModel = isLocal ? LOCAL_MODEL_ID : (this.hostedModel || '@cf/deepseek-ai/deepseek-v4-flash-0731');
-    this.primaryModel = isLocal ? LOCAL_MODEL_ID : (this.hostedModel || '@cf/deepseek-ai/deepseek-v4-flash-0731');
+    this.hintModel = isLocal ? LOCAL_MODEL_ID : (this.hostedModel || '@cf/deepseek-ai/deepseek-v4.1-flash-1017');
+    this.primaryModel = isLocal ? LOCAL_MODEL_ID : (this.hostedModel || '@cf/deepseek-ai/deepseek-v4.1-flash-1017');
     this.model = this.primaryModel; // Default model for backward compatibility
     if (typeof window !== 'undefined') {
       window.__clozeAIMode = isLocal ? 'local' : this.hostedModel ? 'workers-ai' : 'proxy';
