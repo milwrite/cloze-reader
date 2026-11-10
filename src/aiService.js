@@ -81,6 +81,8 @@ class OpenRouterService {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...payload, model: this.model, ...(this.hostedModel?{chat_template_kwargs:{enable_thinking:false}}:{}) }),
+      // Bounded, so a round can never sit on "Loading passages..." forever.
+      signal: AbortSignal.timeout(60000),
       ...options,
     });
     try {
@@ -102,7 +104,9 @@ class OpenRouterService {
     const error = new Error(message || `API request failed: ${response.status}`);
     error.status = response.status;
     error.code = detail?.error?.code;
-    error.retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
+    // Only "unavailable right now" is worth asking again. A 502 or 504 means the
+    // server already waited on a model, so that request may have been paid for.
+    error.retryable = response.status === 503;
     throw error;
   }
 
@@ -176,12 +180,22 @@ class OpenRouterService {
     return 'proxy-mode';
   }
 
-  async retryRequest(requestFn, maxRetries = 3, delayMs = 500) {
+  // One automatic retry at most, and only when the request most likely never reached a
+  // model: the connection failed before any response, or the server answered 503.
+  // Timeouts, rate limits, 502/504 and unusable model output are not asked again; the
+  // caller falls back (manual word selection, a generic context line) instead.
+  shouldRetry(error) {
+    if (!error || error.name === 'AbortError' || error.name === 'TimeoutError') return false;
+    if (error.retryable === true) return true;
+    return error instanceof TypeError && error.status === undefined;
+  }
+
+  async retryRequest(requestFn, maxRetries = 2, delayMs = 500) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await requestFn();
       } catch (error) {
-        if (attempt === maxRetries || error.retryable === false || error.name === 'AbortError') {
+        if (attempt === maxRetries || !this.shouldRetry(error)) {
           throw error; // Final attempt failed, throw the error
         }
         // Wait before retrying, with exponential backoff

@@ -88,13 +88,19 @@ export async function suite(request:Request,env:SuiteEnv,app:(request:Request,id
    let result;
    if(env.CAIL_GATEWAY_KEY){
     if(!env.GATEWAY)return json({error:{message:'Generation is not configured.'}},503);
-    const upstream=await env.GATEWAY.fetch(new Request(TOOLS+'/v1/chat/completions',{
+    // A timeout is reported as 504 and unreadable output as 502, never as 503: the page
+    // asks again only on 503, and both of these may already have been paid for.
+    let upstream:Response;
+    try{upstream=await env.GATEWAY.fetch(new Request(TOOLS+'/v1/chat/completions',{
      method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+env.CAIL_GATEWAY_KEY},
      body:JSON.stringify({...inputs,model:env.CLOZE_MODEL.split('/').pop()}),
      signal:AbortSignal.any([request.signal,AbortSignal.timeout(55000)])
-    }));
+    }));}catch(error){
+     const timedOut=(error as Error)?.name==='TimeoutError';
+     return json({error:{message:timedOut?'The model took too long to answer.':'Generation is temporarily unavailable. Please retry.'}},timedOut?504:503);
+    }
     if(!upstream.ok)return json({error:{message:'Generation is temporarily unavailable. Please retry.'}},upstream.status);
-    result=await upstream.json() as any;
+    try{result=await upstream.json() as any;}catch{return json({error:{message:'The model returned an unreadable response.'}},502);}
    }else result=await env.AI.run(env.CLOZE_MODEL,inputs);
    const content=result?.choices?.[0]?.message?.content??result?.response;
    if(typeof content!=='string'||!content.trim())return json({error:{message:'The model returned an empty response.'}},502);
