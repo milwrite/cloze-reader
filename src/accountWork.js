@@ -13,7 +13,8 @@ export function snapshot(app){
 }
 export async function restore(app,content){
  const record=decode(content.record);
- if(!record.game||typeof record.game.originalText!=='string'||!Array.isArray(record.game.blanks)||!record.game.currentBook)throw new Error('This file does not contain a saved Cloze exercise.');
+ // A round saved before its blanks were chosen has nothing to answer and no way forward.
+ if(!record.game||typeof record.game.originalText!=='string'||!Array.isArray(record.game.blanks)||!record.game.blanks.length||!record.game.currentBook)throw new Error('This file does not contain a saved Cloze exercise.');
  for(const key of fields)app.game[key]=record.game[key];
  app.game.currentBook=record.game.currentBook;app.game.lockedBlanks=record.game.lockedBlanks instanceof Set?record.game.lockedBlanks:new Set();
  for(const key of ['conversations','wordContexts','blankQuestions','currentLevel'])if(record.chat?.[key]!==undefined)app.game.chatService[key]=record.chat[key];
@@ -22,6 +23,8 @@ export async function restore(app,content){
  Object.assign(app,{currentResults:record.ui?.currentResults||null,isRetrying:!!record.ui?.isRetrying,lastRevealWasSkip:!!record.ui?.lastRevealWasSkip,currentHints:record.ui?.currentHints||app.game.hints});
  [...app.elements.passageContent.querySelectorAll('.cloze-input')].forEach((input,index)=>{const saved=record.inputs?.[index];if(saved){input.value=saved.value;input.disabled=saved.disabled;input.className=saved.className;}});
  app.elements.result.textContent=record.ui?.result||'';
+ // Skip belongs to a second attempt; resetUI hides it, so put it back when that is where the player was.
+ app.elements.skipBtn?.classList.toggle('hidden',!app.isRetrying);
  app.elements.nextBtn.classList.toggle('hidden',!record.ui?.nextVisible);
  app.elements.submitBtn.style.display=record.ui?.submitVisible===false?'none':'inline-block';
  app.elements.submitBtn.textContent=record.ui?.submitText||'Submit';
@@ -52,17 +55,21 @@ export default class AccountWork {
    file.onchange=async()=>{const selected=file.files[0];if(!selected)return;if(selected.size>192000){this.status.textContent='The exercise file is too large.';return;}try{const data=JSON.parse(await selected.text());const content=data.content||data;if(!content.record?.game)throw new Error('Choose a Cloze exercise export.');if(!await this.save())return;await restore(this.app,content);this.id=crypto.randomUUID();this.revision=0;this.previous='';await this.save();}catch(error){this.status.textContent=error.message;}finally{file.value='';}};
   }
   const id=new URLSearchParams(location.search).get('work');
-  if(id){const {item}=await this.api('/entries/'+encodeURIComponent(id));await restore(this.app,item.content);this.id=item.id;this.revision=item.revision;this.previous=JSON.stringify(snapshot(this.app));this.ready=true;return true;}
+  // A saved exercise that cannot be opened (deleted, unreadable, service down) must not strand the page:
+  // say so, drop the link, and start a fresh round.
+  if(id){try{const {item}=await this.api('/entries/'+encodeURIComponent(id));await restore(this.app,item.content);this.id=item.id;this.revision=item.revision;this.previous=JSON.stringify(snapshot(this.app));this.ready=true;return true;}catch{history.replaceState(null,'',location.pathname);this.status.textContent='That saved exercise could not be opened. A new round has started.';}}
   // A guest's current round survives the CUNY handoff without moving browser credentials.
   let draft;try{draft=JSON.parse(sessionStorage.getItem('cloze-login-draft')||'null');}catch{}
-  if(draft){await restore(this.app,draft);sessionStorage.removeItem('cloze-login-draft');this.ready=true;await this.save();return true;}
+  // The draft is used once. If it cannot be restored it is gone, not retried on every reload.
+  if(draft){sessionStorage.removeItem('cloze-login-draft');try{await restore(this.app,draft);this.ready=true;await this.save();return true;}catch{this.status.textContent='The round from before sign-in could not be restored. A new round has started.';}}
   this.ready=true;return false;
  }
  changed(){clearTimeout(this.timer);this.timer=setTimeout(()=>void this.save(),500);}
  save(){
   clearTimeout(this.timer);
   this.pending=this.pending.then(async()=>{
-   if(!this.ready||!this.app.game.originalText)return true;
+   // While a round is still being built its text is new but its blanks are not: never save that half.
+   if(!this.ready||!this.app.game.originalText||this.app.roundLoading||!this.app.game.blanks?.length)return true;
    const content=snapshot(this.app),serialized=JSON.stringify(content);
    if(!this.authenticated){sessionStorage.setItem('cloze-login-draft',serialized);return true;}
    if(serialized===this.previous)return true;

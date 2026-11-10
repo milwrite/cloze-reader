@@ -43,3 +43,9 @@ test('failed save keeps the current exercise and prevents advancing the round',a
  assert.equal(await work.newRound(),false);assert.equal(work.id,id);assert.equal(work.revision,0);
  assert.match(work.status.textContent,/another tab/);
 });
+
+test('a round saved before its blanks were chosen is refused, not restored as a dead end',async()=>{
+ const source=appFixture(),content=snapshot(source.app);
+ content.record.game.blanks=[];
+ await assert.rejects(restore(appFixture().app,content),/does not contain a saved Cloze exercise/);
+});

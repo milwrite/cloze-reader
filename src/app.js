@@ -422,6 +422,17 @@ class App {
   }
 
   async handleNext() {
+    // A second press while the first is still saving or loading would start two rounds.
+    if (this.advancing) return;
+    this.advancing = true;
+    try {
+      await this.advanceRound();
+    } finally {
+      this.advancing = false;
+    }
+  }
+
+  async advanceRound() {
     if(!await this.accountWork.newRound())return;
     try {
       // Show loading immediately with specific message
@@ -536,6 +547,7 @@ class App {
   }
 
   showLoading(show, message = 'Loading passages...') {
+    this.roundLoading = Boolean(show);   // saved-work code reads this
     if (show) {
       this.elements.loading.innerHTML = `
         <div class="text-center py-8">

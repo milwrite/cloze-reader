@@ -21,3 +21,18 @@ test('server key funds generation without entering configuration or saved-work i
  const saved=await worker.fetch(new Request(origin+'/api/work/entries',{headers:{cookie:'__Host-cloze-session=valid'}}),env);assert.equal(saved.status,200);
  const denied=await worker.fetch(new Request(origin+'/api/work/entries'),env);assert.equal(denied.status,401);
 });
+
+test('a model timeout is reported as 504 and unreadable output as 502, never as a retryable 503',async()=>{
+ const base:any={PUBLIC_ORIGIN:origin,APP_ID:'cloze',CLOZE_MODEL:'@cf/deepseek-ai/deepseek-v4.1-flash-1017',CAIL_GATEWAY_KEY:'server-only-fixture',
+  REQUEST_LIMIT:{limit:async()=>({success:true})},AI:{run:async()=>{throw new Error('must use gateway');}},
+  IDENTITY:{identities:async()=>({ok:false,status:401})}};
+ const ask=(GATEWAY:any)=>worker.fetch(new Request(origin+'/api/ai/chat',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Help.'}]})}),{...base,GATEWAY});
+ const timedOut=await ask({fetch:async()=>{throw Object.assign(new Error('The operation timed out'),{name:'TimeoutError'});}});
+ assert.equal(timedOut.status,504);
+ const unreachable=await ask({fetch:async()=>{throw new TypeError('connection refused');}});
+ assert.equal(unreachable.status,503);
+ const unreadable=await ask({fetch:async()=>new Response('<html>bad gateway</html>',{status:200})});
+ assert.equal(unreadable.status,502);
+ const empty=await ask({fetch:async()=>Response.json({choices:[{message:{content:'  '}}]})});
+ assert.equal(empty.status,502);
+});
