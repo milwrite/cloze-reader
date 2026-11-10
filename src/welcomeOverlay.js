@@ -87,7 +87,7 @@ class WelcomeOverlay {
   aiModeText() {
     return window.__clozeAIMode === 'local'
       ? 'Powered by your local cloze-reader model.'
-      : 'Powered by DeepSeek V4 Flash on Cloudflare Workers AI through CUNY AI Lab.';
+      : 'Powered by DeepSeek V4.1 Flash on Cloudflare Workers AI through CUNY AI Lab.';
   }
 
   hide() {
