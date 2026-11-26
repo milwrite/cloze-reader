@@ -36,11 +36,14 @@ export default class AccountWork {
  async api(path,method='GET',body){const response=await fetch('/api/work'+path,{method,headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw new Error(data.error?.message||'Your exercise could not be saved.');return data;}
  async initialize(){
   const nav=document.createElement('nav');nav.className='suite-account suite-nav';nav.setAttribute('aria-label','CUNY account');
-  const links=document.createElement('div');links.className='suite-nav-links';nav.append(links);
-  const games=document.createElement('a');games.className='suite-nav-button';games.href='https://games.ailab-452.workers.dev/';games.textContent='Games';
+  const links=document.createElement('div');links.dataset.arcadeHeader='';nav.append(links);
+  const games=document.createElement('a');games.href='https://games.ailab-452.workers.dev/';games.dataset.arcadeHome='';
+  games.setAttribute('aria-label','CUNY AI Lab Games home');
+  const logo=document.createElement('img');logo.src=new URL('./cail-logo-white.png',import.meta.url).href;logo.alt='CUNY AI Lab';logo.width=1154;logo.height=259;
+  const title=document.createElement('span');title.textContent='Games';games.append(logo,title);
   games.onclick=async e=>{e.preventDefault();if(await this.save())location.assign(games.href);};
   links.append(games);
-  this.link=document.createElement('a');this.link.className='suite-nav-button';this.link.textContent='CUNY Login';this.link.href='/auth/start?next=/';links.append(this.link);
+  this.link=document.createElement('a');this.link.dataset.arcadeAccount='';this.link.textContent='CUNY Login';this.link.href='/auth/start?next=/';links.append(this.link);
   this.status=document.createElement('span');this.status.setAttribute('role','status');this.status.setAttribute('aria-live','polite');nav.append(this.status);document.body.prepend(nav);
   try {
    const response=await fetch('/api/session');
